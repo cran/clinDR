@@ -1,0 +1,59 @@
+export(emaxsim,emaxsimB,plot.emaxsim,plot.emaxsimB,plot.emaxsimobj,plot.emaxsimBobj,
+			 print.emaxsim,print.emaxsimB,print.emaxsimobj,print.emaxsimBobj,
+			 predict.emaxsim,predict.emaxsimobj,predict.emaxsimBobj,
+			 summary.emaxsim,summary.emaxsimB,summary.emaxsimobj,summary.emaxsimBobj,
+			 summary.fitEmax,summary.fitEmaxB,
+			 update.emaxsimobj,emaxfun,FixedMean,RandEmax,selEstan,
+			 targetD,targetCI,predict.emaxalt,SeEmax,emaxalt,startEmax,nllogis,
+			 plotB,plot.plotB,plotD, DRDensityPlot,plotBdensity,
+			 fitEmax,predict.fitEmax,plot.fitEmax,print.fitEmax,
+			 fitEmaxB,predict.fitEmaxB,plot.fitEmaxB,print.fitEmaxB,
+			 prior.control,mcmc.control,compileStanModels,checkMonoEmax,targetBeta)
+import("foreach")
+importFrom("rstan","stan_model","sampling")
+importFrom("graphics", "abline", "plot", "points","mtext")
+importFrom("stats", "as.formula", "binomial", "coef", "glm",
+             "glm.control", "lm", "median", "na.omit", "nlm", "nls",
+             "nls.control", "optim", "pbeta", "pchisq", "pf", "plogis",
+             "pnorm", "ppoints", "predict", "qlogis", "qnorm",
+             "quantile", "rbeta", "rbinom", "rnorm", "rt", "var", "vcov",
+             "weighted.mean","rchisq")
+importFrom("utils","capture.output","flush.console")
+importFrom("DoseFinding","Mods","optContr","MCTtest")
+importFrom("rstan","sampling",stan_model)
+importFrom("parallel","nextRNGStream","detectCores","makeCluster","stopCluster")
+importFrom("doParallel","registerDoParallel")
+importFrom("ggplot2","ggplot","aes","coord_cartesian","geom_point",
+					 "scale_color_manual","scale_shape_manual",
+					 "geom_hline","facet_wrap","geom_errorbar",
+					 "geom_ribbon","theme_bw","scale_fill_grey","labs",
+					 "theme","element_blank","element_line",
+					 "geom_line","xlab","ylab","scale_x_continuous")
+S3method("[",emaxsim)
+S3method("[",emaxsimB)
+S3method(plot,emaxsim)
+S3method(plot,emaxsimB)
+S3method(plot,emaxsimobj)
+S3method(plot,emaxsimBobj)
+S3method(predict,emaxsim)
+S3method(predict,emaxsimobj)
+S3method(predict,emaxsimBobj)
+S3method(print,emaxsim)
+S3method(print,emaxsimB)
+S3method(print,emaxsimobj)
+S3method(print,emaxsimBobj)
+S3method(summary,emaxsim)
+S3method(summary,emaxsimB)
+S3method(summary,emaxsimobj)
+S3method(summary,emaxsimBobj)
+S3method(summary,fitEmax)
+S3method(summary,fitEmaxB)
+S3method(update,emaxsimobj)
+S3method(predict,emaxalt)
+S3method(print,fitEmax)
+S3method(print,fitEmaxB)
+S3method(predict,fitEmax)
+S3method(predict,fitEmaxB)
+S3method(plot,fitEmax)
+S3method(plot,fitEmaxB)
+S3method(plot,plotB)

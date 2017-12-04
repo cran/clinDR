@@ -1,0 +1,86 @@
+Changes to clinDR:
+======================
+Update 1.6
+- Change package dependencies
+- Additional documentation for CRAN release
+- Modify examples for CRAN release
+Update 1.05
+- Fix bug in parallel processing for emaxsim and emaxsimB
+- Fix bug in residSD input to customCode in emaxsimB
+Update 1.04
+- RandEmax can now generate random residual SD from a scaled inverted chi distribution
+Update 1.03
+- Added prediction interval option to plot.emaxsimobj
+- Expanded output from emaxsimB when check=TRUE so
+	test data for custom code can be generated
+Update 1.02
+- Improved labeling of output of predict.fitEmax(B) 
+- Add descriptive label to plot.emaxsim(B) to indicate difference with placebo by default
+- Corrected bug in emaxsim output of residual SD.  This impacts predictive intervals from several functions.
+Update 1.01
+- Major update adding Bayesian versions of fitEmax and emaxsim
+- Supporting methods, e.g., plot, print,... also supplied for
+	new Bayesian functions fitEmaxB and emaxsimB
+- Parallel computing options added for the Bayesian functions
+Update 0.9.6.5
+- Added log scale option to plot.plotB.R, plotD.R, plot.fitEmax.R, plot.emaxsimobj.R. 
+If plot=plotDif (difference with placebo) and log=TRUE, 
+the plot starts from the lowest nonzero dose.
+- Improved active control plotting in plot.plotB.R.
+- Added optional user-specified control over x-axis tick marks.
+Update 0.9.6.4
+- In checkMonoEmax, included equality in predictive probability calculation.
+- In plot.fitEmax, if there is no grouping variable, then no panel at the top
+of the plot is created.  The function now returns a list with the ggplot2 
+object and a matrix with the confidence and prediction interval limits.
+Update 0.9.6.3
+- Added grouped-data option to checkMonoEmax, and test data.
+- Corrected plotting issue in plotB.
+Update 0.9.6.2
+- Updated code for fitEmax test statistics.  plot.fitEmax predictive
+  error bars now use the smallest sample size for a dose/strata combination.
+- plotB now returns the ggplot object so it can be further modified.
+- fitEmax can now use non-integer prot variable.
+Update 0.9.6
+- Added binary logistic Emax model fitting to emaxsim and all associated
+  functions
+- Changed check of the variance-covariance matrix in fitEmax to ensure it
+  is positive definite
+- Eliminated femax and femaxH
+- Replaced RandEmax with skewRandEmax and eliminated the name skewRandEmax
+Update 0.9.5.1
+- Corrected bug in predictive interval for binary data in plot.fitEmax
+Update 0.9.5
+- Added treatment difference option to plot.fitEmax
+- Updated implementation of symbol group in plotB
+- Corrected bugs in prediction intervals in plot.fitEmax
+- Added treatment difference estimation to predict.fitEmax
+- Updated emaxsim and its support functions to use fitemax
+  and its support functions
+Update 0.9.4
+- Added GOF tests to fitEmax output
+- Fixed symbol bug in plot.fitEmax and plot.logitEmax
+- Fixed fitEmax and logitEmax to return NULL when convergence fails.
+- Created fitEmax to unify fitting of Emax models with continuous/binary data
+Update 0.9.3
+- Updated all graphic output to use ggplot2
+- Changed order of Emax model parameters to better support fitting 
+  of data from multiple protocols with different placebo response.
+  Order of parameters in logitEmax also changed for consistency across
+  all Emax functions.
+- Created new function contEmax to fit continuous emax models using
+  ML estimation along with supporting plot and predict functions
+- Added plot symbol options and residual plots to plot.contEmax and
+  plot.logitEmax
+- Fixed bug in 4-parameter binary data case for  startEmax
+- Fixed bug in predictive intervals in plot.logitEmax
+- Changed default confidence/posterior interval levels to 0.90
+Update 0.9.2  
+- led50 replaces ed50 everywhere.
+- Changed options for skewRandEmax
+- Last version before changes to graphics. 
+Update 0.9.1 
+- Numerous changes to DoseResponse package.  The biggest change was to eliminate
+  transformation of the Hill parameter. 
+
+
