@@ -13,7 +13,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
   if(! modType %in% c(3,4))stop("modType must be 3 or 4")
   if(length(ed50contr)!=length(lambdacontr))stop('The number of ED50 and Lambda defining contrasts must be equal')
 	
-	save.seed<-.Random.seed
+	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
 
     ### extract design parameters from genObj
@@ -176,7 +176,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	}
 	
 	RNGkind(save.rng)
-	.Random.seed<<-save.seed
+	if(exists('save.seed')).Random.seed<<-save.seed
   
 	return(structure(list(description=description,
 				binary=binary,modType=modType,genObj=genObj, 
@@ -300,10 +300,9 @@ simrepB<-function(j,inlist)
 						  S=V,df=ddf,type='general')$tStat
     holdP<-attr(holdC,'pVal')
     orderh<-order(holdC)
-    holdC<-holdC[orderh]
-    holdP<-holdP[orderh]
-    selContrast[i]<-ifelse(negEmax,orderh[1],orderh[length(holdC)])
-    pVal[i]<-ifelse(negEmax,holdP[1],holdP[length(holdC)])
+		ncontr<-length(orderh)
+    pVal[i]<-holdP[orderh[ncontr]]
+    selContrast[i]<-orderh[ncontr]
     
     ### format data as counts if binary
     if(binary){
@@ -315,7 +314,8 @@ simrepB<-function(j,inlist)
     	yin<-yhat
     } 
     bfit<-fitEmaxB(yin,din,prior,modType,count=cin,binary=binary,
-    								 msSat=msSat[i],mcmc=mcmc,estan=estan,diagnostics=check)
+    							 msSat=msSat[i],mcmc=mcmc,estan=estan,
+    							 diagnostics=check,nproc=1)
     
     ### return mcmc for preliminary checking
     if(check){

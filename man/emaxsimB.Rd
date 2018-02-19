@@ -60,11 +60,11 @@ When \code{TRUE}, the intended effect is assumed to be negative.
 			  the median-based contrast is excluded.}
 	\item{lambdacontr}{Hill parameters matched to the ed50contr.  The default value is 1
 for each contrast model.}
-	\item{testMods}{The model object for a MCP-MOD model-based test
+	\item{testMods}{The model object for a MCP-MOD test
 	created by \code{\link{Mods}} from package DoseFinding.  If 
 specified, the other contrast inputs are ignored.  The  \code{\link{Mods}} 
 call should
-use the unique sorted dose levels.  The validity of
+use the unique sorted dose levels.  The direction of the trend should be specificed in the call to \code{\link{Mods}}.  The \code{negEmax} is stored for use by support functions, but it does not determine the direction of the effect when \code{testMods} is specified.  The validity of
 \code{testMods} is not checked.}
 	\item{idmax}{Index of the default dose group for comparison to placebo.  
 Most analysis functions allow other dose groups to be
@@ -99,7 +99,8 @@ Binary data are handled similarly.  The models are fit on the logit scale and th
 back-transformed for estimation of dose response.  Reduced linear models are 
 selected based on the corresponding likelihood deviance.  
 
-MCP-MOD tests are created from contrasts based on the Emax function.  Different
+MCP-MOD tests are created from contrasts based on the Emax function using
+the \code{DoseFinding} package.  Different
 ED50 and lambda (Hill) parameters can be specified to form the contrasts. A contrast
 matrix output from the DoseFinding package can be specified instead, allowing for
 other contrast choices.  

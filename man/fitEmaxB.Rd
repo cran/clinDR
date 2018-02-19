@@ -12,7 +12,8 @@ data, the Emax model is on the logit scale.
 \usage{
 fitEmaxB(y, dose, prior, modType = 3, prot = rep(1, length(y)), 
 	count = rep(1, length(y)), binary = FALSE, msSat = NULL,
-	pboAdj = FALSE, mcmc = mcmc.control(),estan = NULL, diagnostics = TRUE)
+	pboAdj = FALSE, mcmc = mcmc.control(),estan = NULL, 
+	diagnostics = TRUE, nproc = getOption("mc.cores", 1L))
 }
 
 \arguments{
@@ -56,6 +57,11 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \code{selEstan} and passed to \code{fitEmaxB} for repeated executions to
   improve efficiency and stability.}
   \item{diagnostics}{Print output from rstan.}
+  \item{nproc}{The number of processor requested for \code{STAN} MCMC
+  computations.  Defaults to the value set by the 
+  \code{rstan} installation.   When set explicitly, \code{nproc} 
+  is usually 1 or the number of MCMC chains. If greater than the
+  number of chains, it is set to the number of chains.}
 }
 \details{
 The function \code{compileStanModels} must be executed once to create compiled STAN

@@ -1,10 +1,14 @@
 library(clinDR)
-if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")) setwd("./clinDR/inst/tests/extraGraphics/pdfoutput")
 
-if(file.exists("output.plotD_new.pdf")) file.rename("output.plotD_new.pdf", "output.plotD_old.pdf")
 
-pdf(file=paste("output.plotD_new.pdf"))
+if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
+	pvar<-"./clinDR/inst/tests/extraGraphics/pdfoutput"
+} else pvar<-NULL
 
+if(file.exists(file.path(pvar,"output.plotD_new.pdf"))) file.rename(file.path(pvar,"output.plotD_new.pdf"), 
+																																				 file.path(pvar,"output.plotD_old.pdf"))
+	
+pdf(file=paste(file.path(pvar,"output.plotD_new.pdf")))
 
 
 data(examples14) 

@@ -7,13 +7,13 @@
 the population value divided by the posterior SD of the mean difference.
 }
 \usage{
-\method{plot}{emaxsimB}(x, id = x$idmax, difPlacebo= TRUE, ...)
+\method{plot}{emaxsimB}(x, id = x$idmax, plotDif= TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{ Output  of \code{\link{emaxsimB}} }
   \item{id}{ Index of the dose to be assessed (placebo index=1). }
-  \item{difPlacebo}{ If true (default), the estimates and population
+  \item{plotDif}{ If true (default), the estimates and population
 values are differences with placebo.  IF false, absolute dose response
 values are used.}
   \item{\dots}{ Optional parameters passed to the plotting function }

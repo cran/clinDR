@@ -13,7 +13,7 @@ the model-based estimated dose response curve.
     plotDif=FALSE,
     plotResid=FALSE,
     clev = 0.9, 
-    plotPop='m',     
+    plotPop=c('m','3','4'),     
     negC = FALSE, 
     log=FALSE,
     predict=TRUE, 

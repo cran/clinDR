@@ -2,11 +2,15 @@
 ###### DRDensity plots
 library(clinDR)
 
-if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")) setwd("./clinDR/inst/tests/extraGraphics/pdfoutput")
+if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
+	pvar<-"./clinDR/inst/tests/extraGraphics/pdfoutput"
+} else pvar<-NULL
 
-if(file.exists("output.densityplot_new.pdf")) file.rename("output.densityplot_new.pdf", "output.densityplot_old.pdf")
+if(file.exists(file.path(pvar,"output.densityplot_new.pdf"))) file.rename(file.path(pvar,"output.densityplot_new.pdf"), 
+																																				 file.path(pvar,"output.densityplot_old.pdf"))
+	
+pdf(file=paste(file.path(pvar,"output.densityplot_new.pdf")))
 
-pdf(file=paste("output.densityplot_new.pdf"))
 
 
 
@@ -82,3 +86,4 @@ plotBdensity(dgrid,cbind(parms[,1],parms[,2],
        xlab='Dose',ylab='Dif with PBO')
 
 dev.off()
+detach(dat)

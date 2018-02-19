@@ -8,7 +8,13 @@ DRDensityPlot<-function(x,qL,qH,qlevL=c(0.025,0.05,0.10,0.25),
     if(nrow(qH)!=length(x))stop("rows of qH must correspond to x values")
     if(length(qlevL)!=ncol(qL))stop("columns of qL must correpond to qlevL")
     if(length(qlevL)!=ncol(qH))stop("columns of qH must correpond to 1-qlevL")
-
+		
+		### remove row/col names that create warning messages
+		rownames(qL)<-NULL
+		colnames(qL)<-NULL
+		rownames(qH)<-NULL
+		colnames(qH)<-NULL
+		
     ng<-length(qlevL)
     gscale<-c(1:ng)*floor(70/ng)
     gscale<-paste("gray",gscale,sep="")

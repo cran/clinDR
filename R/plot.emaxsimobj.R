@@ -1,6 +1,6 @@
 "plot.emaxsimobj" <-
   function(x,xlim,xat=NULL,ylim,xlab,ylab,plotDif=FALSE,
-           plotResid=FALSE,clev=0.9,plotPop='m',negC= FALSE,log=FALSE, 
+           plotResid=FALSE,clev=0.9,plotPop=c('m','3','4'),negC= FALSE,log=FALSE, 
   				 predict=TRUE,plot=TRUE,...)
   {
     binary<-x$binary
@@ -10,6 +10,11 @@
     
     cimul<-abs(qnorm((1-clev)/2))
     n<-table(x$dose)
+    
+    plotPop<-match.arg(plotPop)
+   	if((plotPop=='3')&&(length(x$pop)!=3))stop("Invalid populaton Emax parameters")
+   	if((plotPop=='4')&&(length(x$pop)!=4))stop("Invalid populaton Emax parameters")   
+    ngrid<-101
     
     if(!plotDif){
       dm<-x$dm
@@ -120,7 +125,7 @@
       gp2<-gp2+coord_cartesian(xlim=xlim,ylim=ylim)
       
       ### compute predictions on grid
-      dgrid<-seq(doselev[1],doselev[length(doselev)],length=101)
+      dgrid<-seq(doselev[1],doselev[length(doselev)],length=ngrid)
       if(!plotDif){
         fitgrid<-predict(x,dgrid)$fitpred
       }else fitgrid<-predict(x,dgrid)$fitdif
@@ -136,9 +141,7 @@
         names(dfg)<-c('doselev','predpop')
         gp2<-gp2+geom_line(data=dfg,aes(x=doselev,y=predpop),
                            col='black',linetype=2)
-      }else if(plotPop%in%c('3','4')){
-        if((plotPop=='3')&&(length(x$pop)!=3))stop("Invalid populaton Emax parameters")
-        if((plotPop=='4')&&(length(x$pop)!=4))stop("Invalid populaton Emax parameters")
+      }else {
         pm<-emaxfun(dgrid,x$pop)
         pm0<-emaxfun(0,x$pop)
         if(binary){
@@ -206,7 +209,7 @@
         
         ### compute predictions on grid
         
-        dgrid<-seq(doselev[1],doselev[length(doselev)],length=101)
+        dgrid<-seq(doselev[1],doselev[length(doselev)],length=ngrid)
         dgrid <- c(dgrid, doselev)
         dgrid <- sort(unique(dgrid))
         
@@ -240,9 +243,6 @@
         										 col='black')   
         	
         }
-        
-        
-   
         
         if(plotPop=='m' || is.null(x$pop)){
           dfg<-data.frame(doselevlog,predpop)
@@ -334,16 +334,21 @@
   }
 
 "plot.emaxsimBobj" <-
-function(x, clev=0.9, plotDif=FALSE, plotPop='m', 
+function(x, clev=0.9, plotDif=FALSE, plotPop=c('m','3','4'), 
 				 log=FALSE, plotResid=FALSE, plot=TRUE, ... )
 {
-	if(!missing(log) || !missing(plotResid))stop('log and plotREsid options not currently implemented')
+	if(!missing(log) || !missing(plotResid))stop('log and plotResid options not currently implemented')
 	out<-plot(x$bfit, clev=clev, plotDif=plotDif, plot=FALSE, ... )  	
 	lplot<-out$lplot
 	
+  plotPop<-match.arg(plotPop)
+ 	if((plotPop=='3')&&(length(x$pop)!=3))stop("Invalid populaton Emax parameters")
+ 	if((plotPop=='4')&&(length(x$pop)!=4))stop("Invalid populaton Emax parameters")
+  ngrid<-101
+
 	pop<-x$pop
 	if(!is.null(pop) && plotPop!='m'){
-		dgrid<-seq(0,1.1*max(x$bfit$dose),length=400)
+		dgrid<-seq(0,1.1*max(x$bfit$dose),length=ngrid)
 		if(x$binary){
 			popg<-plogis(emaxfun(dgrid,x$pop))
 		}else  popg<-emaxfun(dgrid,x$pop)
@@ -354,8 +359,10 @@ function(x, clev=0.9, plotDif=FALSE, plotPop='m',
 	
 	if(plotDif){
 		popg<-popg-popg[1]
-		popg<-popg[-1]
-		dgrid<-dgrid[-1]
+		if(log){
+			popg<-popg[-1]
+			dgrid<-dgrid[-1]
+		}
 	}
 	
 	lplot<-lplot+geom_line(data=data.frame(dgrid=dgrid,popg=popg),

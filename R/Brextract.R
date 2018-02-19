@@ -1,6 +1,6 @@
 "[.emaxsim" <-
 function(x,i,...){
-  save.seed<-.Random.seed
+  if(exists('.Random.seed'))save.seed<-.Random.seed
   save.rng<-RNGkind()[1]
   RNGkind("L'Ecuyer-CMRG")
   .Random.seed<<-as.integer(x$rseed[i,])
@@ -28,7 +28,7 @@ function(x,i,...){
         vc<-matrix(x$vc[i,c(1:(n2^2))],ncol=n2)
   }
 
-  .Random.seed<<-save.seed   ### re-assign seed to original sequence order
+  if(exists('save.seed')).Random.seed<<-save.seed   ### re-assign seed to original sequence order
   RNGkind(save.rng)
  
      return(structure(list(y=y, dose=dose, pop=x$pop[i,],
@@ -49,7 +49,7 @@ function(x,i,...){
 
 "[.emaxsimB" <-
 function(x,i,...){
-  save.seed<-.Random.seed
+  if(exists('.Random.seed'))save.seed<-.Random.seed
   save.rng<-RNGkind()[1]
   RNGkind("L'Ecuyer-CMRG")
   .Random.seed<<-as.integer(x$rseed[i,])
@@ -88,7 +88,7 @@ function(x,i,...){
    								 msSat=msSat,mcmc=mcmc,estan=NULL,diagnostics=FALSE)
 
 
-  .Random.seed<<-save.seed   ### re-assign seed to original sequence order
+  if(exists('save.seed')).Random.seed<<-save.seed   ### re-assign seed to original sequence order
   RNGkind(save.rng)
   
   return(structure(list(y=y, dose=dose, pop=x$pop[i,],

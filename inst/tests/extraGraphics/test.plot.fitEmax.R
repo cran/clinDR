@@ -1,11 +1,15 @@
 library(clinDR)
 
 
-if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")) setwd("./clinDR/inst/tests/extraGraphics/pdfoutput")
+if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
+	pvar<-"./clinDR/inst/tests/extraGraphics/pdfoutput"
+} else pvar<-NULL
 
-if(file.exists("output.fitEmax_new.pdf")) file.rename("output.fitEmax_new.pdf", "output.fitEmax_old.pdf")
+if(file.exists(file.path(pvar,"output.fitEmax_new.pdf"))) file.rename(file.path(pvar,"output.fitEmax_new.pdf"), 
+																																				 file.path(pvar,"output.fitEmax_old.pdf"))
+	
+pdf(file=paste(file.path(pvar,"output.fitEmax_new.pdf")))
 
-pdf(file=paste("output.fitEmax_new.pdf"))
 
 
 set.seed(12357)

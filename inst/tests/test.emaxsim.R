@@ -51,6 +51,83 @@ test_that("check mcp power calculation",{
 })
 ####################################################################
 
+####################################################################
+###### check mcp testing.  Repeat with negative target
+######
+set.seed(12357)
+nsim<-1000
+
+doselev<-c(0,0.033,0.067,0.167,0.33,1)
+tareff<- -0.313
+ndose<-length(doselev)
+n<-rep(95,ndose)
+sdy<-1
+
+parm.mat<-matrix(c( .5,.5,  .05,.5, .95,.5),byrow=T,ncol=2)
+
+parm.mat[,1]<-qgamma(parm.mat[,1],shape=1.05,rate=3.0)  ###ed50
+parm.mat[,2]<-qgamma(parm.mat[,2],shape=2.5,rate=1.18) ###lambda
+
+
+###########################################
+#### use pop emax model 
+e0<-0
+ed50<-qgamma(0.5,shape=1.05,rate=3.0)
+lambda<-qgamma(0.5,shape=2.5,rate=1.18)
+emax<-(ed50^lambda+1)*(tareff)
+pop<-c(log(ed50),lambda,emax,e0)
+meanlev<-emaxfun(doselev,parm=pop)
+
+gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)  
+
+### 3 contrasts and linear
+emaxMods3<-Mods(sigEmax=cbind(parm.mat[,1],parm.mat[,2]),
+               linear=NULL,doses=doselev,placEff=e0,maxEff=-1)
+emaxMat3<-optContr(emaxMods3,w=n)
+
+#### power from DoseFinding
+altmod<-Mods(sigEmax=cbind(parm.mat[1,1],parm.mat[1,2]), doses=doselev, 
+          placEff = e0, maxEff=min(meanlev),
+          direction ="decreasing")
+
+pow3n<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n, 
+            sigma=sdy,placAdj=FALSE,
+            alternative="one.sided",critV=TRUE))
+
+D3n <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,negEmax=TRUE)
+
+
+test_that("check mcp power calculation",{
+    expect_that(mean(D3n$pVal<0.05),equals(pow3n,tol=2.5*sqrt(pow3*(1-pow3)/nsim)))
+})
+
+### 3 contrasts only
+emaxMods3<-Mods(sigEmax=cbind(parm.mat[,1],parm.mat[,2]),
+               doses=doselev,placEff=e0,maxEff=-1)
+emaxMat3<-optContr(emaxMods3,w=n)
+
+#### power from DoseFinding
+altmod<-Mods(sigEmax=cbind(parm.mat[1,1],parm.mat[1,2]), doses=doselev, 
+          placEff = e0, maxEff=min(meanlev),
+          direction ="decreasing")
+
+pow3n3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n, 
+            sigma=sdy,placAdj=FALSE,
+            alternative="one.sided",critV=TRUE))
+
+D3n3 <- emaxsim(nsim,gen.parm,modType=4,
+							 ed50contr=as.vector(parm.mat[,1]),
+							 lambdacontr = as.vector(parm.mat[,2]),
+							 negEmax=TRUE)
+
+
+test_that("check mcp power calculation",{
+    expect_that(mean(D3n3$pVal<0.05),equals(pow3n3,tol=2.5*sqrt(pow3*(1-pow3)/nsim)))
+})
+
+
+
+####################################################################
 
 
 ####################################################################

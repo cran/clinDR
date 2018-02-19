@@ -1,8 +1,10 @@
 "fitEmaxB"<-
 function(y,dose,prior,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 		 binary=FALSE,msSat=NULL,pboAdj=FALSE,
-		 mcmc=mcmc.control(),estan=NULL,diagnostics=TRUE){
+		 mcmc=mcmc.control(),estan=NULL,diagnostics=TRUE,
+		 nproc=getOption("mc.cores", 1L)){
 
+	if(nproc>parallel::detectCores())nproc<-parallel::detectCores()
 	tol<-.Machine$double.eps
 	protorig<-factor(prot)             #ensure that prot is a factor
 	prot<-as.numeric(protorig)         #convert to 1,2,3,....
@@ -49,6 +51,7 @@ function(y,dose,prior,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 	lamsca<-prior$lamsca
 	
 	chains<-mcmc$chains
+	if(nproc>chains)nproc<-chains
 	thin<-mcmc$thin
 	warmup<-mcmc$warmup
 	iter<-mcmc$iter
@@ -211,11 +214,13 @@ function(y,dose,prior,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 		estan<-readRDS(emod)	
 	}
 	
+	nproc<-as.integer(nproc)  ## required by rstan
 	if(diagnostics){
 		estanfit<-sampling(estan,data=indata,
 										 warmup=warmup,iter=iter,thin=thin,seed=seed,
 										 chains=chains,init=inits,pars=parameters,
-										 control=list(adapt_delta=adapt_delta)
+										 control=list(adapt_delta=adapt_delta),
+										 						 cores = nproc 
 										 )		
 	}else{
 		capture.output(
@@ -223,8 +228,8 @@ function(y,dose,prior,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 											 warmup=warmup,iter=iter,thin=thin,seed=seed,
 											 chains=chains,init=inits,pars=parameters,
 											 control=list(adapt_delta=adapt_delta),
-											 verbose=FALSE,open_progress=FALSE,refresh=-1
-											 )
+											 verbose=FALSE,open_progress=FALSE,refresh=-1,
+											 cores = nproc )
 		,file=NULL)
 	}
 	

@@ -1,0 +1,11 @@
+### must run in pdfoutput
+
+cmp --ignore-initial=200 output.densityplot_old.pdf output.densityplot_new.pdf
+cmp --ignore-initial=200 output.emaxsimBobj_old.pdf output.emaxsimBobj_new.pdf
+cmp --ignore-initial=200 output.emaxsimobj_old.pdf output.emaxsimobj_new.pdf
+cmp --ignore-initial=200 output.fitEmax_old.pdf output.fitEmax_new.pdf
+cmp --ignore-initial=200 output.fitEmaxB_old.pdf output.fitEmaxB_new.pdf
+cmp --ignore-initial=200 output.plotB_old.pdf output.plotB_new.pdf 
+cmp --ignore-initial=200 output.plotD_old.pdf output.plotD_new.pdf 
+
+

@@ -1,11 +1,14 @@
 library(clinDR)
 
-if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")) setwd("./clinDR/inst/tests/extraGraphics/pdfoutput")
 
-if(file.exists("output.emaxsimobj_new.pdf")) file.rename("output.emaxsimobj_new.pdf", "output.emaxsimobj_old.pdf")
+if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
+	pvar<-"./clinDR/inst/tests/extraGraphics/pdfoutput"
+} else pvar<-NULL
+
+if(file.exists(file.path(pvar,"output.emaxsimobj_new.pdf"))) file.rename(file.path(pvar,"output.emaxsimobj_new.pdf"), 
+																																				 file.path(pvar,"output.emaxsimobj_old.pdf"))
 	
-pdf(file=paste("output.emaxsimobj_new.pdf"))
-
+pdf(file=paste(file.path(pvar,"output.emaxsimobj_new.pdf")))
 
 set.seed(12357)
 nsim<-50

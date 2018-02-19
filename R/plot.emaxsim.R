@@ -1,10 +1,10 @@
 "plot.emaxsim" <-
-function(x,id=x$idmax,difPlacebo= TRUE,...)
+function(x,id=x$idmax,plotDif= TRUE,...)
 {
 	### produces qq plot for z-statistics for primary comparison of
 	### idmax dose with placebo
 
-    if(difPlacebo){
+    if(plotDif){
        fitdifv<-x$fitpredv-x$fitpredv[,1]
        fitdifP<-x$predpop-x$predpop[,1]
     }else{
@@ -15,8 +15,8 @@ function(x,id=x$idmax,difPlacebo= TRUE,...)
     doselev<-x$genObj$genP$doselev
 
     xx<-qnorm(ppoints(nrow(fitdifv)))
-    if(difPlacebo)y<-(fitdifv[, id] - fitdifP[,id])/x$sedifv[, id]
-    if(!difPlacebo)y<-(fitdifv[, id] - fitdifP[,id])/x$sepredv[, id]
+    if(plotDif)y<-(fitdifv[, id] - fitdifP[,id])/x$sedifv[, id]
+    if(!plotDif)y<-(fitdifv[, id] - fitdifP[,id])/x$sepredv[, id]
     ord<-order(y)
     y<-y[ord]
     altord<-x$fitType[ord]
@@ -28,7 +28,7 @@ function(x,id=x$idmax,difPlacebo= TRUE,...)
                     xlab="Theoretical Quantiles",ylab="Sample Quantiles",... )
     points(xx[altord!=modChar],y[altord!=modChar],col="red")
     points(xx[altord==modChar],y[altord==modChar])
-    if(difPlacebo)mtext('Difference with placebo')
+    if(plotDif)mtext('Difference with placebo')
 	abline(0, 1)
         cat("Results based on alternative model fits are displayed in red\n")
 	return(invisible())

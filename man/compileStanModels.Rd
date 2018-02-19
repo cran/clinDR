@@ -20,6 +20,8 @@ package directory. Execution requires several minutes. The compiled models are
 32- or 64- bit specific. Both sets must be compiled if the compiled R type
 is changed (they are stored in sub-directories comp32 or comp64).  It is recommended
 to execute the function again if the package \code{rstan} is updated.
+
+Package \code{rstan} must be functional for \code{CompileStanModels} to be successful.  See \url{https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows}.  Note especially the instructions for installing \code{Rtools}, which is required for execution on a Windows machine.
 }
 \value{
 Six model files with extensions '.rds' should be created in the package directory

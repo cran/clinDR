@@ -1,5 +1,17 @@
 Changes to clinDR:
 ======================
+Update 1.7
+- The calling sequence for 'plotPop' in plot.emaxsimobj and
+plot.emaxsimBobj have been changed to ensure a valid value
+is input.
+- The parameter difPlacebo has been renamed plotDif in
+plot.emaxsim and plot.emaxsimB for consistency with other 
+plotting functions
+- Corrected bug in MCP-MOD test with negative trends
+- Corrected bug causing warning messages from DRDensityPlot
+when the quantiles have row or column names
+- Corrected plotting of population curve at placebo in
+plot.emaxsimB
 Update 1.6
 - Change package dependencies
 - Additional documentation for CRAN release

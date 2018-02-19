@@ -1,6 +1,6 @@
 "emaxsim" <-
 function(nsim, genObj, modType=3,binary=FALSE,
-				seed=12357,nproc=detectCores(),negEmax=FALSE,
+				seed=12357,nproc=parallel::detectCores(),negEmax=FALSE,
 				ed50contr=NULL, lambdacontr=NULL,testMods=NULL,
 				idmax=length(doselev),iparm=rep(NA,modType), 
 				ed50cutoff=2.5*max(doselev),
@@ -14,7 +14,7 @@ function(nsim, genObj, modType=3,binary=FALSE,
 	if(! modType %in% c(3,4))stop("modType must be 3 or 4")
 	if(length(ed50contr)!=length(lambdacontr))stop('The number of ED50 and Lambda defining contrasts must be equal')
 	
-	save.seed<-.Random.seed
+	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
 	
 
@@ -167,7 +167,7 @@ function(nsim, genObj, modType=3,binary=FALSE,
 	}
 	
 	RNGkind(save.rng)
-	.Random.seed<<-save.seed
+	if(exists('save.seed')).Random.seed<<-save.seed
 
   return(structure(list(description=description,
   											binary=binary,modType=modType,genObj=genObj, 
@@ -283,11 +283,10 @@ simrep<-function(j,inlist)
 
 		holdP<-attr(holdC,'pVal')
 		orderh<-order(holdC)
-		holdC<-holdC[orderh]
-		holdP<-holdP[orderh]
-		selContrast[i]<-ifelse(negEmax,orderh[1],orderh[length(holdC)])
-		pVal[i]<-ifelse(negEmax,holdP[1],holdP[length(holdC)])
-
+		ncontr<-length(orderh)
+    pVal[i]<-holdP[orderh[ncontr]]
+    selContrast[i]<-orderh[ncontr]
+ 	
 		### main estimation code
 		simout<-emaxalt(y,dose,modType,binary=binary,iparm,ed50cutoff,
 						ed50lowcutoff,switchMod,truncLambda=truncLambda)

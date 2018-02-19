@@ -176,7 +176,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 
 testout<-fitEmaxB(ysub,dsub,prior,modType=3,prot=protsub,pboAdj=TRUE,
-								 mcmc=mcmc,diagnostics=FALSE)
+								 mcmc=mcmc,diagnostics=FALSE,nproc=3)
 
 parms<-as.matrix(testout$estanfit)
 parms<-parms[,1:2]
@@ -297,8 +297,6 @@ test_that("pboadj4 check absolute levels",{
 #############################################################
 ### 4 parm model and grouped data, one protocol
 ### and replicated measurement per dose/protocol condition
-set.seed(12357)
-
 set.seed(12357)
 nsim<-1000
 doselev<-c(0,5,25,50,100,350)

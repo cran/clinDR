@@ -49,7 +49,8 @@ the \code{dgrid} dosing values }
 predictive intervals for the dose group sample means.}
   \item{plotDif}{Plot difference between doses and placebo, and
   it is assumed the lowest dose is placebo. If \code{activeControl}, the
-  difference is with the active control mean.}
+  difference is with the active control mean, and the active 
+  controls are not plotted.}
   \item{plotMed}{If TRUE, model-based curves are medians rather than means.}
   \item{plotResid}{If TRUE, a plot of the residuals formed from the
   dose group means minus the posterior dose group means.}
