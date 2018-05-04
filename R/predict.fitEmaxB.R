@@ -13,14 +13,12 @@ function(object,dosevec,clev=0.9,int=1,dref=0, ...){
 	clevup<- 0.5+clev/2
 	clevlow<-0.5-clev/2
 	
-	parms<-as.matrix(object$estanfit)
+	if(!binary) sigsim<-sigma(object) else sigsim<-NULL
 	if(pboAdj){
-		if(!binary) sigsim<-parms[,modType] else sigsim<-NULL
-		parms<-cbind(parms[,1:(modType-1)],rep(0,nrow(parms)))		
-	}else{ 
-		if(!binary) sigsim<-parms[,modType+nprot] else sigsim<-NULL
-		parms<-parms[,c(1:(modType-1),modType+int-1)]
-	}
+		parms<-coef(object)
+		parms<-cbind(parms,rep(0,nrow(parms)))		
+	}else parms<-coef(object)[,c(1:(modType-1),modType+(int-1))]
+	
 	predout<- emaxfun(dosevec,parms)
 	predref<- as.vector(emaxfun(dref,parms))
 	if(binary){

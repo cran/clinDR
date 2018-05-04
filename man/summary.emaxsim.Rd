@@ -23,9 +23,14 @@ estimators in the simulation.}
 
 \value{
 The function produces annotated output summarizing the
-repeated sampling properties of the estimation procedures.  It does not return any output.
+properties of the estimation procedures.  The summaries are also
+returned as an invisible list for extracting results.
 }
 \author{ Neal Thomas }
+
+\details{For pairwise comparisons, the 'most favorable pairwise comparison' means the dose with the best difference versus placebo is compared to the population
+mean response for the selected dose, thus the target value for coverage,
+bias, and RMSE changes depending on the selected dose.}
 
 \seealso{  \code{\link{emaxsim}}, \code{\link{print.emaxsim}},
 \code{\link{plot.emaxsim}}  }
@@ -49,7 +54,7 @@ meanlev<-emaxfun(doselev,pop.parm)
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,sdy)  
 D1 <- emaxsim(nsim,gen.parm)
-summary(D1,testalph=0.05,clev=0.95,seSim=TRUE)
+summary(D1,testalph=0.05,clev=0.95)
 }
 \dontshow{
 ## emaxsim changes the random number seed
@@ -68,7 +73,7 @@ meanlev<-emaxfun(doselev,pop.parm)
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,sdy)  
 D1 <- emaxsim(nsim,gen.parm,nproc=1)
-summary(D1,testalph=0.05,clev=0.95,seSim=TRUE)
+summary(D1,testalph=0.05,clev=0.95)
 }
 }
 \keyword{nonlinear}

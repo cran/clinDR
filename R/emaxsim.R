@@ -2,7 +2,7 @@
 function(nsim, genObj, modType=3,binary=FALSE,
 				seed=12357,nproc=parallel::detectCores(),negEmax=FALSE,
 				ed50contr=NULL, lambdacontr=NULL,testMods=NULL,
-				idmax=length(doselev),iparm=rep(NA,modType), 
+				idmax=length(doselev),iparm=NA, 
 				ed50cutoff=2.5*max(doselev),
 				ed50lowcutoff=doselev[2]/1000,switchMod= TRUE,truncLambda=6,
 				description="")
@@ -17,6 +17,8 @@ function(nsim, genObj, modType=3,binary=FALSE,
 	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
 	
+	on.exit( RNGkind(save.rng))
+	on.exit(if(exists('save.seed')).Random.seed<<-save.seed,add=TRUE)
 
 	### extract design parameters from genObj
 	n<-genObj$genP$n
@@ -166,16 +168,12 @@ function(nsim, genObj, modType=3,binary=FALSE,
 		popSD<-c(popSD,simout[[j]]$popSD)
 	}
 	
-	RNGkind(save.rng)
-	if(exists('save.seed')).Random.seed<<-save.seed
-
   return(structure(list(description=description,
   											binary=binary,modType=modType,genObj=genObj, 
   											pop=pop,popSD=popSD,init=init,  
-  											ed50contr=ed50contr, lambdacontr=lambdacontr,testMods=testMods,			
   											est4=est4,est3=est3,estA=estA, vc=vc,residSD=residSD,
   											fitType=fitType,pVal=pVal,selContrast=selContrast,
-  											negEmax=negEmax,
+  											testMods=testMods,negEmax=negEmax,
   											ed50cutoff=ed50cutoff,ed50lowcutoff=ed50lowcutoff,switchMod=switchMod, 
   											negC=negC,
   											bigC=bigC,predpop=predpop,        
@@ -288,8 +286,8 @@ simrep<-function(j,inlist)
     selContrast[i]<-orderh[ncontr]
  	
 		### main estimation code
-		simout<-emaxalt(y,dose,modType,binary=binary,iparm,ed50cutoff,
-						ed50lowcutoff,switchMod,truncLambda=truncLambda)
+		simout<-emaxalt(y,dose,modType,binary,iparm,ed50cutoff,
+						ed50lowcutoff,switchMod,truncLambda)
 
 		### assign simulation output
 		mv[i, ]  <- simout$dm

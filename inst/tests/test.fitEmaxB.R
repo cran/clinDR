@@ -34,8 +34,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,
 									mcmc=mcmc,diagnostics=TRUE)
 
-parms<-as.matrix(testout$estanfit)
-parms<-parms[,1:5]
+parms<-coef(testout)
 estimate<-apply(parms,2,mean)
 se<-sqrt(diag(var(parms)))
 z<-(estimate-c(pop[1],1,pop[2:3],pop[3]))/se
@@ -107,8 +106,7 @@ testout<-fitEmaxB(ymean,doselev,prior=prior,modType=4,
 									prot=protshort,count=nag,msSat=msSat,
 									mcmc=mcmc,diagnostics=TRUE)
 
-parms<-as.matrix(testout$estanfit)
-parms<-parms[,1:5]
+parms<-coef(testout)
 estimate<-apply(parms,2,mean)
 se<-sqrt(diag(var(parms)))
 z<-(estimate-c(pop[1],1,pop[2:3],pop[3]))/se
@@ -178,8 +176,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 testout<-fitEmaxB(ysub,dsub,prior,modType=3,prot=protsub,pboAdj=TRUE,
 								 mcmc=mcmc,diagnostics=FALSE,nproc=3)
 
-parms<-as.matrix(testout$estanfit)
-parms<-parms[,1:2]
+parms<-coef(testout)
 estimate<-apply(parms,2,mean)
 se<-sqrt(diag(var(parms)))
 z<-(estimate-pop[1:2])/se
@@ -259,8 +256,7 @@ testout<-fitEmaxB(ymean,dlevsub,prior,modType=4,prot=protshort,
 								 count=nag,pboAdj=TRUE,msSat=msSat,
 								 mcmc=mcmc,diagnostics=FALSE)
 
-parms<-as.matrix(testout$estanfit)
-parms<-parms[,1:3]
+parms<-coef(testout)
 estimate<-apply(parms,2,mean)
 se<-sqrt(diag(var(parms)))
 z<-(estimate-c(pop[1],1,pop[2]))/se
@@ -344,8 +340,7 @@ for(i in 1:nsim){
 	testout<-fitEmaxB(ysum,doselev,prior=prior,count=n,modType=modtype,
 										msSat=msSat,mcmc=mcmc,estan=estan,diagnostics=FALSE)
 	
-	parms<-as.matrix(testout$estanfit)
-	parms<-parms[,1:modtype]
+	parms<-coef(testout)
 	estimate<-apply(parms,2,mean)
 	se<-sqrt(diag(var(parms)))
 	z[i,]<-(estimate-pparm)/se
@@ -411,8 +406,7 @@ testout<-fitEmaxB(y,dvec,modType=modType,
 								prior=prior,mcmc=mcmc,	
 								diagnostics=FALSE)
 
-pgen<-as.matrix(testout$estanfit)
-pgen<-pgen[,1:(modType+1)]
+pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
 se<-sqrt(diag(var(pgen)))
 z<-(estimate-parms)/se
@@ -478,8 +472,7 @@ testout<-fitEmaxB(y,dvec,modType=modType,
 								prior=prior,mcmc=mcmc,	
 								diagnostics=FALSE)
 
-pgen<-as.matrix(testout$estanfit)
-pgen<-pgen[,1:(modType+1)]
+pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
 se<-sqrt(diag(var(pgen)))
 z<-(estimate[1:3]-parms[c(1,3,4)])/se[1:3]

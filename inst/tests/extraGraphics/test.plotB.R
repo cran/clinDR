@@ -25,11 +25,12 @@ prior<-prior.control(epmu=1.78,epsd=1,emaxmu=-2.82,emaxsd=1,
 fitb<-fitEmaxB(y,dose,prior,modType=4,count=nsize,msSat=sd^2,
 							 mcmc=mcmc.control(iter=20000))
 
-parms<-as.matrix(fitb$estanfit)
+parms<-coef(fitb)
+sigsim<-sigma(fitb)
 
 
 ##### basic plot
-outB<-plotB(y,dose,parms[,1:4],(parms[,5])^2,count=nsize,
+outB<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,
       ylab="Y")
 
 plot(outB)
@@ -46,7 +47,7 @@ plot(outB,plotResid=TRUE,predict=FALSE, log=TRUE)
 ##### test symbol plotting
 symbol<-rep(2,length(dose))
 symbol[1:floor(length(dose)/2)]<-1
-outB<-plotB(y,dose,parms[,1:4],(parms[,5])^2,count=nsize,symbol=symbol,
+outB<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
       ylab="Cholesterol")
 
 plot(outB,symbolShape=8:9,symbolColor=c('red','blue'),
@@ -77,10 +78,10 @@ ymeans<-predict(fitb,dose)$pred
 ymeans<-rep(ymeans,nsize)
 yvec<-rnorm(length(ymeans),ymeans,sd)
 dvec<-rep(dose,nsize)
-outBB<-plotB(yvec,dvec,parms[,1:4],(parms[,5])^2,
+outBB<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
       ylab="Change in LDL", log=TRUE)
 plot(outBB,log=TRUE)
-outBB<-plotB(yvec,dvec,parms[,1:4],(parms[,5])^2,
+outBB<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
       ylab="Change in LDL",binary='BinRes',BinResLev=-0.5,BinResDir='<')
 plot(outBB,log=TRUE)
 plot(outBB)
@@ -90,11 +91,11 @@ plot(outBB, log=TRUE)
 ##### test active comparator
 set.seed(12357)
 nac<-10
-msd<-median(parms[,5])
+msd<-median(sigsim)
 yac<-rnorm(nac,mean(y),msd)
 ac<-rnorm(nrow(parms),mean(yac),msd/sqrt(nac))
 
-outac<-plotB(y,dose,parms[,1:4],(parms[,5])^2,count=nsize,
+outac<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,
       ylab="Change in LDL vs Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
 	  dac=10,labac='Active',plotDif=TRUE)
 
@@ -103,13 +104,13 @@ plot(outac,labac='Active', log=TRUE)
 
 symbol<-rep(2,length(dose))
 symbol[1:floor(length(dose)/2)]<-1
-outac<-plotB(y,dose,parms[,1:4],(parms[,5])^2,count=nsize,symbol=symbol,
+outac<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
 		symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
       ylab="LDL with Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
 	  dac=10,labac='Prednisone',shapeac=9,colac='red')
 
 
-hold<-plotB(y,dose,parms[,1:4],(parms[,5])^2,count=nsize,symbol=symbol,
+hold<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
              symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
              ylab="LDL with Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
              dac=10,labac='Prednisone',shapeac=9,colac='red')
@@ -117,18 +118,18 @@ plot(hold)
 
 #### with responder outcome
 symvec<-rep(symbol,nsize)
-outac<-plotB(yvec,dvec,parms[,1:4],(parms[,5])^2,
+outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
       ylab="Change in LDL vs Active Comparator",
 	  activeControl=TRUE,yac=yac,ac=ac,dac=2,
 	  binary='BinRes',BinResLev=0,BinResDir = '<')
 
-outac<-plotB(yvec,dvec,parms[,1:4],(parms[,5])^2,symbol=symvec,
+outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,symbol=symvec,
 		symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
       ylab="Change in LDL vs Active Comparator",
 	  activeControl=TRUE,yac=yac,ac=ac,dac=2,
 	  binary='BinRes',BinResLev=0,shapeac=9,colac='red')
 
-outac<-plotB(yvec,dvec,parms[,1:4],(parms[,5])^2,
+outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
              ylab="Change in EDD vs Active Comparator",
              activeControl=TRUE,yac=yac,ac=ac,dac=2,
              binary='BinRes',BinResLev=0)

@@ -5,7 +5,6 @@ Simulate Emax Bayesian estimation
 }
 \description{
 
-
 Simulate dose response data and apply 4- or 3- parameter
 sigmoidal or hyperbolic Bayesian estimation.  The prior distributions
 are input by the user based on the empirical distributions estimated
@@ -132,13 +131,16 @@ constructor function generating study data.}
 	continuous data.  \code{NULL} for binary data.}
 	\item{mcmc}{mcmc input settings}
 	\item{prior}{Input prior distribution.}
-	\item{ed50contr, lambdacontr, testMods}{See input descriptions}
 	\item{est}{Matrix with posterior median parameter estimates for each simulation:
 	(led50,lambda,emax,e0) or (led50,emax,e0).}
 	\item{residSD}{The posterior median of the residual SD for each simulation.}
 	\item{pVal}{The \code{nsim} p-values from the global null test.  The p-values are 
 	1-sided computed using MCP-Mod.}
 	\item{selContrast}{The index of the test contrast producing the smallest p-value.}
+	\item{testMods}{Object of class Mods from R package \code{DoseFinding} that defines
+	the contrasts used in MCP-MOD testing.  The functions can be plotted with
+	\code{DoseFinding} loaded.}	
+	\item{gofP}{Goodness of fit test computed by \code{checkMonoEmax}.}
 	\item{negEmax}{User input stored for subsequent reference.}
 	\item{predpop}{Matrix with population means for each dose group}
 	\item{mv}{Matrix with rows containing dose group sample means}
@@ -174,10 +176,11 @@ Neal Thomas
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
-\seealso{
-\code{\link{emaxsim}},\code{\link{fitEmaxB}},\code{link{print.emaxsimB}},
-\code{link{plot.emaxsimB}}, \code{link{summary.emaxsimB}}
-}
+\seealso{  \code{\link{print.emaxsimB}}, 
+\code{\link{summary.emaxsimB}}, \code{\link{plot.emaxsimB}}, 
+\code{\link{coef.emaxsimB}}, \code{\link{sigma.emaxsimB}},
+\code{\link{emaxfun}}}
+
 \examples{
 \dontrun{
 

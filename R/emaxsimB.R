@@ -15,8 +15,11 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	
 	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
-
-    ### extract design parameters from genObj
+	
+	on.exit( RNGkind(save.rng))
+	on.exit(if(exists('save.seed')).Random.seed<<-save.seed,add=TRUE)
+	
+  ### extract design parameters from genObj
 	n<-genObj$genP$n
 	doselev<-genObj$genP$doselev ## doselev should be sorted/unique
   Ndose<-length(doselev)
@@ -126,6 +129,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	mv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	msSat<-rep(NA,nsim)
   pVal<-rep(NA,nsim)
+  gofP<-rep(NA,nsim)
   selContrast<-rep(NA,nsim)
   colnames(predpop)<-doselev
   colnames(fitpredv)<-doselev
@@ -165,6 +169,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 		sdv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$sdv
 		msSat[indmat[j,1]:indmat[j,2]]<-simout[[j]]$msSat
 		pVal[indmat[j,1]:indmat[j,2]]<-simout[[j]]$pVal
+		gofP[indmat[j,1]:indmat[j,2]]<-simout[[j]]$gofP
 		selContrast[indmat[j,1]:indmat[j,2]]<-simout[[j]]$selContrast
 		residSD[indmat[j,1]:indmat[j,2]]<-simout[[j]]$residSD
 		est[indmat[j,1]:indmat[j,2],]<-simout[[j]]$est
@@ -174,16 +179,13 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 		pop<-rbind(pop,simout[[j]]$pop)
 		popSD<-c(popSD,simout[[j]]$popSD)		
 	}
-	
-	RNGkind(save.rng)
-	if(exists('save.seed')).Random.seed<<-save.seed
   
 	return(structure(list(description=description,
 				binary=binary,modType=modType,genObj=genObj, 
         pop=pop,popSD=popSD,mcmc=mcmc,prior=prior,
-				ed50contr=ed50contr, lambdacontr=lambdacontr,testMods=testMods,			
 				est=est,residSD=residSD,
         pVal=pVal,selContrast=selContrast,
+				testMods=testMods,gofP=gofP,
         negEmax=negEmax,
         predpop=predpop,        
         mv = mv, sdv = sdv, msSat=msSat, fitpredv = fitpredv,
@@ -226,6 +228,7 @@ simrepB<-function(j,inlist)
  	
  	### set up input dose variable
  	if(binary)din<-c(doselev,doselev) else din<-doselev
+ 	if(binary)sigsim<-1  ### default placeholder
  	
 	predpop <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	fitpredv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
@@ -242,6 +245,7 @@ simrepB<-function(j,inlist)
   colnames(mv)<-doselev
 
 	residSD<-numeric(nrep)
+	gofP<-numeric(nrep)
 	est<-matrix( rep(NA,nrep*nparm),ncol=nparm )
   if(modType==3){
    colnames(est)<-c("led50","emax","e0")
@@ -264,6 +268,8 @@ simrepB<-function(j,inlist)
   
   if(is.null(customCode))customOut<-NULL
   	 else customOut<-vector("list",nrep)
+  
+  if(!negEmax)trend<-'positive' else trend<-'negative'
 
 	for(i in 1:nrep) {
 		ioff<-i+indmat[j,1]-1
@@ -319,15 +325,10 @@ simrepB<-function(j,inlist)
     
     ### return mcmc for preliminary checking
     if(check){
-    	parme<-as.matrix(bfit$estanfit)
-    	ncparm<-ncol(parme)
-    	parme<-parme[,1:(ncparm-1)]
     	if(binary){
-	    	return(list(estanfit=bfit$estanfit,parms=parme,pVal=pVal[i],dose=dose,y=y))
+	    	return(list(estanfit=bfit$estanfit,parms=coef(bfit),pVal=pVal[i],dose=dose,y=y))
     	}else{
-    		rese<-parme[,ncparm-1]
-    		parme<-parme[,1:(ncparm-2)]
-	    	return(list(estanfit=bfit$estanfit,parms=parme,residSD=rese,pVal=pVal[i],dose=dose,y=y))
+	    	return(list(estanfit=bfit$estanfit,parms=coef(bfit),residSD=sigma(bfit),pVal=pVal[i],dose=dose,y=y))
     	}
     }
 
@@ -349,13 +350,16 @@ simrepB<-function(j,inlist)
     }
     
     ### extract generated parameters
-  	parms<-as.matrix(bfit$estanfit)
+  	parms<-coef(bfit)
 		if(!binary){
-			sigsim<-parms[,modType+1] 
+			sigsim<- sigma(bfit)
 			residSD[i]<-median(sigsim)
 		}
-		parms<-parms[,c(1:(modType-1),modType)]  
     est[i,]<- apply(parms,2,median)
+    
+    ### compute gof test
+    gofP[i]<-checkMonoEmax(yin,din,parms,sigsim^2,cin,
+    											 trend=trend,logit=binary)
     
     ### execute customized code
     if(!is.null(customCode)){
@@ -375,7 +379,7 @@ simrepB<-function(j,inlist)
 	return(list(pop=pop,popSD=popSD,  
         est=est,residSD=residSD,
         pVal=pVal,selContrast=selContrast,
-        predpop=predpop,        
+        gofP=gofP,predpop=predpop,        
         mv = mv, sdv = sdv, msSat=msSat, fitpredv = fitpredv,
         sepredv = sepredv, sedifv = sedifv, lb=lb,ub=ub,
 				customOut=customOut

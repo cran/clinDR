@@ -157,10 +157,9 @@ mcmc<-mcmc.control(chains=3)
 
 fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
 				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-as.matrix(fitout$estanfit)
+parms<-coef(fitout)[1:4]  ## use first intercept
 
-outB<-plotB(exdat$y,exdat$dose,cbind(parms[,"led50"],parms[,"lambda"],
-      parms[,"emax"],parms[,"e0[1]"]), sigma2=(parms[,'sigma'])^2,
+outB<-plotB(exdat$y,exdat$dose,parms, sigma2=(sigma(fitout))^2,
 			ylab="Change in EDD")
 			
 plot(outB,plotDif=TRUE)

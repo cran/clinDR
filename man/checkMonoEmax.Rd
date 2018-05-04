@@ -18,7 +18,9 @@ checkMonoEmax(y,
 }
 
 \arguments{
-  \item{y}{Outcomes }
+  \item{y}{Outcomes.  Continuous \code{y} can be individual data or group means.
+  Binary \code{y} can be individual data, group proportions, or 0/1 data with
+  correspondng counts, as is required by \code{fitEmaxB}.}
   \item{dose}{Doses corresponding to outcomes }
   \item{parm}{Matrix of simultated parameter values (each row is a
 simulated parameter vector).  The \code{parm} values
@@ -30,7 +32,7 @@ simulated parameter vector.}
 additive, homogeneous).  The length of \code{sigma2} must be the same
 as the number of rows of \code{parm}.  \code{sigma2} is ignored when
 \code{logit=TRUE}}
-  \item{nvec}{The number of observations in each \code{y} when it is a mean.  The default 
+  \item{nvec}{The number of observations contributing to each \code{y}.  The default 
   is \code{1} for patient-level data.}
   \item{modelFun}{The mean model function.  The first argument is a
 scalar dose, and the second argument is a matrix of parameter values.
@@ -77,10 +79,9 @@ mcmc<-mcmc.control(chains=3)
 
 fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
 				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-as.matrix(fitout$estanfit)
+parms<-coef(fitout)[1:4]  #use first intercept
 
-checkMonoEmax(y=exdat$y, dose=exdat$dose, parm=cbind(parms[,"led50"],parms[,"lambda"],
-      parms[,"emax"],parms[,"e0[1]"]), sigma2=(parms[,'sigma'])^2,
+checkMonoEmax(y=exdat$y, dose=exdat$dose, parm=parms, sigma2=(sigma(fitout))^2,
       nvec=exdat$nsize, trend='negative')
       
 }

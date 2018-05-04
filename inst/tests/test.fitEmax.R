@@ -27,8 +27,8 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 testout<-fitEmax(y,dose,modType=4,prot=prots,diagnostics=FALSE)
 
-se<-sqrt(diag(testout$fit$vc))
-z<-(testout$fit$estimate-c(pop[1],1,pop[2:3],pop[3]))/se
+se<-sqrt(diag(vcov(testout)))
+z<-(coef(testout)-c(pop[1],1,pop[2:3],pop[3]))/se
 
 ### check parameter estimates
 test_that("model parameters agree within 2se",{
@@ -89,11 +89,11 @@ dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
 
-testout<-fitEmax(ysub,dsub,parms=pop,modType=3,prot=protsub,pboAdj=TRUE,
+testout<-fitEmax(ysub,dsub,iparm=pop,modType=3,prot=protsub,pboAdj=TRUE,
 								 diagnostics=FALSE)
 
-se<-sqrt(diag(testout$fit$vc))
-z<-(testout$fit$estimate-pop[1:2])/se
+se<-sqrt(diag(vcov(testout)))
+z<-(coef(testout)-pop[1:2])/se
 
 ### check parameter estimates
 test_that("pboadj model parameters agree within 2se",{
@@ -125,11 +125,11 @@ test_that("pboadj check absolute levels",{
 #### no intercept with 4 parm, int=1, starting value given
 #### non-zero reference dose
 
-testout<-fitEmax(ysub,dsub,parms=c(pop[1],1,pop[2],0),
+testout<-fitEmax(ysub,dsub,iparm=c(pop[1],1,pop[2],0),
 								 modType=4,prot=protsub,pboAdj=TRUE,diagnostics=FALSE)
 
-se<-sqrt(diag(testout$fit$vc))
-z<-(testout$fit$estimate-c(pop[1],1,pop[2]))/se
+se<-sqrt(diag(vcov(testout)))
+z<-(coef(testout)-c(pop[1],1,pop[2]))/se
 
 ### check parameter estimates
 test_that("pboadj4 model parameters agree within 2se",{
@@ -195,8 +195,8 @@ for(i in 1:nsim){
 	y<-rnorm(n1+n2,meanlev,sdy)
 	prots<-c(rep('d',n1),rep('c',n2))
 	testout<-fitEmax(y,dose,modType=modtype,prot=prots,diagnostics=FALSE)
-	se<-sqrt(diag(testout$fit$vc))
-	z[i,]<-(testout$fit$estimate-pparm)/se
+	se<-sqrt(diag(vcov(testout)))
+	z[i,]<-(coef(testout)-pparm)/se
 	gof[i]<-testout$gofTest
 	predout<-predict(testout,dosevec=c(20,80),int=1,dref=50)
 	zabs[i,]<-(predout$pred-poppred)/predout$se
@@ -248,8 +248,8 @@ for(i in 1:nsim){
 	ysum<-c(tapply(y[prots==1],dose[prots==1],mean),
 					tapply(y[prots==2],dose[prots==2],mean))
 	testout<-fitEmax(ysum,doselev,count=n,modType=modtype,msSat=msSat,diagnostics=FALSE)
-	se<-sqrt(diag(testout$fit$vc))
-	z[i,]<-(testout$fit$estimate-pparm)/se
+	se<-sqrt(diag(vcov(testout)))
+	z[i,]<-(coef(testout)-pparm)/se
 	gof[i]<-testout$gofTest
 	predout<-predict(testout,dosevec=c(20,80),int=1,dref=50)
 	zabs[i,]<-(predout$pred-poppred)/predout$se
@@ -311,8 +311,8 @@ testout<-fitEmax(y,dvec,modType=4,parms[1:4],
 								 prot=prots,
 								 count=counts,binary=TRUE,diagnostics=FALSE)
 
-se<-sqrt(diag(testout$fit$vc))
-z<-(testout$fit$estimate-parms)/se
+se<-sqrt(diag(vcov(testout)))
+z<-(coef(testout)-parms)/se
 
 ### check parameter estimates
 test_that("model parameters agree within 2se",{
@@ -346,8 +346,8 @@ testout<-fitEmax(y,dvec,modType=3,
 								 prot=prots,
 								 count=counts,binary=TRUE,diagnostics=FALSE)
 
-se<-sqrt(diag(testout$fit$vc))
-z<-(testout$fit$estimate-parms)/se
+se<-sqrt(diag(vcov(testout)))
+z<-(coef(testout)-parms)/se
 
 ### check parameter estimates
 test_that("model parameters agree within 2se: no parms",{
@@ -409,8 +409,8 @@ for(i in 1:nsim){
 	testout<-fitEmax(y,dvec,modType=modtype,parms[1:4],
 									 prot=prots,
 									 count=counts,binary=TRUE,diagnostics=FALSE)
-	se<-sqrt(diag(testout$fit$vc))
-	z[i,]<-(testout$fit$estimate-pparm)/se
+	se<-sqrt(diag(vcov(testout)))
+	z[i,]<-(coef(testout)-pparm)/se
 	gof[i]<-testout$gofTest
 	predout<-predict(testout,dosevec=c(.2,.5,.8),int=1,dref=0)
 	zabs[i,]<-(predout$pred-poppred)/predout$se

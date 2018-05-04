@@ -6,7 +6,7 @@
            bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE,
            plot=TRUE, ...){
   	
-	outplot<-combplot(bayes=FALSE,x=x,int=int,plotResid=plotResid,
+	outplot<-combplot(x=x,bayes=FALSE,int=int,plotResid=plotResid,
 					clev=clev, predict=predict,plotci=plotci,plotDif=plotDif,
           xlab=xlab,ylab=ylab,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
@@ -25,7 +25,7 @@
            bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE,
            plot=TRUE, ...){
   	
-	outplot<-combplot(bayes=TRUE,x=x,int=int,plotResid=plotResid,
+	outplot<-combplot(x=x,bayes=TRUE,int=int,plotResid=plotResid,
 					clev=clev, predict=predict,plotci=plotci,plotDif=plotDif,
           xlab=xlab,ylab=ylab,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
@@ -67,8 +67,11 @@
     protlab<-levels(x$prot)
     count<-x$count
     binary<-x$binary
-    if(!bayes)residSD<-x$residSD
-    
+    if(!bayes){
+    	if(!binary){
+    		residSD<-sigma(x)
+    	}else residSD<-NA
+  	}
     
     if(isTRUE(plotDif & plotResid))warning('plotDif is ignored when plotResid is TRUE')
     

@@ -25,7 +25,7 @@ emaxsim(
 	lambdacontr=NULL,
 	testMods=NULL,
 	idmax=length(doselev), 
-	iparm=rep(NA,modType),
+	iparm=NA,
 	ed50cutoff=2.5*max(doselev), 
 	ed50lowcutoff=doselev[2]/1000,
 	switchMod= TRUE,
@@ -122,7 +122,6 @@ constructor function generating study data.}
 	continuous data.  \code{NULL} for binary data.}
 	\item{init}{Matrix with rows containing the starting Emax parameters
 for each simulation}
-	\item{ed50contr, lambdacontr, testMods}{See input descriptions}
 	\item{est4}{Matrix with 4 parmameter Emax fit.  NA if failed to
 converge or modType=3}
 	\item{est3}{Matrix with 3 parmameter Emax fit.  NA if failed to
@@ -141,6 +140,9 @@ log-linear, or exponential when an alternative model is selected.}
 	\item{pVal}{The \code{nsim} p-values from the global null test.  The p-values are 
 	1-sided computed using MCP-Mod.}
 	\item{selContrast}{The index of the test contrast producing the smallest p-value.}
+	\item{testMods}{Object of class Mods from R package \code{DoseFinding} that defines
+	the contrasts used in MCP-MOD testing.  The functions can be plotted with
+	\code{DoseFinding} loaded.}
 	\item{negEmax}{User input stored for subsequent reference.}
 	\item{ed50cutoff}{Upper allowed limit for ED50 estimates}
 	\item{ed50lowcutoff}{Lower allowed limit for the ED50 estimates.}
@@ -174,6 +176,8 @@ To reproduce the data, the random number generator must also be changed to
 
 \seealso{  \code{\link{print.emaxsim}}, 
 \code{\link{summary.emaxsim}}, \code{\link{plot.emaxsim}}, 
+\code{\link{coef.emaxsim}}, \code{\link{sigma.emaxsim}},
+\code{\link{vcov.emaxsim}}, \code{\link{predict.emaxsim}},
 \code{\link{emaxfun}}}
 
 

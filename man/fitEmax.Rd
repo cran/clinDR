@@ -11,7 +11,7 @@ Emax model.  Different intercepts for multiple protocol-data are supported.  For
 data, the Emax model is on the logit scale.
 }
 \usage{
-fitEmax(y,dose,parms,modType=3,
+fitEmax(y,dose,iparm,modType=3,
 	prot=rep(1,length(y)),count=rep(1,length(y)),
 	binary=FALSE,diagnostics=TRUE,msSat=NULL,
 	pboAdj=FALSE,optObj=TRUE)
@@ -23,9 +23,10 @@ fitEmax(y,dose,parms,modType=3,
 are are not permitted.  Dose/protocol group means for grouped continuous data.  For binary
 data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \item{dose}{Dose for each patient.}
-  \item{parms}{Starting values for the Newton-Raphson algorithm.  The
+  \item{iparm}{Starting values for the Newton-Raphson algorithm.  The
 order of the variables is (log(ED50),Emax,E0) or
-(log(ED50),lambda,Emax,E0).  Note the transformation of ED50.  
+(log(ED50),lambda,Emax,E0).  Note the transformation of ED50. If there is more
+than one protocol, the E0 is automatically duplicated.
 \code{startEmax} is used to obtain starting values if none are specified.}
   \item{modType}{modType=3 (default) for the 3-parameter hyperbolic Emax model.
   modType=4 for the 4-parameter sigmoidal Emax model.} 

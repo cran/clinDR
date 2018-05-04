@@ -46,9 +46,15 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
 D3 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3)
 
 
-test_that("check mcp power calculation",{
-    expect_that(mean(D3$pVal<0.05),equals(pow3,tol=2.5*sqrt(pow3*(1-pow3)/nsim)))
-})
+test_that("check mcp power calculation",{ expect_that(mean(D3$pVal<0.05),equals(pow3,tol=2.5*sqrt(pow3*(1-pow3)/nsim))) })
+
+### check initial value specification
+D3i <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,iparm=pop)
+
+test_that("check spec of initial values",{
+	expect_lt(abs(max(apply((D3$fitpredv-D3i$fitpredv),1,max))),0.2)
+}) 
+
 ####################################################################
 
 ####################################################################
@@ -164,7 +170,7 @@ emaxMat1<-optContr(emaxMods1,w=n)
 
 D1 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods1)
 
-parmmean<-apply(D1$est4,2,mean)
+parmmean<-apply(coef(D1)$est,2,mean)
 
 predsim1<-predict(D1,dose=0.033)
 
@@ -209,7 +215,7 @@ gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)
 ### 1 contrast
 D1 <- emaxsim(nsim,gen.parm,modType=3)
 
-parmmean<-apply(D1$est3,2,mean)
+parmmean<-apply(coef(D1)$est[,1:3],2,mean)
 
 predsim1<-predict(D1,dose=0.033)
 
@@ -226,6 +232,15 @@ test_that("predict.emaxsim matches emaxsim internal values",{
     expect_that(as.numeric(predsim1$sedifv),
                 equals((as.numeric(D1$sedifv[,2]))))
 })
+
+D1i <- emaxsim(nsim,gen.parm,modType=3,iparm=pop)
+
+test_that("check spec of initial values with 3-parm model",{
+	expect_lt(abs(max(apply((D1$fitpredv-D1i$fitpredv),1,max))),0.2)
+}) 
+
+
+
 ####################################################################
 
 
@@ -323,5 +338,76 @@ test_that("check DR for coverage",{
 	equals(rep(0.95,ndose),tol=2*sqrt(.95*.05/nsim)))
 })
 
+########################################################
+##### test summary and reporting of most favorable results
+set.seed(12357)
+nsim<-10000
+idmax<-5
+doselev<-c(0,5,25,50,100)
+n<-c(78,81,81,81,77)
+Ndose<-length(doselev)
 
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-4.127726
+sdy<-7.967897
+pop<-c(log(ed50),emax,e0)    
+meanlev<-emaxfun(doselev,pop)  
 
+###FixedMean is specialized constructor function for emaxsim
+gen<-FixedMean(n,doselev,meanlev,sdy)  
+
+prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
+										 sigmaup=30,edDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
+
+D2e <- emaxsim(nsim,gen, modType=3)
+
+out2e<-summary(D2e)
+
+#########################################
+### repeat but negative trend
+set.seed(1357)
+nsim<-10000
+idmax<-5
+doselev<-c(0,5,25,50,100)
+n<-c(78,81,81,81,77)
+Ndose<-length(doselev)
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<- -4.127726
+sdy<-7.967897
+pop<-c(log(ed50),emax,e0)    
+meanlev<-emaxfun(doselev,pop)  
+
+###FixedMean is specialized constructor function for emaxsim
+gen<-FixedMean(n,doselev,meanlev,sdy)  
+
+prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
+										 sigmaup=30,edDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
+
+D2en <- emaxsim(nsim,gen, modType=3,negEmax=TRUE)
+
+oute2n<-summary(D2en)
+
+###
+test_that("check selected bias pos/neg",{
+	expect_that(as.numeric(out2e$biasSelMean),
+							equals(as.numeric(-oute2n$biasSelMean),tol=0.03,scale=1))
+})
+
+###
+test_that("check selected rsms pos/neg",{
+	expect_that(as.numeric(out2e$mseSelMean),
+							equals(as.numeric(oute2n$mseSelMean),tol=0.03,scale=1))
+})
+
+###
+test_that("check selected 1-sided errors pos/neg",{
+	expect_that(as.numeric(out2e$errUpSelMean),
+							equals(as.numeric(oute2n$errLowSelMean),tol=0.01,scale=1))
+})

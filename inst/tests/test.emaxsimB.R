@@ -94,7 +94,7 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 D1 <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							mcmc=mcmc,testMods=emaxMods1)
 
-parmmed<-apply(D1$est,2,mean)
+parmmed<-apply(coef(D1),2,mean)
 
 test_that("check asymptotic distributions for 4-parm model",{
 	expect_that(as.numeric(parmmed),equals(pop,tol=0.01))
@@ -251,4 +251,157 @@ test_that("check DR for coverage from custom code",{
 })
 
 
+####################
+### gof tests
+###
+set.seed(12357)
+nsim<-25
+idmax<-5
+doselev<-c(0,5,25,50,100)
+n<-c(78,81,81,81,77)
+Ndose<-length(doselev)
 
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-4.127726
+sdy<-1.0
+pop<-c(log(ed50),emax,e0)    
+meanlev<-emaxfun(doselev,pop)  
+meanlev[5]<-meanlev[5]+1.0
+
+###FixedMean is specialized constructor function for emaxsim
+gen<-FixedMean(n,doselev,meanlev,sdy)  
+
+prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
+										 sigmaup=30,edDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+									 propInit=0.15,adapt_delta = 0.95)
+
+D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+
+test_that("gofP is very high",{
+	expect(all(D1$gofP>0.50),'gofP not large as expected')
+})
+
+set.seed(12357)
+nsim<-25
+idmax<-5
+doselev<-c(0,5,25,50,100)
+n<-c(78,81,81,81,77)
+Ndose<-length(doselev)
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-4.127726
+sdy<-1.0
+pop<-c(log(ed50),emax,e0)    
+meanlev<-emaxfun(doselev,pop)  
+meanlev[5]<-meanlev[1]   ### back to pbo
+
+###FixedMean is specialized constructor function for emaxsim
+gen<-FixedMean(n,doselev,meanlev,sdy)  
+
+prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
+										 sigmaup=30,edDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+									 propInit=0.15,adapt_delta = 0.95)
+
+D1low <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+
+test_that("gofP is very low",{
+	expect(all(D1low$gofP<0.05),'gofP not low as expected')
+})
+
+### binary
+set.seed(12357)
+nsim<-25
+
+doselev<-c(0,0.033,2*0.033,4*0.033,8*0.033,16*0.033)
+ndose<-length(doselev)
+n<-10*rep(95,ndose)
+###########################################
+#### use pop emax model 
+e0<-qlogis(.2)
+ed50<-0.15
+lambda<-1
+emax<-qlogis(0.55)-e0
+pop<-c(log(ed50),lambda,emax,e0)
+meanlev<-plogis(emaxfun(doselev,parm=pop))
+meanlev[6]<-0.55    ## higher than expected
+
+gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
+
+prior<-prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+D1b <- emaxsimB(nsim,gen.parm,prior,modType=4,
+							 mcmc=mcmc,binary=TRUE,seed=12357)
+
+test_that("gofP is very high: binary",{
+	expect(all(D1b$gofP>0.50),'gofP not large as expected')
+})
+
+####
+set.seed(12357)
+nsim<-25
+
+doselev<-c(0,0.033,2*0.033,4*0.033,8*0.033,16*0.033)
+ndose<-length(doselev)
+n<-10*rep(95,ndose)
+###########################################
+#### use pop emax model 
+e0<-qlogis(.2)
+ed50<-0.15
+lambda<-1
+emax<-qlogis(0.55)-e0
+pop<-c(log(ed50),lambda,emax,e0)
+meanlev<-plogis(emaxfun(doselev,parm=pop))
+meanlev[6]<-meanlev[1]    ## descend to pbo
+
+gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
+
+prior<-prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+D1blow <- emaxsimB(nsim,gen.parm,prior,modType=4,
+							 mcmc=mcmc,binary=TRUE,seed=12357)
+
+test_that("gofP is very high: binary",{
+	expect(all(D1blow$gofP<0.05),'gofP not small as expected')
+})
+
+####
+set.seed(12357)
+nsim<-8
+
+doselev<-c(0,0.033,2*0.033,4*0.033,8*0.033,16*0.033)
+ndose<-length(doselev)
+n<-10*rep(95,ndose)
+###########################################
+#### use pop emax model 
+e0<-qlogis(.2)
+ed50<-0.15
+lambda<-1
+emax<-qlogis(0.55)-e0
+pop<-c(log(ed50),lambda,emax,e0)
+meanlev<-plogis(emaxfun(doselev,parm=pop))
+
+gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
+
+prior<-prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
+							 mcmc=mcmc,binary=TRUE,seed=12357)
+
+out8<-D2[8]
+
+fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE)
+parms<-coef(fit8)
+gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,logit=TRUE)
+
+test_that("emaxsimB gofP equals checkMonoEmax return value ",{
+	expect_equal(gofP,D2$gofP[8],tol=0.01,scale=1)
+})

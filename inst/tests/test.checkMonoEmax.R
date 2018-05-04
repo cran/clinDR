@@ -13,10 +13,10 @@ mcmc<-mcmc.control(chains=3)
 fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
 								 count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
 
-parm<-as.matrix(fitout$estanfit)
+parm<-coef(fitout)
+sigsim<-sigma(fitout)
 
-
-p1<-checkMonoEmax(exdat$y,exdat$dose,parm[,1:4],(parm[,5])^2,
+p1<-checkMonoEmax(exdat$y,exdat$dose,parm,(sigsim)^2,
 									nvec=exdat$nsize,trend='negative')
 
 test_that("continuous model fit is good",{
@@ -26,7 +26,7 @@ test_that("continuous model fit is good",{
 ### make high group decline (do not rerun mcmc for altered fit)
 ynm<-ifelse(exdat$dose==1,exdat$y+1.5,exdat$y)
 set.seed(12357)
-p1nm<-checkMonoEmax(ynm,exdat$dose,parm[,1:4],(parm[,5])^2,trend='negative')
+p1nm<-checkMonoEmax(ynm,exdat$dose,parm,(sigsim)^2,trend='negative')
 
 test_that("coninuous model fit is bad",{
   expect_lt(p1nm,0.05)
@@ -36,8 +36,10 @@ test_that("coninuous model fit is bad",{
 #### repeat with individual patient data
 set.seed(12357)
 popparm<-apply(parm[,1:4],2,median)
+popmean<-emaxfun(exdat$dose,popparm)
+popmean[6]<-popmean[6]+1.5*exdat$sd   ### ensure positive
 dose<-rep(exdat$dose,exdat$nsize)
-popmean<-emaxfun(dose,popparm)
+popmean<-rep(popmean,exdat$nsize)
 y<-rnorm(length(popmean),popmean,exdat$sd)
 
 
@@ -47,10 +49,10 @@ mcmc<-mcmc.control(chains=3)
 
 fitouti<-fitEmaxB(y,dose,prior,modType=4, mcmc=mcmc)
 
-parm<-as.matrix(fitouti$estanfit)
+parmi<-coef(fitouti)
+sigsimi<-sigma(fitouti)
 
-
-p1v<-checkMonoEmax(y,dose,parm[,1:4],(parm[,5])^2,
+p1v<-checkMonoEmax(y,dose,parmi,(sigsimi)^2,
 									trend='negative')
 
 test_that("individual data continuous model fit is good",{
@@ -60,7 +62,7 @@ test_that("individual data continuous model fit is good",{
 
 ynm<-ifelse(dose==1,y+0.75,y)
 
-p1nv<-checkMonoEmax(ynm,dose,parm[,1:4],(parm[,5])^2,
+p1nv<-checkMonoEmax(ynm,dose,parm,(sigsim)^2,
 									trend='negative')
 
 test_that("individual data coninuous model fit is bad",{
@@ -78,18 +80,18 @@ mcmc<-mcmc.control(chains=3)
 fitoutb<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,count=exdat$nsize,
 								 mcmc=mcmc,binary=TRUE)
 
-parms<-as.matrix(fitoutb$estanfit)[,1:4]
+parms<-coef(fitoutb)
 popparms<-apply(parms,2,median)
 
 dose<-rep(exdat$dose,exdat$nsize)
-
 modp<-plogis(emaxfun(dose,popparms))
+modp[dose==0.4]<-modp[dose==0.4]+.05
 
 yb<-rbinom(length(modp),1,modp)
 
 fitoutb2<-fitEmaxB(yb,dose,prior,modType=4,
 								 mcmc=mcmc,binary=TRUE)
-parmb<-as.matrix(fitoutb2$estanfit)[,1:4]
+parmb<-coef(fitoutb2)
 
 set.seed(12357)
 p1b<-checkMonoEmax(yb,dose,parmb,rep(1,nrow(parmb)),trend='negative',logit=TRUE)
@@ -99,7 +101,7 @@ test_that("binary model fit is good",{
 })
 
 ## non-monotone 
-ybnm<-ifelse(dose==1,rbinom(sum(dose==1),1,.2),yb)
+ybnm<-ifelse(dose==1,rbinom(sum(dose==1),1,.3),yb)
 
 set.seed(12357)
 p1bnm<-checkMonoEmax(ybnm,dose,parmb,rep(1,nrow(parmb)),trend='negative',logit=TRUE)
@@ -120,7 +122,7 @@ nvec<-as.vector(table(dose))
 set.seed(12357)
 p1bv<-checkMonoEmax(ybv,dvec,parmb,rep(1,nrow(parmb)),nvec=nvec,trend='negative',logit=TRUE)
 
-test_that("aggregate good coninuous model check",{
+test_that("aggregate good binary model check",{
   expect_equal(p1b,p1bv)
 })
 

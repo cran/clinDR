@@ -31,9 +31,9 @@ test_that("check asymptotic distribution of targetD 3-parm estimates",{
 })
 
 test_that("check asymptotic distribution of parameter estimates",{
-    expect_that(mean(abs((D3$est3[,1]-log(ed50))/sqrt(D3$vc[,1]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
-    expect_that(mean(abs((D3$est3[,2]-emax)/sqrt(D3$vc[,5]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
-     expect_that(mean(abs((D3$est3[,3]-e0)/sqrt(D3$vc[,9]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D3$est3[,1]-log(ed50))/sqrt(vcov(D3)[,1]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D3$est3[,2]-emax)/sqrt(vcov(D3)[,5]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+     expect_that(mean(abs((D3$est3[,3]-e0)/sqrt(vcov(D3)[,9]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
 })
 
 ############################################
@@ -68,10 +68,10 @@ test_that("check asymptotic distribution of targetD 4-parm estimates",{
 })
 
 test_that("check asymptotic distribution of parameter estimates",{
-    expect_that(mean(abs((D4$est4[,1]-log(ed50))/sqrt(D4$vc[,1]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
-    expect_that(mean(abs((D4$est4[,2]-1)/sqrt(D4$vc[,6]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
-     expect_that(mean(abs((D4$est4[,3]-emax)/sqrt(D4$vc[,11]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
-    expect_that(mean(abs((D4$est4[,4]-e0)/sqrt(D4$vc[,16]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,1]-log(ed50))/sqrt(vcov(D4)[,1]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,2]-1)/sqrt(vcov(D4)[,6]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+     expect_that(mean(abs((D4$est4[,3]-emax)/sqrt(vcov(D4)[,11]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,4]-e0)/sqrt(vcov(D4)[,16]))>1.96),equals(0.05,tol=1.96*sqrt(.95*.05/nsim),scale=1))
 })
 
 ############################################
@@ -150,10 +150,10 @@ test_that("check asymptotic distribution of targetD 4-parm estimates",{
 })
 
 test_that("check asymptotic distribution of parameter estimates",{
-    expect_that(mean(abs((D4$est4[,1]-log(ed50))/sqrt(D4$vc[,1]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
-    expect_that(mean(abs((D4$est4[,2]-1)/sqrt(D4$vc[,6]))>1.96,na.rm=T),equals(0.05,tol=3.5*sqrt(.95*.05/nsim),scale=1))
-     expect_that(mean(abs((D4$est4[,3]-emax)/sqrt(D4$vc[,11]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
-    expect_that(mean(abs((D4$est4[,4]-e0)/sqrt(D4$vc[,16]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,1]-log(ed50))/sqrt(vcov(D4)[,1]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,2]-1)/sqrt(vcov(D4)[,6]))>1.96,na.rm=T),equals(0.05,tol=3.5*sqrt(.95*.05/nsim),scale=1))
+     expect_that(mean(abs((D4$est4[,3]-emax)/sqrt(vcov(D4)[,11]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
+    expect_that(mean(abs((D4$est4[,4]-e0)/sqrt(vcov(D4)[,16]))>1.96,na.rm=T),equals(0.05,tol=3*sqrt(.95*.05/nsim),scale=1))
 })
 
 #########

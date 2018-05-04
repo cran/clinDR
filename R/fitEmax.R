@@ -1,5 +1,5 @@
 "fitEmax"<-
-function(y,dose,parms,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
+function(y,dose,iparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 		 binary=FALSE,diagnostics=TRUE,msSat=NULL,pboAdj=FALSE,optObj=TRUE){
 
 	tol<-.Machine$double.eps
@@ -18,20 +18,20 @@ function(y,dose,parms,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
 	lengthvec<-c(length(y),length(dose),length(prot),length(count))
 	if(any(abs(lengthvec-lengthvec[1])>tol))stop('Length of y and dose must be equal')
 
-    if(missing(parms)){
-        parms<-startEmax(y,dose,count=count,modType=modType,binary=binary)
+    if(missing(iparm)){
+        iparm<-startEmax(y,dose,count=count,modType=modType,binary=binary)
         ### replicate intercept for multiple protocols
     }else{
         if(modType==3){
-			if(length(parms)!=3)stop('Incorrect number of starting parameters')
-			names(parms)<-c('led50','emax','e0')
+			if(length(iparm)!=3)stop('Incorrect number of starting parameters')
+			names(iparm)<-c('led50','emax','e0')
 		}else if(modType==4){
-			if(length(parms)!=4)stop('Incorrect number of starting parameters')
-			names(parms)<-names(parms)<-c('led50','lambda','emax','e0')
+			if(length(iparm)!=4)stop('Incorrect number of starting parameters')
+			names(iparm)<-names(iparm)<-c('led50','lambda','emax','e0')
 		}
     }
 	### replicate intercept for multiple protocols
-    svec<-c(parms,rep(parms[modType],nprot-1))
+    svec<-c(iparm,rep(iparm[modType],nprot-1))
     for(i in modType:(modType+nprot-1))names(svec)[i]<-paste('e',i+1-modType,sep='')
 
 	###############################################################################

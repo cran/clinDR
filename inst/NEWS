@@ -1,5 +1,16 @@
 Changes to clinDR:
 ======================
+Update 1.8
+- Added testMods of class Mods from R package DoseFinding to the
+output object of emaxsim(B).  testMods gives the functions defining the
+contrasts for MCP-MOD testing.  The ED50contr and lambdacontr that
+can also be used to define the contrasts were removed.
+- Added coef,sigma, and vcov methods for fitEmax(B), emaxsim(B) objects
+- The summary.emaxsim and summary.emaxsimB functions now
+return the printed output for extraction.  Summaries for
+the best pairwise comparison were added.
+- Corrected use of specified starting values in function emaxalt and emaxsim.
+- Improved error handling in emaxsim(B) to reset random number generator
 Update 1.7
 - The calling sequence for 'plotPop' in plot.emaxsimobj and
 plot.emaxsimBobj have been changed to ensure a valid value

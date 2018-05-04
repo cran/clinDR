@@ -34,7 +34,7 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   continuous group means or binary 0/1 values.  
   Default is 1 (ungrouped data).}
   \item{binary}{When \code{TRUE}, the \code{y} are assumed to be coded \code{0/1}, and 
-  the the means reported are proportions.  The Emax model is specified on the logit 
+  the means reported are proportions.  The Emax model is specified on the logit 
   scale, and proportions are estimated from the model by back-transformation.}
   \item{msSat}{If continuous \code{Y} are dose/protocol group means rather than
   individual measurements, the within group variance, \code{msSat}, should be 

@@ -1,7 +1,6 @@
 "summary.emaxsimB" <-
 function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 {
-
 	clev<-match.arg(clev)
 	jsel<-match(clev,c('0.95','0.9','0.8'))
 	clev<-as.numeric(clev)
@@ -23,6 +22,10 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
   pVal<-object$pVal
   idmax<-object$idmax
   nsim<-length(pVal)
+  
+  ## select best pairwise function (return index to dif)
+  if(!negEmax){f<-function(x){xmax<-max(x); which(x==xmax)[1]}
+  }else f<-function(x){xmin<-min(x); which(x==xmin)[1]}
   
   cat(paste("\n",object$description,"\n\n"))
 	cat(paste("Number of simulations:                     ",nsim,'\n',sep=''))
@@ -63,7 +66,16 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 	actlev <- apply(t(lb[,,jsel])<=fitdifP & t(ub[,,jsel])>=fitdifP,2,mean)
 	
 	mean.actlev<- apply(abs(mdifv - fitdifP)/semdifv <=qnorm(clev+(1-clev)/2),2,mean)
-	
+	seldif<-apply(mdifv,1,f)
+	seldif<-cbind(seq_along(seldif),seldif)
+	bestm<-mdifv[seldif]
+	bestpop<-fitdifP[seldif]
+	sel.actlev <- mean(abs(bestm - bestpop)/semdifv[seldif]<=
+										 	qnorm(clev+(1-clev)/2))
+	sel.up.err<- mean((bestm - bestpop)/semdifv[seldif]>=
+											qnorm(clev+(1-clev)/2))
+	sel.low.err<- mean((bestm - bestpop)/semdifv[seldif]<=
+										 	-qnorm(clev+(1-clev)/2))	
 	se.actlev<-sqrt( actlev*(1-actlev)/nsim )
 	se.mean.actlev<-sqrt( mean.actlev*(1-mean.actlev)/nsim )
 	
@@ -85,6 +97,10 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 		cat(paste("Simulation standard errors:\n"))
 		print(round(se.mean.actlev,4))
 	}
+	cat(paste("Most favorable pairwise comparison:\n"))	
+	cat(paste(round(sel.actlev,3),' Lower error(',
+						round(sel.low.err,3),
+						') Upper error(',round(sel.up.err,3)),')\n',sep='')
 	
 	bias<-apply(fitdifv-fitdifP,2,mean)
 	se.bias<-sqrt( apply(fitdifv,2,var)/nsim )
@@ -96,30 +112,36 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 		cat(paste("Simulation standard errors:\n"))
 		print(round(se.bias,3))
 	}
-
+	sel.mbias<-mean(bestm-bestpop)
+	cat(paste("Bias in the most favorable pairwise comparison:\n"))	
+	cat(paste(round(sel.mbias,2),'\n'))
+	
 	### summarize standard errors
 	cat(paste("\n\nReported SEs by dose group [Dose-PBO]:\n"))
-	cat(paste("(Bayesian dose response modeling (posterior SD):","\n"))
+	cat(paste("Bayesian dose response modeling (posterior SD):","\n"))
 	sd.sedifv <- apply(sedifv, 2, mean)
 	names(sd.sedifv)<-doselev[2:Ndose]
-	print(sd.sedifv)
+	print(round(sd.sedifv,3))
 
 	cat(paste("\nPairwise comparisons:","\n"))
 	sd.semdifv <- apply(semdifv, 2, mean)
 	names(sd.semdifv )<-doselev[2:Ndose]
-	print(sd.semdifv)
+	print(round(sd.semdifv,3))
 
 	### mean squared errors
   mse.sedifv <- sqrt( apply((fitdifv-fitdifP)^2,2,mean) )
 	names(mse.sedifv)<-doselev[2:Ndose]
 	mse.pair<-sqrt( apply((mdifv-fitdifP)^2,2,mean)  )
 	names(mse.pair)<-doselev[2:Ndose]
+	sel.mse.pair<-sqrt( mean((bestm-bestpop)^2) )
 
 	cat(paste("\n\nSquare Root Mean Squared Error [Dose-PBO]:\n"))
 	cat(paste("Bayesian dose response modeling (est=posterior mean) :","\n"))
 	print(round(mse.sedifv,3))
 	cat(paste("\n","Pairwise comparisons:","\n"))
 	print(round(mse.pair,3))
+	cat(paste("\nMost favorable pairwise comparison:","\n"))
+	cat(paste(round(sel.mse.pair,3)))
 
 	if(seSim== TRUE){
 		cat(paste("\nNote:  (Standard errors) are simulation errors based ",
@@ -127,6 +149,13 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 		cat(paste("Note:  Distinguish (Standard errors) from ",
      	          "Bayesian posterior SD" ,"\n",sep=""))
 	}
-	return(invisible())
+	return(invisible(list(powMCPMOD=pow,PowMean=mean.pow,
+												covMod=actlev,
+												covMean=mean.actlev,covSelMean=sel.actlev,
+												errLowSelMean=sel.low.err,errUpSelMean=sel.up.err,
+												biasMod=bias,biasSelMean=sel.mbias,
+												summarySEmod=sd.sedifv,summarySEmean=sd.semdifv,
+												mseMod=mse.sedifv,mseMean=mse.pair,
+												mseSelMean=sel.mse.pair)))
 }
 

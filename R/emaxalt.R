@@ -1,4 +1,4 @@
-emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
+emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=NA,
 					ed50cutoff=2.5*max(doselev),
 					ed50lowcutoff=doselev[2]/1000,
 					switchMod= TRUE,truncLambda=6){
@@ -27,7 +27,7 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 	estA<-rep(NA,2)
 
 	### assign initial parameter values
-	if(all(!is.na(iparm))){
+	if(!any(is.na(iparm))){
 		if(is.null(names(iparm))){
 		   if(modType==3){names(iparm)<-c("led50","emax","e0")
 		   }else{names(iparm)<-c("led50","lambda","emax","e0")}
@@ -42,12 +42,10 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 		###
 		Sparm<-startEmax(y,dose,modType=modType,binary=binary)
 
-	   if(modType==4){
-			if(Sparm[2]<=0){
+		if(modType==4 && Sparm[2]<=0){
 				warning(paste("A negative lambda starting",
 				   " value was generated and replaced by 1"))
 				Sparm[2]<-1
-			}
 		}
 	}
 
@@ -58,7 +56,7 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 	AcceptConv<-F
 
 	if(modType==4){
-		fit<-fitEmax(y,dose,modType=4,binary=binary,diagnostics=FALSE,
+		fit<-fitEmax(y,dose,iparm=Sparm,modType=4,binary=binary,diagnostics=FALSE,
 					 optObj=FALSE)
 		
 		### check for acceptable convergence and compute se's if ok
@@ -70,7 +68,7 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 			}else if(ed50>ed50cutoff)bigC<-TRUE
 
 			if(!(negC&switchMod) & !(bigC&switchMod)){
-				vc<-fit$fit$vc
+				vc<-as.vector(vcov(fit))
 				seout<-predict(fit,doselev)
 				fitpred <-seout$pred
 				sepred <- seout$se
@@ -84,13 +82,14 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 
 
 	### if 4 parm fit not found, select new 3 parm starting values
-	if(modType==4 & AcceptConv== FALSE) Sparm<-startEmax(y,dose,modType=3,binary=binary)
-	fit<-fitEmax(y,dose,modType=3,binary=binary,diagnostics=FALSE,
+	if(modType==4 & AcceptConv== FALSE){ 
+		Sparm<-startEmax(y,dose,modType=3,binary=binary)
+		fit<-fitEmax(y,dose,iparm=Sparm,modType=3,binary=binary,diagnostics=FALSE,
 					 optObj=FALSE)
+	}else if(modType==3)fit<-fitEmax(y,dose,iparm=Sparm,modType=3,binary=binary,
+											diagnostics=FALSE,optObj=FALSE)
 
 	if(!AcceptConv){   
-		
-
 		### check for acceptable convergence and compute se's if ok
 		if(!is.null(fit)){
 			### check that info matrix is invertible
@@ -107,7 +106,7 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=rep(NA,modType),
 			}
 
 			if(!(negC3&&switchMod) && !(bigC3&&switchMod)){
-				vc<-as.vector(fit$fit$vc)
+				vc<-as.vector(vcov(fit))
 				seout<-predict(fit,doselev)
 				fitpred <-seout$pred
 				sepred <- seout$se

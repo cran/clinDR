@@ -66,15 +66,13 @@ mcmc<-mcmc.control(chains=3)
 
 fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
 				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-as.matrix(fitout$estanfit)
+parms<-coef(fitout)[1:4]   ## use first intercept
 
 dgrid<-seq(0,1,length=100)
 
-plotBdensity(dgrid,parm=cbind(parms[,"led50"],parms[,"lambda"],
-      parms[,"emax"],parms[,"e0[1]"]))
+plotBdensity(dgrid,parm=parms)
 
-plotBdensity(dgrid,parm=cbind(parms[,"led50"],parms[,"lambda"],
-      parms[,"emax"]),plotDif=TRUE,
+plotBdensity(dgrid,parm=parms,plotDif=TRUE,
        xlab='Dose',ylab='Dif with PBO')
 }
 \dontshow{

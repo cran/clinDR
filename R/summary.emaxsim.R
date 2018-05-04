@@ -13,6 +13,10 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
   fitdifP<-object$predpop-object$predpop[,1]
   noFit<- (modType==4 & apply(is.na(object$est4),1,any)) | (modType==3 & apply(is.na(object$est3),1,any))
   propFit<-table(object$fitType)/nsim
+  
+  ## select best pairwise function (return index to dif)
+  if(!negEmax){f<-function(x){xmax<-max(x); which(x==xmax)[1]}
+  }else f<-function(x){xmin<-min(x); which(x==xmin)[1]}
 
   cat(paste("\n",object$description,"\n\n"))
 	cat(paste("Number of simulations:                     ",nsim,'\n',sep=''))
@@ -78,6 +82,16 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 	### confidence interval coverage and bias
 	actlev <- apply(abs(fitdifv - fitdifP)/object$sedifv <=qnorm(clev+(1-clev)/2),2,mean)
 	mean.actlev<- apply(abs(mdifv - fitdifP)/semdifv <=qnorm(clev+(1-clev)/2),2,mean)
+	seldif<-apply(mdifv,1,f)
+	seldif<-cbind(seq_along(seldif),seldif)
+	bestm<-mdifv[seldif]
+	bestpop<-fitdifP[seldif]
+	sel.actlev <- mean(abs(bestm - bestpop)/semdifv[seldif]<=
+										qnorm(clev+(1-clev)/2))
+	sel.up.err<- mean((bestm - bestpop)/semdifv[seldif]>=
+										qnorm(clev+(1-clev)/2))
+	sel.low.err<- mean((bestm - bestpop)/semdifv[seldif]<=
+										-qnorm(clev+(1-clev)/2))	
 	se.actlev<-sqrt( actlev*(1-actlev)/nsim )
 	se.mean.actlev<-sqrt( mean.actlev*(1-mean.actlev)/nsim )
 	cat(paste("\n\nCoverage probabilities for nominal ",
@@ -98,51 +112,54 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 		cat(paste("Simulation standard errors:\n"))
 		print(round(se.mean.actlev[-1],4))
 	}
+	cat(paste("Most favorable pairwise comparison:\n"))	
+	cat(paste(round(sel.actlev,3),' Lower error(',
+						round(sel.low.err,3),
+						') Upper error(',round(sel.up.err,3)),')\n',sep='')
+	
+	
 	bias<-apply(fitdifv-fitdifP,2,mean)
 	se.bias<-sqrt( apply(fitdifv,2,var)/nsim )
 	names(bias)<-doselev
 	names(se.bias)<-doselev
-	cat(paste("\n\nMean bias from dose response modeling [EST-POP]:\n"))
+	cat(paste("\n\nBias from dose response modeling [EST-POP]:\n"))
 	print(round(bias[-1],2))
 	if(seSim== TRUE){
 		cat(paste("Simulation standard errors:\n"))
 		print(round(se.bias[-1],3))
 	}
-	bias<-apply(fitdifv-fitdifP,2,median)
-	se.bias<-sequant(p=.5, sig2=(.75*apply(fitdifv,2,iqr))^2, n=nsim)
-	names(bias)<-doselev
-	names(se.bias)<-doselev
-	cat(paste("\nMedian bias from dose response modeling [EST-POP]:\n"))
-	print(round(bias[-1],2))
-	if(seSim== TRUE){
-		cat(paste("Simulation standard errors:\n"))
-		print(round(se.bias[-1],3))
-	}
+	sel.mbias<-mean(bestm-bestpop)
+	cat(paste("Bias in the most favorable pairwise comparison:\n"))	
+	cat(paste(round(sel.mbias,2),'\n'))
+
 
 	### summarize standard errors
 
 	cat(paste("\n\nReported SEs by dose group [Dose-PBO]:\n"))
 	cat(paste("Dose response modeling:","\n"))
-	sd.sedifv <- apply(object$sedifv, 2, summary)
-	colnames(sd.sedifv)<-doselev
-	print(sd.sedifv[,-1])
+	sd.sedifv <- apply(object$sedifv, 2, mean)
+	names(sd.sedifv)<-doselev
+	print(round(sd.sedifv[-1],3))
 
 	cat(paste("\nPairwise comparisons:","\n"))
-	sd.semdifv <- apply(semdifv, 2, summary)
-	colnames(sd.semdifv )<-doselev
-	print(sd.semdifv[,-1])
-
+	sd.semdifv <- apply(semdifv, 2, mean)
+	names(sd.semdifv )<-doselev
+	print(round(sd.semdifv[-1],3))
+	
 	### mean squared errors
-    mse.sedifv <- sqrt( apply((fitdifv-fitdifP)^2,2,mean) )
+  mse.sedifv <- sqrt( apply((fitdifv-fitdifP)^2,2,mean) )
 	names(mse.sedifv)<-doselev
 	mse.pair<-sqrt( apply((mdifv-fitdifP)^2,2,mean)  )
 	names(mse.pair)<-doselev
+	sel.mse.pair<-sqrt( mean((bestm-bestpop)^2) )
 
 	cat(paste("\nSquare Root Mean Squared Error:\n"))
 	cat(paste("Dose response modeling:","\n"))
 	print(round(mse.sedifv[-1],3))
 	cat(paste("\n","Pairwise comparisons:","\n"))
 	print(round(mse.pair[-1],3))
+	cat(paste("\nMost favorable pairwise comparison:","\n"))
+	cat(paste(round(sel.mse.pair,3)))
 
 	if(seSim== TRUE){
 		cat(paste("\nNote:  (Standard errors) are simulation errors based ",
@@ -150,6 +167,17 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 		cat(paste("Note:  Distinguish (Standard errors) from ",
      	          "reported non-linear estmation SE" ,"\n",sep=""))
 	}
-	return(invisible())
+	return(invisible(list(propNoFit=mean(noFit),
+												propSwitchMod=mean(object$bigC),
+												propHighED50=mean(object$bigC),
+												propLowED50=mean(object$negC),
+												propFit=propFit,powMCPMOD=pow,
+												PowMean=mean.pow,covMod=actlev[-1],
+												covMean=mean.actlev[-1],covSelMean=sel.actlev,
+												errLowSelMean=sel.low.err,errUpSelMean=sel.up.err,
+												biasMod=bias[-1],biasSelMean=sel.mbias,
+												summarySEmod=sd.sedifv,summarySEmean=sd.semdifv,
+												mseMod=mse.sedifv[-1],mseMean=mse.pair[-1],
+												mseSelMean=sel.mse.pair)))
 }
 

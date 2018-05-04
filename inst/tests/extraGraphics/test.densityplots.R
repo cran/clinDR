@@ -76,13 +76,11 @@ prior<-prior.control(epmu=1.78,epsd=1,emaxmu=-2.82,emaxsd=1,
 
 fitb<-fitEmaxB(y,dose,prior,modType=4,count=nsize,msSat=sd^2)
 
-parms<-as.matrix(fitb$estanfit)
-plotBdensity(dgrid,cbind(parms[,1],parms[,2],
-       parms[,3],parms[,4]))
+parms<-coef(fitb)
+plotBdensity(dgrid,parms[,1:4])
 
 ### difference with pbo
-plotBdensity(dgrid,cbind(parms[,1],parms[,2],
-       parms[,3],parms[,4]),plotDif=TRUE,
+plotBdensity(dgrid,parms[,1:4],plotDif=TRUE,
        xlab='Dose',ylab='Dif with PBO')
 
 dev.off()
