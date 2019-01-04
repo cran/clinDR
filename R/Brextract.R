@@ -32,7 +32,7 @@ function(x,i,...){
   RNGkind(save.rng)
  
      return(structure(list(y=y, dose=dose, pop=x$pop[i,],
-     											popSD<-x$popSD[i],binary=binary,
+     											popSD=x$popSD[i],binary=binary,
             init=x$init[i,], est4=x$est4[i,],
             est3=x$est3[i,],estA=x$estA[i,], 
             vc=vc,residSD=x$residSD[i],bigC=x$bigC[i],

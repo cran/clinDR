@@ -10,8 +10,10 @@ the model-based estimated (posterior means) dose response curve.
 
 \usage{
 \method{plot}{emaxsimBobj}(
-    x, clev=0.9, plotDif=FALSE, plotPop=c('m','3','4'), 
-				 log=FALSE, plotResid=FALSE, plot=TRUE, ... )
+	x, clev=0.9, plotDif=FALSE, 
+	plotPop=c('m','3','4'), 
+	log=FALSE, plotResid=FALSE, 
+	plot=TRUE, ... )
 }
 
 \arguments{

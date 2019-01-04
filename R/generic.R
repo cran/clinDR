@@ -17,10 +17,10 @@ coef.emaxsim<-function(object, ...){
 
 ####
 coef.fitEmaxB<-function(object, ...){
-	prot<-length(unique(object$prot))
-	if(object$pboAdj)prot<-0
-	modType<-object$modType
-	return(as.matrix(object$estanfit)[,1:(modType+(prot-1))])
+	binary<-object$binary
+	matm<-as.matrix(object$estanfit)	
+	if(binary)nc<-ncol(matm)-1 else nc<-ncol(matm)-2
+	return(matm[,1:nc])
 }
 
 ####
@@ -45,18 +45,16 @@ sigma.emaxsim<-function(object, ...){
 }
 
 ####
+
 sigma.fitEmaxB<-function(object, ...){
-	prot<-length(unique(object$prot))
-	if(object$pboAdj)prot<-0
-	modType<-object$modType
 	if(object$binary){
 		warning("sigma returns NA for binary endpoint")
 		return(NA)
 	}else{
-		return(as.vector(as.matrix(object$estanfit)[,modType+prot]))
+		matm<-as.matrix(object$estanfit)	
+		return(as.vector(matm[,ncol(matm)-1]))
 	}
 }
-
 #####
 sigma.emaxsimB<-function(object, ...){
 	if(object$binary){

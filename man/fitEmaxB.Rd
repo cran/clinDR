@@ -11,8 +11,9 @@ data, the Emax model is on the logit scale.
 }
 \usage{
 fitEmaxB(y, dose, prior, modType = 3, prot = rep(1, length(y)), 
-	count = rep(1, length(y)), binary = FALSE, msSat = NULL,
-	pboAdj = FALSE, mcmc = mcmc.control(),estan = NULL, 
+	count = rep(1, length(y)), xbase=NULL,
+	binary = FALSE, msSat = NULL,
+	pboAdj = FALSE, mcmc = mcmc.control(), estan = NULL, 
 	diagnostics = TRUE, nproc = getOption("mc.cores", 1L))
 }
 
@@ -33,6 +34,12 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \item{count}{Counts for the number of patients when the \code{Y} are dose 
   continuous group means or binary 0/1 values.  
   Default is 1 (ungrouped data).}
+  \item{xbase}{A matrix of baseline covariates with rows corresponding to 
+  \code{y} that enter as linear additive predictors.  The baseline covariates must 
+  be centered about
+  their (protocol-specific) means.  \code{xbase} does not include an intercept or
+  protocol indicators.  Covariates cannnot be specified with PBO adjusted or 
+  aggregated input.}
   \item{binary}{When \code{TRUE}, the \code{y} are assumed to be coded \code{0/1}, and 
   the means reported are proportions.  The Emax model is specified on the logit 
   scale, and proportions are estimated from the model by back-transformation.}
@@ -74,7 +81,8 @@ Thomas and Roy (2016).}
 \value{
 A list assigned class "fitEmaxB" with:
 \item{estanfit}{The \code{rstan} object with the model fit.}
-\item{y, dose, prot, count, modType, binary, pboAdj, 
+\item{y, dose, prot, count, 
+modType, binary, pboAdj, nbase, 
 msSat, prior, mcmc}{Input values.}
 }
 \references{
@@ -90,7 +98,7 @@ Neal Thomas
 
 
 \seealso{
-\code{\link{fitEmax}}, \code{\link{predict.fitEmaxB}}, \code{\link{plot.fitEmaxB}}
+\code{\link{fitEmax}}, \code{\link{predict.fitEmaxB}}, \code{\link{plot.fitEmaxB}}, \code{\link{coef.fitEmaxB}}
 }
 \examples{
 \dontrun{

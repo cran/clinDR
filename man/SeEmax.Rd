@@ -8,7 +8,8 @@
 asymptotic variance-covariance matrix from the fit of a 3- or 4-parameter
 Emax model}
 \usage{
-SeEmax(fit, doselev, modType, dref=0)
+SeEmax(fit, doselev, modType, dref=0, nbase=0, x=NULL, 
+				binary=FALSE, clev=0.9)
 }
 
 \arguments{
@@ -16,12 +17,21 @@ SeEmax(fit, doselev, modType, dref=0)
 model.  The order of the parameters in the fit must be (log(ed50),emax,e0) or
 (log(ed50),lambda,emax,e0).
  Alternatively, fit can be a list with the first element the coefficient
-vector, and the second element the variance-covariance matrix. }
+vector, and the second element the variance-covariance matrix.  List input
+can be used with multiple protocols and baseline covariates (see details).}
   \item{doselev}{SEs are evaluated at vector of doses }
   \item{modType}{modType=3,4 for a 3 or 4 parameter model.}
   \item{dref}{A reference dose (0 by default) for contrasts, but other values 
    can be specified.  If specified, a single reference value must be given.
    }
+   
+  \item{nbase}{The number of baseline predictors included in the model.}
+  \item{x}{The model is evaluated at baseline covariate values, \code{x}.
+  If \code{x} is a matrix, then each row is a vector of baseline 
+  predictors, and the results are for the dose response averaged over
+  all of the predictors in \code{x}.}
+  \item{binary}{Emax model on logistic scale, then backtransformed.}
+  \item{clev}{Confidence level for intervals.}
 }
 
 \value{
@@ -43,11 +53,25 @@ Returns a list:
    back-transformation (e.g., for logistic regression with binary data).
    }
 }
+\details{
+The Emax models supported by \code{SeEmax} should now be fit using 
+\code{fitEmax} and \code{predict.fitEmax}.  \code{SeEmax} remains available
+primarily for backward compatibility.
+
+\code{SeEmax} can be used with models that allow different placebo response
+for multiple protocols by selecting the intercept for a specific protocol.  
+Coeficients for baseline covariates can also be included following the intercept.
+The variance-covariance matrix from the full model must be subsetted to match
+the included coeficients (i.e., the rows and columns corresponding to the
+omitted intercepts must be removed).  List input must be used for the more
+general models. 
+}
 \references{
 Bates, D. M. and Watts, D. G. (1988) Nonlinear Regression
      Analysis and Its Applications, Wiley
  }
 \author{Neal Thomas }
+\seealso{\code{fitEmax}}
 \examples{
 
 \dontrun{

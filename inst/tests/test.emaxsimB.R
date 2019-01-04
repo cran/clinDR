@@ -398,9 +398,9 @@ D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
 
 out8<-D2[8]
 
-fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE)
+fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE, diagnostics = FALSE)
 parms<-coef(fit8)
-gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,logit=TRUE)
+gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,binary=TRUE)
 
 test_that("emaxsimB gofP equals checkMonoEmax return value ",{
 	expect_equal(gofP,D2$gofP[8],tol=0.01,scale=1)

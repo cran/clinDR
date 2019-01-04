@@ -12,20 +12,7 @@ automatically for  single execution, so the model does not
 need to be pre-loaded.
 }
 \usage{
-selEstan(modType = 3, binary = FALSE, pboAdj = FALSE)
-}
-%- maybe also 'usage' for other objects documented here.
-\arguments{
-  \item{modType}{
-3- or 4- hyperbolic or sigmoidal Emax model.
-}
-  \item{binary}{
-An Emax model on the logistic scale for binary outcomes.
-}
-  \item{pboAdj}{
-Model omitting the intercept when only placebo-corrected data are 
-available.  Only valid with continuous outcomes.
-}
+selEstan()
 }
 
 \value{
@@ -41,7 +28,7 @@ Neal Thomas
 }
 \examples{
 \dontrun{
-	estan<-selEstan(modType=4)
+	estan<-selEstan()
 }
 }
 

@@ -29,7 +29,7 @@ in the package can be executed.  This requires 3-10 minutes to complete on most
 machines. The compiled code is 32-bit or 64-bit specific, and both must be created if
 both versions of R are used.
 
-The Bayesian computations use the R package \code{rstan}.  It can be installed from CRAN. Windows users should check the instructions for \code{rstan} at the \url{http://mc-stan.org} and \url{https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows}. 
+The Bayesian computations use the R package \code{rstan}.  It can be installed from CRAN. Windows users should check the instructions for \code{rstan} at the \url{http://mc-stan.org} and \url{https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started}. 
 Note that \code{Rtools} must be installed, which is a simple, but often overlooked step. Instructions for its installation are given in the second URL.
 }
 

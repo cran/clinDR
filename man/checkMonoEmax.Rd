@@ -12,9 +12,10 @@ checkMonoEmax(y,
       parm, 
       sigma2,
       nvec=rep(1,length(dose)),
+      xbase=NULL,
       modelFun=emaxfun,
       trend='positive',
-      logit= FALSE)
+      binary= FALSE,logit=binary)
 }
 
 \arguments{
@@ -31,9 +32,11 @@ simulated parameter vector.}
   \item{sigma2}{Simulated draws from the residual variance (assumed
 additive, homogeneous).  The length of \code{sigma2} must be the same
 as the number of rows of \code{parm}.  \code{sigma2} is ignored when
-\code{logit=TRUE}}
+\code{binary=TRUE}}
   \item{nvec}{The number of observations contributing to each \code{y}.  The default 
   is \code{1} for patient-level data.}
+  \item{xbase}{Optional covariates matching \code{y}.  \code{nvec} must be 1 (patient-level)
+  data.  The coeficients for \code{xbase} are the final columns of \code{parm}.}
   \item{modelFun}{The mean model function.  The first argument is a
 scalar dose, and the second argument is a matrix of parameter values.
 The rows of the matrix are random draws of parameter vectors for the
@@ -41,10 +44,11 @@ model.  The default function is the 4-parameter Emax function \code{emaxfun}.}
   \item{trend}{The default is 'positive', so high values for lower doses
   yield small Bayesian predictive probabilities.  Set \code{trend} to 'negative'
   for dose response curves with negative trends.}
-  \item{logit}{Default is FALSE.  If TRUE, the inverse logit 
+  \item{binary}{If TRUE, the inverse logit 
   transform is applied to the
-  (Emax) function output for comparison to dose group sample proportions. It is
-  assumed that the model was fit to binary response data.}
+  (Emax) function output for comparison to dose group sample proportions, and the
+  predictive data are sampled from a binomial distribution.}
+  \item{logit}{\code{logit} is deprecated, use \code{binary}}
 }
 \details{
   A sample of parameters from the joint posterior distribution must be 
@@ -79,7 +83,7 @@ mcmc<-mcmc.control(chains=3)
 
 fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
 				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-coef(fitout)[1:4]  #use first intercept
+parms<-coef(fitout)[,1:4]  #use first intercept
 
 checkMonoEmax(y=exdat$y, dose=exdat$dose, parm=parms, sigma2=(sigma(fitout))^2,
       nvec=exdat$nsize, trend='negative')

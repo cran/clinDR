@@ -209,6 +209,81 @@ plot(testout2, log=TRUE)
 plot(testout2,plotDif=TRUE)
 plot(testout2,plotDif=TRUE, log=TRUE)
 
+
+##################
+### covariates
+## 3 covariates, 2 protocols
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-c(78,81,81,81,77,80)
+n1<-sum(n)
+n2<-sum(n[1:4])
+
+doselev<-c(doselev,doselev[1:4])
+n<-c(n,n[1:4])
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-15.127726
+sdy<-8.0
+x1<-matrix(rnorm(3*n1),ncol=3)
+x1<-scale(x1,center=TRUE,scale=FALSE)
+x2<-matrix(rnorm(3*n2),ncol=3)
+x2<-scale(x2,center=TRUE,scale=FALSE)
+x<-rbind(x1,x2)
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+bparm<-c(2,-1,0.5)
+meanlev<-emaxfun(dose,pop) + x%*%bparm 
+
+y<-rnorm(n1+n2,meanlev,sdy)
+prots<-c(rep(1,n1),rep(2,n2))
+
+
+testout2<-fitEmax(y,dose,modType=4,prot=prots,xbase=x,diagnostics = FALSE)
+
+plot(testout2)
+plot(testout2, log=TRUE)
+
+plot(testout2,plotDif=TRUE)
+plot(testout2,plotDif=TRUE, log=TRUE)
+
+### binary, covariates
+### check with larger n for better asymptotics
+### 4-parm model, 2 covariates, 1 protocol
+### starting values specified
+###
+
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-5*c(78,81,81,81,77,80)
+ntot<-sum(n)
+
+### population parameters for simulation
+e0<- -1.5 
+ed50<-67.481113 
+emax<-4.0
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+meanlev<-emaxfun(dose,pop)  
+iparm<-c(log(ed50),1,emax,e0)
+
+x<-matrix(rnorm(2*ntot),ncol=2)
+x<-scale(x,center=TRUE,scale=FALSE)
+bparm<-c(2,-1)
+meanlev<-plogis(meanlev + x%*%bparm)
+
+y<-rbinom(ntot,1,meanlev)
+
+
+testout4b<-fitEmax(y,dose,modType=4,iparm=iparm,xparm=bparm,xbase=x,
+											binary=TRUE,diagnostics=FALSE)
+
+plot(testout4b)
+
+plot(testout4b,plotDif=TRUE)
+
 dev.off()
-
-

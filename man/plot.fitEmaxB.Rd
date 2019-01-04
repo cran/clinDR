@@ -8,35 +8,39 @@ created by function \code{fitEmaxB}.
 }
 \usage{
 \method{plot}{fitEmaxB}(
-          x,int=0,plotResid=FALSE,clev=0.9,
-          predict=TRUE,plotci=TRUE,plotDif=FALSE,
-          xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
-          symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-          bwidth=NULL,
-          xlim=NULL,
-          xat=NULL,
-          ylim=NULL,
-          log=FALSE,       
-          plot=TRUE, ...)
+      x,int=0,plotResid=FALSE,clev=0.9,
+      predict=TRUE,plotci=TRUE,plotDif=FALSE,
+      xlab='Dose',
+      ylab=ifelse(plotResid,'Residuals','Response'),
+      symbol=NULL,symbolLabel='Group',symbolShape=8,
+      symbolColor='red',symbolSize=4,
+      bwidth=NULL,
+      xlim=NULL,
+      xat=NULL,
+      ylim=NULL,
+      log=FALSE,       
+      ngrid=200,
+      plot=TRUE, ...)
 }
 
 \arguments{
   \item{x}{Output of \code{\link{fitEmaxB}} with class
 "fitEmaxB".}
   \item{int}{The index for the protocol (intercept) to use for the predictions 
-  and computation of dose group means.  The default
+  and computation of dose group means/proportions.  The default
   value is \code{0}, which displays all protocols in a grid layout.}
-  \item{plotResid}{If \code{TRUE}, a residual plot of the observed dose group means  
+  \item{plotResid}{If \code{TRUE}, a residual plot of the observed 
+  dose group means/proportions  
   less the model-based posterior mean estimates 
   is produced instead of a dose response curve plot.}
-  \item{clev}{Posterior probability for intervals about the 
-mean for each dose.}
+  \item{clev}{Level for posterior probability intervals about the 
+mean/proportion for each dose.}
   \item{predict}{When predict=TRUE, predictive intervals for sample dose group
-  means are plotted.  They are gray-shaded bars. If there is \code{>1} symbol group
-  mean for a protocol/dose combination, then the smaller sample size is used when computing
+  means/proportions are plotted.  They are gray-shaded bars. If there is \code{>1} symbol group
+  mean/proportion for a protocol/dose combination, then the smaller sample size is used when computing
   the prediction interval.}
   \item{plotci}{When plotCI=TRUE, posterior intervals for the population dose group
-  means are plotted.  They are black bars.}
+  means/proportions are plotted.  They are black bars.}
   \item{plotDif}{Plot difference between doses and placebo.  It is assumed the lowest
   dose in each protocol is placebo.}
   \item{xlab}{Label for the x-axis}
@@ -48,12 +52,12 @@ mean for each dose.}
   \item{symbolShape}{A character vector with named elements giving 
   the shapes assigned
   to different levels of variable \code{symbol}.  If a single shape is 
-  specified, it is replicated for all dose group means.  See package
+  specified, it is replicated for all dose group means/proportions.  See package
   \code{ggplot2} for symbol mappings.}
   \item{symbolColor}{A character vector with named elements 
   giving the colors assigned
   to different levels of variable \code{symbol}.  If a single color is 
-  specified, it is replicated for all dose group means.  See package
+  specified, it is replicated for all dose group means/proportions.  See package
   \code{ggplot2} for color mappings.}
   \item{symbolSize}{The size of the symbol for the dose group sample means.   
    Set \code{symbolSize=0} to supress plotting the means.}
@@ -63,6 +67,7 @@ mean for each dose.}
   points are outside the range of xlim. By default (when NULL) tickmark locations are computed.}  
   \item{ylim}{Plot limits for the y-axis}
   \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{ngrid}{The number doses evaluated when plotting the curve.}
   \item{plot}{Return plotting output without plotting.}
   \item{...}{No additional plotting options are currently used.}
 }
@@ -78,6 +83,13 @@ using the MCMC parameters evaluated in the Emax function.
 
 The function generates random numbers when \code{predict=TRUE}, so the random number generator/seed must
 be set before the function is called for exact reproducibility.
+
+If baseline covaraties were included in the fit, then the mean of the predictions for
+the protocol given by \code{int} is plotted.  This can be computationally intensive
+when the dosing grid is dense, the MCMC sample size is large, and the input sample
+size is large.  Consider reducing \code{ngrid} in this situation.  
+Note that the protocol must be specified, or the prediction defaults to patients
+from the first protocol.
 }
 \author{Neal Thomas }
 

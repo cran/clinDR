@@ -1,5 +1,16 @@
 Changes to clinDR:
 ======================
+Update 1.9
+- Add support for baseline covariates in fitEmax, fitEmaxB and supporting
+functions
+- Add showStanModels function to display the STAN code for Emax models
+- Corrected output of popSD naming in emaxsim extraction function
+- Consolidated Bayesian Emax models into a single STAN model file.  
+Specification of model type (e.g., hyperbolic vs sigmoidal) is no 
+longer required in selEstan and showStanModels functions
+- The 'logit' parameter in function checkMonoEmax was re-named 'binary'
+- Return printed matrices as invisible objects in print.emaxsim(B) and
+print.emaxsim(B)obj 
 Update 1.8
 - Added testMods of class Mods from R package DoseFinding to the
 output object of emaxsim(B).  testMods gives the functions defining the

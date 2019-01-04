@@ -29,29 +29,29 @@ function(dose,estA,est3,est4,vc,fitType,dref=0,maxE,binary){
 	   }else{
 			dreg<-cbind(rep(1,Ndose),dose)		
 			d0<-c(1,dref)
-		}
+	   }
    }else if(fitType=='LL'){
-       parm<-estA
-       fitpred<-parm[1]+parm[2]*log(dose+1.0)
-       sepred<-sqrt(vc[1,1]+vc[2,2]*(log(dose+1.0))^2 + 
-                      2*vc[1,2]*log(dose+1.0))
-       fitref<-parm[1]+parm[2]*log(dref+1.0)
-       seref<-sqrt(vc[1,1]+vc[2,2]*(log(dref+1.0))^2 + 
-                      2*vc[1,2]*log(dref+1.0))
-	   if(!binary){
-		   fitdif<-parm[2]*(log(dose+1.0)-log(dref+1.0))
-		   sedif<-abs(log(dose+1.0)-log(dref+1.0))*sqrt(vc[2,2])
-	   }else{
-			dreg<-cbind(rep(1,Ndose),log(dose+1.0))		
-			d0<-c(1,log(dref+1.0))
-		}
+   	parm<-estA
+   	fitpred<-parm[1]+parm[2]*log(dose+1.0)
+   	sepred<-sqrt(vc[1,1]+vc[2,2]*(log(dose+1.0))^2 + 
+   							 	2*vc[1,2]*log(dose+1.0))
+   	fitref<-parm[1]+parm[2]*log(dref+1.0)
+   	seref<-sqrt(vc[1,1]+vc[2,2]*(log(dref+1.0))^2 + 
+   								2*vc[1,2]*log(dref+1.0))
+   	if(!binary){
+   		fitdif<-parm[2]*(log(dose+1.0)-log(dref+1.0))
+   		sedif<-abs(log(dose+1.0)-log(dref+1.0))*sqrt(vc[2,2])
+   	}else{
+   		dreg<-cbind(rep(1,Ndose),log(dose+1.0))		
+   		d0<-c(1,log(dref+1.0))
+   	}
    }else if(fitType=='E'){
-       parm<-estA
-       fitpred<-parm[1]+parm[2]*exp(dose/maxE)
-       sepred<-sqrt(vc[1,1]+vc[2,2]*exp(2*dose/maxE) + 
-                    2*vc[1,2]*exp(dose/maxE))
-       fitref<-parm[1]+parm[2]*exp(dref/maxE)
-       seref<-sqrt(vc[1,1]+vc[2,2]*exp(2*dref/maxE) + 
+   	parm<-estA
+   	fitpred<-parm[1]+parm[2]*exp(dose/maxE)
+   	sepred<-sqrt(vc[1,1]+vc[2,2]*exp(2*dose/maxE) + 
+   							 	2*vc[1,2]*exp(dose/maxE))
+   	fitref<-parm[1]+parm[2]*exp(dref/maxE)
+   	seref<-sqrt(vc[1,1]+vc[2,2]*exp(2*dref/maxE) + 
                     2*vc[1,2]*exp(dref/maxE))
 	   if(!binary){
 		   fitdif<-parm[2]*(exp(dose/maxE)-exp(dref/maxE))
@@ -68,7 +68,7 @@ function(dose,estA,est3,est4,vc,fitType,dref=0,maxE,binary){
 	   ### inputs not used by predict are set to null
 	   fit<-list(fit=fit,y=NULL,dose=NULL,modType=nparm,prot=1,
 				 count=NULL,binary=binary,pboAdj=FALSE,residSD=NULL,
-				 gofTest=NULL,nllmod=NULL)
+				 gofTest=NULL,nllmod=NULL,nbase=0)
 	   class(fit)<-'fitEmax'
        seout<-predict(fit,dose,dref=dref,binary=binary)
        fitpred<-seout$pred

@@ -9,7 +9,7 @@ typically dose or time}
   
 \usage{
 DRDensityPlot(x,qL,qH,qlevL=c(0.025,0.05,0.10,0.25),
-	xlim,ylim,xlab='x',ylab='y')
+		xlim,ylim,xlab='x',ylab='y')
 }
 
 \arguments{

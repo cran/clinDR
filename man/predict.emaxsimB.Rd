@@ -9,8 +9,7 @@ predicted values at other doses is indicated.
 }
 \usage{
 \method{predict}{emaxsimB}(object, 
-                dose, dref=0,
-                ...)
+          dose, dref=0, ...)
 }
 
 \arguments{

@@ -4,7 +4,7 @@
 
 }
 \description{
-Compile \code{rstan} code for various Emax models used by \code{fitEmaxB}
+Compile \code{rstan} code for Emax models used by \code{fitEmaxB}
 and \code{emaxsimB}.  This function must be executed once after the 
 \code{clinDR} package is installed.  
 }
@@ -21,10 +21,11 @@ package directory. Execution requires several minutes. The compiled models are
 is changed (they are stored in sub-directories comp32 or comp64).  It is recommended
 to execute the function again if the package \code{rstan} is updated.
 
-Package \code{rstan} must be functional for \code{CompileStanModels} to be successful.  See \url{https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows}.  Note especially the instructions for installing \code{Rtools}, which is required for execution on a Windows machine.
+Package \code{rstan} must be functional for \code{CompileStanModels} to be successful.  See \url{https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started}.  Note especially the instructions for installing \code{Rtools}, which is required for execution on a Windows machine.
+
 }
 \value{
-Six model files with extensions '.rds' should be created in the package directory
+'basemodel.rds' should be created in the package directory
 in the sub-directory 'models'.
 }
 \author{

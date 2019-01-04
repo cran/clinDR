@@ -32,7 +32,7 @@ prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,
-									mcmc=mcmc,diagnostics=TRUE)
+									mcmc=mcmc,diagnostics=FALSE)
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -104,7 +104,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 testout<-fitEmaxB(ymean,doselev,prior=prior,modType=4,
 									prot=protshort,count=nag,msSat=msSat,
-									mcmc=mcmc,diagnostics=TRUE)
+									mcmc=mcmc,diagnostics=FALSE)
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -174,7 +174,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 
 testout<-fitEmaxB(ysub,dsub,prior,modType=3,prot=protsub,pboAdj=TRUE,
-								 mcmc=mcmc,diagnostics=FALSE,nproc=3)
+									mcmc=mcmc,diagnostics=FALSE,nproc=3)
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -253,8 +253,8 @@ nag<-as.vector(nag[nag>0])
 dlevsub<-doselev[doselev!=0]
 
 testout<-fitEmaxB(ymean,dlevsub,prior,modType=4,prot=protshort,
-								 count=nag,pboAdj=TRUE,msSat=msSat,
-								 mcmc=mcmc,diagnostics=FALSE)
+									count=nag,pboAdj=TRUE,msSat=msSat,
+									mcmc=mcmc,diagnostics=FALSE)
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -323,7 +323,7 @@ zabs<-matrix(numeric(nsim*2),ncol=2)
 zdif<-matrix(numeric(nsim*2),ncol=2)
 prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan(modtype)
+estan<-selEstan()
 
 for(i in 1:nsim){
 	y<-rnorm(n1+n2,meanlev,sdy)
@@ -401,10 +401,10 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 
 testout<-fitEmaxB(y,dvec,modType=modType,
-								 prot=prots,
-								 count=counts,binary=TRUE,
-								prior=prior,mcmc=mcmc,	
-								diagnostics=FALSE)
+									prot=prots,
+									count=counts,binary=TRUE,
+									prior=prior,mcmc=mcmc,	
+									diagnostics=FALSE)
 
 pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
@@ -467,10 +467,10 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 
 testout<-fitEmaxB(y,dvec,modType=modType,
-								 prot=prots,
-								 count=counts,binary=TRUE,
-								prior=prior,mcmc=mcmc,	
-								diagnostics=FALSE)
+									prot=prots,
+									count=counts,binary=TRUE,
+									prior=prior,mcmc=mcmc,	
+									diagnostics=FALSE)
 
 pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
@@ -523,7 +523,7 @@ pop.parm<-c(log(ed50),emax,e0)
 modTYpe<-4
 prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan(modType)
+estan<-selEstan()
 
 dose<-rep(doselev,n)
 meanlev<-emaxfun(doselev,pop.parm)  
@@ -540,7 +540,7 @@ for (i in 1:nsim){
 	msSat<-(summary(lm(y~factor(dose)))$sigma)^2
 	testout<-fitEmaxB(ymean,doselev,prior=prior,modType=modType,count=n,
 										mcmc=mcmc,msSat=msSat,
-									 estan=estan,diagnostics = FALSE)
+										estan=estan,diagnostics = FALSE)
 	if(is.null(testout)){
 		covci[i,]<-NA
 		covpi[i,]<-NA
@@ -611,7 +611,7 @@ covdifpi<-matrix(logical(nsim*nd),ncol=nd)
 modType<-4
 prior<-prior.control(0,4,0,4,50,edDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan(modType)
+estan<-selEstan()
 
 for (i in 1:nsim){
 	y<-rbinom(length(n),n,meanlev)
@@ -663,5 +663,365 @@ test_that("plot.fitEmax PI DIF for binary data agree within 3se",{
 										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
 })
 
+#################################################################################
+#################################################################################
+#### include covariates
+#################################################################################
+
+## 1 covariate, 2 protocols
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-c(78,81,81,81,77,80)
+n1<-sum(n)
+n2<-sum(n[1:4])
+
+doselev<-c(doselev,doselev[1:4])
+n<-c(n,n[1:4])
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-15.127726
+sdy<-8.0
+x1<-rnorm(n1)
+x1<-x1-mean(x1)
+x2<-rnorm(n2)
+x2<-x2-mean(x2)
+x<-matrix(c(x1,x2),ncol=1)
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+bparm<-1
+meanlev<-emaxfun(dose,pop) + x%*%bparm 
+
+y<-rnorm(n1+n2,meanlev,sdy)
+prots<-c(rep(1,n1),rep(2,n2))
+
+basemu<-0
+basevar<-matrix((10*sdy)^2,nrow=1,ncol=1)
+prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
+									mcmc=mcmc,diagnostics=FALSE)
+
+parms<-coef(testout)
+estimate<-apply(parms,2,mean)
+se<-sqrt(diag(var(parms)))
+z<-(estimate-c(pop[1],1,pop[2:3],pop[3],bparm))/se
+
+### check parameter estimates
+test_that("model parameters agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+})
+
+### check predictions
+predout<-predict(testout,dosevec=c(20,80),int=2)
+
+poppred<-emaxfun(c(20,80),pop[c(1:3)])
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-e0))/predout$sedif
+
+
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=2*sdy/sqrt(70),scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-e0),tol=2*sdy/sqrt(70),scale=1))
+})
+
+#############################################################
+## 3 covariates, 2 protocols
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-c(78,81,81,81,77,80)
+n1<-sum(n)
+n2<-sum(n[1:4])
+
+doselev<-c(doselev,doselev[1:4])
+n<-c(n,n[1:4])
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-15.127726
+sdy<-8.0
+x1<-matrix(rnorm(3*n1),ncol=3)
+x1<-scale(x1,center=TRUE,scale=FALSE)
+x2<-matrix(rnorm(3*n2),ncol=3)
+x2<-scale(x2,center=TRUE,scale=FALSE)
+x<-rbind(x1,x2)
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+bparm<-c(2,-1,0.5)
+meanlev<-emaxfun(dose,pop) + x%*%bparm 
+
+y<-rnorm(n1+n2,meanlev,sdy)
+prots<-c(rep(1,n1),rep(2,n2))
+
+basemu<-numeric(3)
+basevar<-diag(3)*(10*sdy)^2
+prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
+									 mcmc=mcmc,diagnostics=FALSE)
+
+parms<-coef(testout2)
+estimate<-apply(parms,2,mean)
+se<-sqrt(diag(var(parms)))
+z<-(estimate-c(pop[1],1,pop[2:3],pop[3],bparm))/se
+
+### check parameter estimates
+test_that("model parameters agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+})
+
+### check predictions
+predout<-predict(testout2,dosevec=c(20,80),int=2)
+
+poppred<-emaxfun(c(20,80),pop[c(1:3)])
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-e0))/predout$sedif
+
+
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=2*sdy/sqrt(70),scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-e0),tol=2*sdy/sqrt(70),scale=1))
+})
+
+##########################################################
+### check with larger n for better asymptotics
+### 3-parm model, 2 covariates, 1 protocol
+
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-5*c(78,81,81,81,77,80)
+ntot<-sum(n)
+
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-15.127726
+sdy<-8.0
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+meanlev<-emaxfun(dose,pop)  
+
+x<-matrix(rnorm(2*ntot),ncol=2)
+x<-scale(x,center=TRUE,scale=FALSE)
+bparm<-c(2,-1)
+meanlev<-meanlev + x%*%bparm 
+
+y<-rnorm(ntot,meanlev,sdy)
+
+basemu<-numeric(2)
+basevar<-diag(2)*(10*sdy)^2
+prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+testout3<-fitEmaxB(y,dose,prior=prior,modType=3,xbase=x,
+									mcmc=mcmc,diagnostics=FALSE)
+
+parms<-coef(testout3)
+estimate<-apply(parms,2,mean)
+se<-sqrt(diag(var(parms)))
+z<-(estimate-c(pop[1],pop[2:3],bparm))/se
+
+### check parameter estimates
+test_that("model parameters agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+})
+
+### check predictions
+predout<-predict(testout3,dosevec=c(20,80),int=1)
+
+poppred<-emaxfun(c(20,80),pop[c(1:3)])
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-e0))/predout$sedif
+
+
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=2*sdy/sqrt(70),scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-e0),tol=2*sdy/sqrt(70),scale=1))
+})
+
+##########################################################
+### binary, covariates
+### check with larger n for better asymptotics
+### 4-parm model, 2 covariates, 1 protocol
+
+set.seed(12357)
+
+doselev<-c(0,5,25,50,100,350)
+n<-5*c(78,81,81,81,77,80)
+ntot<-sum(n)
+
+### population parameters for simulation
+e0<- -1.5 
+ed50<-67.481113 
+emax<-4.0
+pop<-c(log(ed50),emax,e0)    
+dose<-rep(doselev,n)
+meanlev<-emaxfun(dose,pop)  
+
+x<-matrix(rnorm(2*ntot),ncol=2)
+x<-scale(x,center=TRUE,scale=FALSE)
+bparm<-c(2,-1)
+meanlev<-plogis(meanlev + x%*%bparm)
+
+y<-rbinom(ntot,1,meanlev)
+
+basemu<-numeric(2)
+basevar<-diag(2)*(4)^2
+prior<-prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+testout4b<-fitEmaxB(y,dose,prior=prior,modType=4,xbase=x,
+									mcmc=mcmc,diagnostics=FALSE,binary=TRUE)
+
+parms<-coef(testout4b)
+estimate<-apply(parms,2,mean)
+se<-sqrt(diag(var(parms)))
+z<-(estimate-c(pop[1],1,pop[2:3],bparm))/se
+
+### check parameter estimates
+test_that("model parameters agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+})
+
+### check predictions
+predout<-predict(testout4b,dosevec=c(20,80),int=1,xvec=c(0,0))
+
+poppred<-plogis(emaxfun(c(20,80),pop[c(1:3)]))
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-plogis(e0)))/predout$sedif
+
+
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=0.05,scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-plogis(e0)),tol=0.05,scale=1))
+})
+
+### binary, covariates
+### check with larger n for better asymptotics
+### 3-parm model, 2 covariates, 1 protocol
+
+set.seed(20572)
+
+doselev<-c(0,5,25,50,100,350)
+n<-4*c(78,81,81,81,77,80)
+ntot<-sum(n)
+
+### population parameters for simulation
+e0<- -1.5 
+ed50<-67.481113 
+emax<-4.0
+pop<-c(log(ed50),emax,e0)    
+dose<-c(rep(doselev,n/2),rep(doselev,n/2))
+prot<-sort(rep(1:2,ntot/2))
+meanlev<-emaxfun(dose,pop)+0.5*(prot==2)  
+
+x1<-matrix(rnorm(ntot),ncol=2)
+x1<-scale(x1,center=TRUE,scale=FALSE)
+x2<-matrix(rnorm(ntot),ncol=2)
+x2<-scale(x2,center=TRUE,scale=FALSE)
+x<-rbind(x1,x2)
+bparm<-c(1.,-0.5)
+meanlev<-plogis(meanlev + x%*%bparm)
+
+y<-rbinom(ntot,1,meanlev)
+
+basemu<-numeric(2)
+basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
+basevar<-basevar*(4)^2  ## off-diagonal elements
+
+prior<-prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=3,xbase=x,
+									mcmc=mcmc,diagnostics=FALSE,binary=TRUE)
+
+parms<-coef(testout5b)
+estimate<-apply(parms,2,mean)
+se<-sqrt(diag(var(parms)))
+z<-(estimate-c(pop[1],pop[c(2:3)],pop[3]+0.5,bparm))/se
+
+### check parameter estimates
+test_that("model parameters agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+})
+
+### check predictions
+predout<-predict(testout5b,dosevec=c(20,80),int=1,xvec=c(0,0))
+
+poppred<-plogis(emaxfun(c(20,80),c(pop[c(1:2)],e0)))
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-plogis(e0)))/predout$sedif
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=0.05,scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-plogis(e0)),tol=0.05,scale=1))
+})
+
+### check predictions
+predout<-predict(testout5b,dosevec=c(20,80),int=2,xvec=c(0,0))
+
+poppred<-plogis(emaxfun(c(20,80),c(pop[c(1:2)],e0+0.5)))
+z<-(predout$pred-poppred)/predout$se
+zdif<-(predout$fitdif-(poppred-plogis(e0+0.5)))/predout$sedif
+
+
+### check predictions 
+test_that("predictions agree within 2.5se",{
+	expect_lt(as.numeric(max(abs(z))),2.5)
+	expect_lt(as.numeric(max(abs(zdif))),2.5)
+})
+
+test_that("check absolute levels",{
+	expect_that(as.numeric(predout$pred),
+							equals(poppred,tol=0.05,scale=1))
+	expect_that(as.numeric(predout$fitdif),
+							equals((poppred-plogis(e0+0.5)),tol=0.05,scale=1))
+})
 
 

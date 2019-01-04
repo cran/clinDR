@@ -3,7 +3,7 @@
            predict=TRUE,plotci=TRUE,plotDif=FALSE,
            xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE,
+           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE, ngrid=200,
            plot=TRUE, ...){
   	
 	outplot<-combplot(x=x,bayes=FALSE,int=int,plotResid=plotResid,
@@ -11,7 +11,7 @@
           xlab=xlab,ylab=ylab,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
 					symbolColor=symbolColor,symbolSize=symbolSize,
-          bwidth=bwidth, xlim=xlim, xat=xat, ylim=ylim, log=log,
+          bwidth=bwidth, xlim=xlim, xat=xat, ylim=ylim, log=log, ngrid=ngrid,
           plot=plot, ...)
 	
 	return(invisible(outplot))  	 	
@@ -22,7 +22,7 @@
            predict=TRUE,plotci=TRUE,plotDif=FALSE,
            xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE,
+           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE, ngrid=200,
            plot=TRUE, ...){
   	
 	outplot<-combplot(x=x,bayes=TRUE,int=int,plotResid=plotResid,
@@ -32,7 +32,7 @@
 					symbolColor=symbolColor,symbolSize=symbolSize,
           bwidth=bwidth, 
 					xlim=xlim,xat=xat,ylim=ylim,
-          log=log,
+          log=log, ngrid=ngrid,
           plot=plot, ...)
 	return(invisible(outplot))  	 	
 }
@@ -47,6 +47,7 @@
 				 xlim=NULL, xat=NULL,
 				 ylim=NULL,
 	       log=FALSE,
+				 ngrid=ngrid,
 	       plot=TRUE, ...){
 	
     #### plot of a continuous emax model (in x) and dose group means
@@ -97,10 +98,10 @@
     dmax<-max(doselev)*1.1
     dmin<-min(c(0,doselev))-0.1*dmax
     xlim<-if(is.null(xlim))xlim<-c(dmin,dmax)
-    dgrid<-seq(0,xlim[2],length=400)
+    dgrid<-seq(0,xlim[2],length=ngrid)
     dgrid <- c(dgrid, doselev)
     dgrid <- sort(unique(dgrid)) 
-    ngrid<-length(dgrid)
+    ngridsup<-length(dgrid)
     
     
     
@@ -268,7 +269,7 @@
       pihvec<-c(pihvec,pih)
       
       ### grid level
-      protG<-c(protG,rep(k,ngrid))
+      protG<-c(protG,rep(k,ngridsup))
       predvecG<-c(predvecG,predvals)
       dgridvec<-c(dgridvec,dgrid)
       

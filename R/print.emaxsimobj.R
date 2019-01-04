@@ -24,6 +24,6 @@ function(x,nprint, ...){
 
 	print(tmp,quote= FALSE)
 
-	return(invisible())
+	return(invisible(tmp))
 }
 

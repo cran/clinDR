@@ -15,7 +15,7 @@ is fit on the logit scale and then back-transformed.
 \usage{
 emaxalt(y, dose, modType=3,binary=FALSE, 
 	iparm=NA,ed50cutoff=2.5*max(doselev), 
-	 ed50lowcutoff=doselev[2]/1000,switchMod= TRUE,
+	ed50lowcutoff=doselev[2]/1000,switchMod= TRUE,
 	truncLambda=6)
 }
 

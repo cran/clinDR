@@ -32,8 +32,8 @@ Matrix of MCMC generated parameters for fitEmaxB.
 
 \author{Neal Thomas }
 
-\seealso{ \code{\link{fitEmax}}, \code{\link{fitEmaxB}},
-	\code{\link{emaxsim}},\code{\link{emaxsimB}} }
+\seealso{ \code{\link{sigma}}, \code{\link{fitEmax}}, \code{\link{fitEmaxB}},
+	\code{\link{emaxsim}}, \code{\link{emaxsimB}} }
 
 \examples{
 doselev<-c(0,5,25,50,100,350)

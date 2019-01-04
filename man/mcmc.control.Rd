@@ -8,8 +8,8 @@ Set MCMC controls.  Also control spread of initial parameter values.
 }
 \usage{
 mcmc.control(chains = 1, thin = 1, 
-warmup = 500, iter = 5000* thin, 
-propInit = 0.25, seed = 12357, adapt_delta = 0.8)
+	warmup = 500, iter = 5000* thin, 
+	propInit = 0.25, seed = 12357, adapt_delta = 0.8)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

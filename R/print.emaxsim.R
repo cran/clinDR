@@ -42,6 +42,6 @@ function(x,nprint=min(length(x$fitType),20),id=x$idmax,digits=3,...){
 
 	print(tmp,quote= FALSE)
 
-	return(invisible())
+	return(invisible(tmp))
 }
 

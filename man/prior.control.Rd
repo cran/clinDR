@@ -8,9 +8,12 @@ Set the parameters of the prior distribution for the Emax model implemented in \
 }
 \usage{
 prior.control(epmu = NULL, epsd = NULL, emaxmu = NULL, 
-	emaxsd = NULL, p50 = NULL, sigmalow = NULL, sigmaup = NULL, 
-	led50mu = 0.79, led50sca = 0.6, edDF = 3, lama = 3.03, 
-	lamb = 18.15, lamsca = 6, binary = FALSE)
+	emaxsd = NULL, p50 = NULL, 
+	sigmalow = NULL, sigmaup = NULL, 
+	led50mu = 0.79, led50sca = 0.6, edDF = 3, 
+	lama = 3.03, lamb = 18.15, lamsca = 6, 
+	basemu=NULL,basevar=NULL,
+	binary = FALSE)
 }
 \arguments{
   \item{epmu}{
@@ -54,6 +57,14 @@ The degrees of freedom of the log-t prior distribution for the \code{ED50}.
   \item{lamsca}{
 The beta prior distribution for the Hill parameter is re-scaled to have support on (0,lamsca).
 }
+	\item{basemu}{
+	A vector of prior means for the covariate regression parameters.
+	}
+	\item{basevar}{
+	The prior variance-covariance matrix for the covariate regression parameters.
+	The covariate regression parameters are apriori independent of the other dose 
+	response model parameters.
+	}
   \item{binary}{
 Set to \code{TRUE} for binary data applications.  Used to check for consistency in usage.
 }

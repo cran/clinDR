@@ -4,7 +4,8 @@
 Print a summary of the fitted Emax model
 }
 \description{
-Print a summary of the fitted Emax model
+Print a summary of the fitted Emax model.  
+Printed output returned as invisible matrix.
 }
 \usage{
 \method{print}{emaxsimBobj}(x, nprint=min(length(x$y),20), ...)

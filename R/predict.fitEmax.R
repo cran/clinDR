@@ -1,25 +1,29 @@
 "predict.fitEmax"<-
-function(object,dosevec,clev=0.9,int=1,dref=0, ...){
+function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 
 	if(missing(dosevec))stop('dosevec must be specified')
 
 	modType<-object$modType
 	binary<-object$binary
 	pboAdj<-object$pboAdj
-	parms<-object$fit$estimate
+	parmstot<-object$fit$estimate
 	vc<-object$fit$vc
 	nprot<-max(as.numeric(object$prot))
+	prot<-as.numeric(object$prot)
+	nbase<-object$nbase
+	if(nbase && is.null(xvec))xvec<-object$xbase[prot==int,]
 
 	if(! int%in%(c(1:nprot)))stop('The intercept specification is invalid')
 
 	clev<- 0.5+clev/2
-	if(pboAdj)parms<-c(parms,rep(0,nprot))  ## put into standard form
-	nparm<-length(parms)
-
-	nsub<-nparm-nprot
+	if(pboAdj)parmstot<-c(parmstot,rep(0,nprot))  ## put into standard form
+	
+	nparm<-length(parmstot)
+	nsub<-nparm-nprot-nbase
 	if(! nsub%in%c(2,3) )stop('parm has invalid length')
-	parms<-parms[c(1:nsub,nsub+int)]
-
+	parms<-parmstot[c(1:nsub,nsub+int)]
+	if(nbase>0)parms<-c(parms,parmstot[c((1+nparm-nbase):nparm)])
+	
 	### put vc into standard form before applying subsetting code for one int
 	if(pboAdj){
 		if(modType==3){
@@ -35,50 +39,16 @@ function(object,dosevec,clev=0.9,int=1,dref=0, ...){
 		}
 	}
 
-   ### create vc matrix including the single selected intercept
-	vsub<-as.vector(vc[1:nsub,nsub+int])
-	vc<-cbind(rbind(vc[1:nsub,1:nsub],vsub),c(vsub,vc[nsub+int,nsub+int]))
-
-	mout<-SeEmax(list(parms,vc),dosevec,modType=nsub+1,dref=dref)
-
-	predout<-mout$fitpred
-	sepred<-mout$sepred
-	lb<- predout-qnorm(clev)*sepred
-	ub<- predout+qnorm(clev)*sepred
-	if(!binary){
-		fitdif<-mout$fitdif
-		sedif<-mout$sedif
-		lbdif<- fitdif-qnorm(clev)*sedif
-		ubdif<- fitdif+qnorm(clev)*sedif
-	}else{
-		predout<-plogis(predout)
-		lb<-plogis(lb)
-		ub<-plogis(ub)
-		sepred<-predout*(1-predout)*sepred  ### se for proportions
-
-		predref<-plogis(mout$predref)
-		seref<-predref*(1-predref)*mout$seref
-		fitdif<-predout-predref
-		xhold<-sepred^2+seref^2-
-				   2*predout*(1-predout)*predref*(1-predref)*mout$covref
-		xhold[xhold<0]<-0  ### <0 possible with dref in doselev(rounding)
-		sedif<-sqrt(xhold)
-		lbdif<-fitdif-qnorm(clev)*sedif
-		ubdif<-fitdif+qnorm(clev)*sedif
-	}
+  ### create vc matrix including the single selected intercept
+	if(!nbase){
+		vc<-vc[c(1:nsub,nsub+int),c(1:nsub,nsub+int)]
+	}else  vc<-vc[c(1:nsub,nsub+int,(1+nparm-nbase):nparm),
+					c(1:nsub,nsub+int,(1+nparm-nbase):nparm)]
 	
-		names(predout)<-dosevec
-		names(sepred)<-dosevec
-		names(lb)<-dosevec
-		names(ub)<-dosevec
-		names(fitdif)<-dosevec
-		names(sedif)<-dosevec
-		names(lbdif)<-dosevec
-		names(ubdif)<-dosevec
-	
-	return(list(pred=predout,lb=lb,ub=ub,se=sepred,
-		 fitdif=fitdif,lbdif=lbdif,
-		 ubdif=ubdif,sedif=sedif))
+	mout<-SeEmax(list(parms,vc),dosevec,modType=nsub+1,dref=dref,
+							 nbase=nbase,x=xvec, binary=binary, clev=clev)
+
+	return(mout)	
 }
 
 

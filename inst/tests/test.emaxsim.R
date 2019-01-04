@@ -363,9 +363,9 @@ prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
 
 D2e <- emaxsim(nsim,gen, modType=3)
-
+sink("NUL")
 out2e<-summary(D2e)
-
+sink()
 #########################################
 ### repeat but negative trend
 set.seed(1357)
@@ -392,8 +392,10 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 
 D2en <- emaxsim(nsim,gen, modType=3,negEmax=TRUE)
 
-oute2n<-summary(D2en)
 
+sink("NUL")
+oute2n<-summary(D2en)
+sink()
 ###
 test_that("check selected bias pos/neg",{
 	expect_that(as.numeric(out2e$biasSelMean),

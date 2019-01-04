@@ -8,9 +8,9 @@ problems with common estimation methods.
 }
 \usage{
 \method{print}{emaxsim}(x, 
-              nprint = min(length(x$fitType), 20), 
-              id = x$idmax, 
-              digits = 3, ...)
+        nprint = min(length(x$fitType), 20), 
+        id = x$idmax, 
+        digits = 3, ...)
 }
 
 \arguments{
@@ -24,7 +24,7 @@ placebo }
 }
 
 \value{
-Print output without any return value.
+Printed output returned as invisible matrix.
 
 }
 \author{ Neal Thomas }

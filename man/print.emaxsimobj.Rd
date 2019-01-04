@@ -17,7 +17,7 @@ length 2, \code{nprint} is the range of data to print. }
 }
 
 \value{
-  Printed output only.
+Printed output returned as invisible matrix.
 }
 
 \author{ Neal Thomas }

@@ -9,7 +9,7 @@ and comparison with simple pairwise comparisons.
 \usage{
 \method{summary}{emaxsimB}(object, testalpha = 0.05, 
 	clev = c('0.95','0.9','0.8'),
-  seSim = FALSE, ...)
+	seSim = FALSE, ...)
 }
 
 \arguments{

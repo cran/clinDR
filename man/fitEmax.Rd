@@ -11,8 +11,8 @@ Emax model.  Different intercepts for multiple protocol-data are supported.  For
 data, the Emax model is on the logit scale.
 }
 \usage{
-fitEmax(y,dose,iparm,modType=3,
-	prot=rep(1,length(y)),count=rep(1,length(y)),
+fitEmax(y,dose,iparm,xparm,modType=3,
+	prot=rep(1,length(y)),count=rep(1,length(y)),xbase=NULL,
 	binary=FALSE,diagnostics=TRUE,msSat=NULL,
 	pboAdj=FALSE,optObj=TRUE)
 }
@@ -23,11 +23,13 @@ fitEmax(y,dose,iparm,modType=3,
 are are not permitted.  Dose/protocol group means for grouped continuous data.  For binary
 data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \item{dose}{Dose for each patient.}
-  \item{iparm}{Starting values for the Newton-Raphson algorithm.  The
+  \item{iparm}{Optional starting values for the Newton-Raphson algorithm.  The
 order of the variables is (log(ED50),Emax,E0) or
 (log(ED50),lambda,Emax,E0).  Note the transformation of ED50. If there is more
-than one protocol, the E0 is automatically duplicated.
-\code{startEmax} is used to obtain starting values if none are specified.}
+than one protocol, the E0 is automatically duplicated.}
+	\item{xparm}{Optional starting values for the baseline covariate slopes (if any).
+\code{xparm} must be specified when \code{iparm} and \code{xbase} are specified.
+\code{startEmax} is used to obtain starting values if no starting values are specified.}
   \item{modType}{modType=3 (default) for the 3-parameter hyperbolic Emax model.
   modType=4 for the 4-parameter sigmoidal Emax model.} 
   \item{prot}{Protocol (group) membership used to create multiple intercepts.  
@@ -35,6 +37,12 @@ than one protocol, the E0 is automatically duplicated.
   \item{count}{Counts for the number of patients when the \code{Y} are dose 
   continuous group means or binary 0/1 values.  
   Default is 1 (ungrouped data).}
+  \item{xbase}{A matrix of baseline covariates with rows corresponding to 
+   \code{y} that enter as linear additive predictors.  The baseline covariates must 
+  be centered about
+  their (protocol-specific) means.  \code{xbase} does not include an intercept or
+  protocol indicators.  Covariates cannnot be specified with PBO adjusted or 
+  aggregated input.}
   \item{diagnostics}{Print trace information per iteration and any error messages from the optimizing
 	methods.  Printing can be suppressed for use in simulation studies.}
   \item{binary}{When \code{TRUE}, the \code{y} are assumed to be coded \code{0/1}, and 
@@ -81,7 +89,7 @@ models, or a common intercept model across protocols).}
 \author{Neal Thomas }
 
 \seealso{\code{\link{nls}}, \code{\link{nlm}},  \code{\link{nllogis}}, 
-\code{\link{predict.fitEmax}}, \code{\link{plot.fitEmax}} }
+\code{\link{predict.fitEmax}}, \code{\link{plot.fitEmax}}, \code{\link{coef.fitEmax}} }
 \examples{
 
 ## the example changes the random number seed

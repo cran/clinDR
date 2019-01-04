@@ -3,14 +3,14 @@
 \title{Mean response and SE for specified doses for a
 simulated emaxsimobj object}
 \description{
-Estimated mean and standard error for specified doses computed from
+Estimated mean/proportion and standard error for specified doses computed from
 the output of a simulated data set created by function emaxsim.  Also returns mean difference with placebo and their
 standard errors.
 }
 \usage{
 \method{predict}{emaxsimobj}(object, 
-                dose, dref=0,
-                ...)
+          dose, dref=0,
+          ...)
 }
 
 \arguments{

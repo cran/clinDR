@@ -24,7 +24,7 @@ startEmax(y,
   (\code{binary=TRUE}), \code{y} must be 0/1 and starting values are returned 
   for an Emax model on the logit scale.}
   \item{dose}{Dose variable corresponding to each outcome value.}
-  \item{baseline}{Optional baseline covariate of same length as y.
+  \item{baseline}{Optional baseline covariate(s) of same length as y.
 When baseline is specified, starting values are created from anacova
 adjusted dose group means.}
   \item{count}{Counts for the number of patients with each dose/y value.  

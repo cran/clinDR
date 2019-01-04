@@ -11,9 +11,12 @@ are input by the user based on the empirical distributions estimated
 from dose response meta-analyses.  For binary response data, the Emax
 model is fit on the logit scale, and then back-transformed}
 \usage{
-emaxsimB(nsim, genObj, prior, modType = 3, binary = FALSE, seed=12357,
-	check = FALSE, nproc=parallel::detectCores(), negEmax = FALSE, ed50contr = NULL, 
-	lambdacontr = NULL, testMods = NULL, idmax = length(doselev), 
+emaxsimB(nsim, genObj, prior, modType = 3, 
+	binary = FALSE, seed=12357,
+	check = FALSE, nproc=parallel::detectCores(), 
+	negEmax = FALSE, ed50contr = NULL, 
+	lambdacontr = NULL, testMods = NULL, 
+	idmax = length(doselev), 
 	mcmc = mcmc.control(), 
 	customCode=NULL, customParms=NULL,
 	description = "")
@@ -214,7 +217,7 @@ customCode<-function(parms,residSD,pVal,dose,y,customParms){
 	target<-customParms
 	ed50<-exp(parms[,1])
 	emax<-parms[,2]
-	td<-ifelse(emax-target>0,ed50/(emax-target),Inf)
+	td<-ifelse(emax-target>0,ed50*(target/(emax-target)),Inf)
 	tdest<-median(td)
 	lb<-quantile(td,0.1)
 	ub<-quantile(td,0.9)

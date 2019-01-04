@@ -28,7 +28,7 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
   }else f<-function(x){xmin<-min(x); which(x==xmin)[1]}
   
   cat(paste("\n",object$description,"\n\n"))
-	cat(paste("Number of simulations:                     ",nsim,'\n',sep=''))
+	cat(paste("Number of simulations: ",nsim,'\n',sep=''))
 
 	### pairwise mean+sv	ndose<-length(doselev)
 	mdifv <- mv[,2:Ndose] - mv[, 1]
@@ -49,16 +49,16 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 	pow<- mean(pVal<=testalpha)
 	mean.pow <- mean(dirEff*mdifv[,idmax-1]/semdifv[,idmax-1] >qnorm(1-testalpha))
 	if(seSim== TRUE){
-	cat(paste("\nPower for global null test based on MCP-mod:      ",round(pow,3),
+	cat(paste("\n  Global null test based on MCP-mod:                          ",round(pow,3),
         "(",round(sqrt(mean(pow)*(1-mean(pow))/nsim),4),")",
         "\n",sep=""))
-	cat(paste("Power for pairwise comparion of high dose vs pbo: ",round(mean.pow,3),
+	cat(paste("  Pairwise comparison (simple, no model) of high dose vs pbo: ",round(mean.pow,3),
         "(",round(sqrt(mean(mean.pow)*(1-mean(mean.pow))/nsim),4),")",
         "\n",sep=""))
 	}else{
-	cat(paste("\nPower for global null test based on MCP-mod:       ",round(pow,3),
+	cat(paste("\n  Global null test based on MCP-mod:                           ",round(pow,3),
         "\n",sep=""))
-	cat(paste("Power for pairwise comparion of high dose vs pbo:  ",round(mean.pow,3),
+	cat(paste("  Pairwise comparison (simple, no model) of high dose vs pbo:  ",round(mean.pow,3),
         "\n",sep=""))
 	}
 	

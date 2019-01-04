@@ -8,8 +8,21 @@ startEmax<-function(y,dose,baseline,count=rep(1,length(y)),
 
     ### require at least 4 points because ends of designs
     ### are unstably estimated and discarded
-     if((length(unique(dose))<4) & (modType==4))stop(paste("At least 4 dose group means", 
+    if((length(unique(dose))<4) & (modType==4))stop(paste("At least 4 dose group means", 
         " are required to obtain starting values"))
+		
+		nbase<-0
+		if(!missing(baseline)){
+			if(is.vector(baseline)){
+				if(length(baseline)!=length(y))stop('baseline and y differ in length')
+				baseline<-matrix(baseline,ncol=1)
+			}else if (is.matrix(baseline)){
+				nbase<-ncol(baseline)
+				if(nrow(baseline)!=length(y))stop('baseline and y differ in length')
+			}
+		}
+		
+		parm<-modType+nbase
 
     ### compute dose group means (with possible baseline adjustment)
     doselev <- sort(unique(dose))
@@ -19,7 +32,10 @@ startEmax<-function(y,dose,baseline,count=rep(1,length(y)),
     dose<-dose[dord]
     y<-y[dord]
     count<-count[dord]
-    if(!missing(baseline))baseline<-baseline[dord]
+    if(!missing(baseline)){
+    	baseline<-baseline[dord,,drop=FALSE]
+      colnames(baseline)<- paste("baseline",1:nbase,sep="")
+    }
 
     if (missing(baseline)) {
         dm<-numeric(ndose)
@@ -29,17 +45,17 @@ startEmax<-function(y,dose,baseline,count=rep(1,length(y)),
         }
     }else {
         if(!binary){
-            anova.fit <- lm(y ~ baseline + factor(dose),weights=count)
+            anova.fit <- lm(y ~ factor(dose) + baseline,weights=count) 
         }else{
-            anova.fit<-glm(y ~ baseline + factor(dose),family=binomial(), 
+            anova.fit<-glm(y ~ factor(dose) + baseline,family=binomial(), 
                            weights=count,glm.control(maxit = 100))
         }
-        beta<- coef(anova.fit)[2]
-        names(beta)<- "beta"
-        
-        predat <- data.frame(dose = doselev, baseline = rep(mean(baseline), 
-            length(doselev)))
-        pred.anova <- predict(anova.fit, predat, se.fit = TRUE, type='response')
+        b<- coef(anova.fit)[(1+ndose):(ndose+nbase)]
+        for(i in 1:nbase)names(b)[i]<- paste("b",i,sep='')
+        bdat<-matrix(rep(apply(baseline,2,mean),
+        														ndose),ncol=nbase,byrow=TRUE)
+        predat <- data.frame(dose = doselev, baseline=I(bdat)) 
+        pred.anova <- predict(anova.fit, newdata=predat, se.fit = TRUE, type='response')
         dm <- pred.anova$fit
     }
 
@@ -91,7 +107,7 @@ startEmax<-function(y,dose,baseline,count=rep(1,length(y)),
        names(Sparm)<-c("led50","lambda","emax","e0")
     }
 
-    if(!missing(baseline))Sparm<-c(Sparm,beta)
+    if(!missing(baseline))Sparm<-c(Sparm,b)
 
     return(Sparm)
  }

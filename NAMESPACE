@@ -4,7 +4,7 @@ export(emaxsim,emaxsimB,plot.emaxsim,plot.emaxsimB,plot.emaxsimobj,plot.emaxsimB
 			 predict.emaxsim,predict.emaxsimB,predict.emaxsimobj,predict.emaxsimBobj,
 			 summary.emaxsim,summary.emaxsimB,summary.emaxsimobj,summary.emaxsimBobj,
 			 summary.fitEmax,summary.fitEmaxB,
-			 update.emaxsimobj,emaxfun,FixedMean,RandEmax,selEstan,
+			 update.emaxsimobj,emaxfun,FixedMean,RandEmax,selEstan,showStanModels,
 			 targetD,targetCI,predict.emaxalt,SeEmax,emaxalt,startEmax,nllogis,
 			 plotB,plot.plotB,plotD, DRDensityPlot,plotBdensity,
 			 fitEmax,predict.fitEmax,plot.fitEmax,print.fitEmax,
@@ -20,7 +20,7 @@ importFrom("stats", "as.formula", "binomial", "coef", "sigma",  "glm",
              "nls.control", "optim", "pbeta", "pchisq", "pf", "plogis",
              "pnorm", "ppoints", "predict", "qlogis", "qnorm",
              "quantile", "rbeta", "rbinom", "rnorm", "rt", "var", "vcov",
-             "weighted.mean","rchisq")
+             "weighted.mean","rchisq","fitted")
 importFrom("utils","capture.output","flush.console")
 importFrom("DoseFinding","Mods","optContr","MCTtest")
 importFrom("rstan","sampling","stan_model")

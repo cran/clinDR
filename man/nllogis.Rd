@@ -11,7 +11,8 @@ with function \code{\link{fitEmax}}
 \usage{
 nllogis(parms,y,dose,
           prot=rep(1,length(y)),
-          count=rep(1,length(y)))
+          count=rep(1,length(y)),
+          xbase=NULL)
 }
 
 \arguments{
@@ -26,6 +27,9 @@ are deleted. Must be coded 0/1.}
   The default is a single protocol.  The value of \code{prot} must be 1,2,3,..}
   \item{count}{Counts for the number of patients with each dose/y value.  
   Default is 1 (ungrouped data).}
+  \item{xbase}{Optional matrix of baseline covariates that enter the model
+  linearly.  If there is a single covariate, it should be converted
+  to a matrix with one column.}
 }
 
 \details{

@@ -8,17 +8,17 @@ group means (with optional CI bars)
   
 }
 \usage{
-\method{plot}{plotB}( x, 
-		plotDif= FALSE, plotMed= FALSE, plotResid=FALSE,
-		predict= TRUE,
-		log=FALSE,
-		xlim,
-		xat=NULL,
-		ylim,  
-		xlab, 
-		ylab,labac='Act Comp',shapeac=8,colac='red',  
-		symbolLabel='Group',symbolShape=8,
-		symbolColor='red',symbolSize=4, ...)
+\method{plot}{plotB}( x,
+	plotDif= FALSE, plotMed= FALSE, 
+	plotResid=FALSE, predict= TRUE,
+	log=FALSE,
+	xlim,
+	xat=NULL,
+	ylim,  
+	xlab, 
+	ylab,labac='Act Comp',shapeac=8,colac='red',  
+	symbolLabel='Group',symbolShape=8,
+	symbolColor='red',symbolSize=4, ...)
 }
 
 \arguments{

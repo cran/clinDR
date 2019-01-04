@@ -8,9 +8,9 @@ unusual estimates.
 }
 \usage{
 \method{print}{emaxsimB}(x, 
-              nprint = min(nsim, 20), 
-              id = x$idmax, 
-              digits = 3, ...)
+      nprint = min(nsim, 20), 
+      id = x$idmax, 
+      digits = 3, ...)
 }
 
 \arguments{
@@ -24,8 +24,7 @@ placebo }
 }
 
 \value{
-Print output without any return value.
-
+Printed output returned as invisible matrix.
 }
 \author{ Neal Thomas }
 \note{ 

@@ -12,6 +12,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 
   if(! modType %in% c(3,4))stop("modType must be 3 or 4")
   if(length(ed50contr)!=length(lambdacontr))stop('The number of ED50 and Lambda defining contrasts must be equal')
+	if(isTRUE( binary!=prior$binary ))stop('Binary specification in prior and model do not match')
 	
 	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
@@ -28,7 +29,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	nfrac2<-0.5*nfrac
 	dose<-genObj$genP$dose
 	
-	estan<-selEstan(modType=modType,binary=binary)
+	estan<-selEstan()
 
 	 ### set up emax-model contrasts for null hypothesis test
 	contMat<-NULL
@@ -359,7 +360,7 @@ simrepB<-function(j,inlist)
     
     ### compute gof test
     gofP[i]<-checkMonoEmax(yin,din,parms,sigsim^2,cin,
-    											 trend=trend,logit=binary)
+    											 trend=trend,binary=binary)
     
     ### execute customized code
     if(!is.null(customCode)){

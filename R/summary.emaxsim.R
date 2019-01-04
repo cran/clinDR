@@ -9,6 +9,8 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
   n<-object$genObj$genP$n
   negEmax<-object$negEmax
   dirEff<- 1-2*(negEmax)
+  pVal<-object$pVal
+  idmax<-object$idmax
   fitdifv<-object$fitpredv-object$fitpredv[,1]
   fitdifP<-object$predpop-object$predpop[,1]
   noFit<- (modType==4 & apply(is.na(object$est4),1,any)) | (modType==3 & apply(is.na(object$est3),1,any))
@@ -63,22 +65,22 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 
 	### power
 	cat(paste("\nPower for 1-sided tests at level ", testalpha," :",sep=""))
-	pow<- mean(object$pVal<=testalpha)
-	mean.pow <- mean(dirEff*mdifv[,object$idmax]/semdifv[,object$idmax] >qnorm(1-testalpha))
+	pow<- mean(pVal<=testalpha)
+	mean.pow <- mean(dirEff*mdifv[,idmax-1]/semdifv[,idmax-1] >qnorm(1-testalpha))
 	if(seSim== TRUE){
-	cat(paste("\nPower for global null test based on MCP-mod:      ",round(pow,3),
+	cat(paste("\n  Global null test based on MCP-mod:                          ",round(pow,3),
         "(",round(sqrt(mean(pow)*(1-mean(pow))/nsim),4),")",
         "\n",sep=""))
-	cat(paste("Power for pairwise comparion of high dose vs pbo: ",round(mean.pow,3),
+	cat(paste("  Pairwise comparison (simple, no model) of high dose vs pbo: ",round(mean.pow,3),
         "(",round(sqrt(mean(mean.pow)*(1-mean(mean.pow))/nsim),4),")",
         "\n",sep=""))
 	}else{
-	cat(paste("\nPower for global null test based on MCP-mod:       ",round(pow,3),
+	cat(paste("\n  Global null test based on MCP-mod:                           ",round(pow,3),
         "\n",sep=""))
-	cat(paste("Power for pairwise comparion of high dose vs pbo:  ",round(mean.pow,3),
+	cat(paste("  Pairwise comparison (simple, no model) of high dose vs pbo:  ",round(mean.pow,3),
         "\n",sep=""))
 	}
-
+		
 	### confidence interval coverage and bias
 	actlev <- apply(abs(fitdifv - fitdifP)/object$sedifv <=qnorm(clev+(1-clev)/2),2,mean)
 	mean.actlev<- apply(abs(mdifv - fitdifP)/semdifv <=qnorm(clev+(1-clev)/2),2,mean)

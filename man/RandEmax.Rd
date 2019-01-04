@@ -12,14 +12,14 @@ and then back-transformed.
 }
 \usage{
 RandEmax(n, doselev, 
-		parmEmax,
-		parmE0,
-		p50,
-		parmED50=c(3,0.79,0.6),
-		parmLambda=c(3.03,18.15,0,6),
-		resSD,
-		dfSD=Inf,
-		binary=FALSE)
+	parmEmax,
+	parmE0,
+	p50,
+	parmED50=c(3,0.79,0.6),
+	parmLambda=c(3.03,18.15,0,6),
+	resSD,
+	dfSD=Inf,
+	binary=FALSE)
 }
 \arguments{
   \item{n}{Sample size for each dose group. }

@@ -5,6 +5,7 @@ function(n,doselev,meanlev,resSD,parm=NULL,binary=FALSE){
 		dose<-rep(doselev,n[dord])
 
 	if(binary){
+		if(any(meanlev<=0) | any(meanlev>=1))stop('For binary data, meanlev must be in (0,1)')
 		resSD<-NULL
 	}else if(missing(resSD))stop('resSD must be specified for normal data')
 

@@ -68,7 +68,9 @@ use the unique sorted dose levels.  The direction of the trend should be specifi
 Most analysis functions allow other dose groups to be
 specified.  The default is the index of the highest dose.}
 	\item{iparm}{Starting values for the  Emax fit.  If
-unspecified, starting values are computed.}
+unspecified, starting values are computed.  The
+order of the variables is (log(ED50),Emax,E0) or
+(log(ED50),lambda,Emax,E0).  Note the transformation of ED50.}
 	\item{ed50cutoff}{The upper limit for the ED50 parameter estimates.The default is large
 enough to ensure a near linear fit to the data from an 
 Emax model.}
