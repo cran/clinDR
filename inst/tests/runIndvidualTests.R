@@ -9,6 +9,9 @@ RNGkind("default")
 test_file('test.emaxsim.R')
 
 RNGkind("default")
+test_file('test.emaxsimBlocalParm.R')
+
+RNGkind("default")
 test_file('test.emaxsimB.R')
 
 RNGkind("default")
@@ -30,11 +33,17 @@ RNGkind("default")
 test_file('test.fitEmax.R')
 
 RNGkind("default")
-test_file('test.fitEmaxB.R')
+test_file('test.fitEmaxBlocalParm.R')
 
-RNGkind("default")
-test_file('test.genfunctions.R')
-
-RNGkind("default")
-test_file('test.checkMonoEmax.R')
+# RNGkind("default")
+# test_file('test.fitEmaxB.R')
+# 
+# RNGkind("default")
+# test_file('test.genfunctions.R')
+# 
+# RNGkind("default")
+# test_file('test.checkMonoEmaxlocalParm.R')
+# 
+# RNGkind("default")
+# test_file('test.checkMonoEmax.R')
 

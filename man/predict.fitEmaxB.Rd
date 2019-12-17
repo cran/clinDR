@@ -7,8 +7,8 @@ derived from a Bayesian hyperbolic or sigmiodial Emax model.
 \description{
 The mean/proportion response for different doses estimated from a Bayesian Emax model is
 computed along with corresponding posterior intervals.  The results are computed
-for a vector of input dose levels. The estimates are posterior means of the
-dose response means/proportions.  
+for a vector of input dose levels. The estimates are posterior means or medians of the
+MCMC generated means/proportions.  
 For binary outcomes, the estimated response rates are
 computed on the logit scale and then back-transformed before forming the 
 estimates and posterior intervals.
@@ -44,7 +44,7 @@ data, the distinction between the mean of the predicted values and the predicted
 value as the mean of the covariates can be important.
 }
 \value{
-A list with estimated mean/proportion, lower bound, upper
+A list with estimated mean/proportion \code{(pred, predMed)}, lower bound, upper
 bound, posterior SD, and corresponding values for differences
 with the reference dose.  One value for each dose in dosevec.
 The MCMC response means (proportions for binary data) are in
@@ -60,15 +60,17 @@ The MCMC response means (proportions for binary data) are in
 \examples{
 
 \dontrun{
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-prior<-prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-				sigmalow=0.01,sigmaup=3)
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+        p50=3.75,sigmalow=0.01,sigmaup=20)
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+parms<-coef(fitout)[,1:4]  #use first intercept
 
 predout<-predict(fitout,dosevec=sort(unique(exdat$dose)))
 }

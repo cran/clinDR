@@ -1,6 +1,6 @@
 "plotD"<-function (y, dose, baseline, se = TRUE, line = TRUE, 
                    meansOnly=FALSE,sem=NULL,clev = 0.8, 
-                   xlab='Dose',ylab='Response', log=FALSE) 
+                   xlab='Dose',ylab='Response', logScale=FALSE) 
 {
   cadj <- abs(qnorm((1 - clev)/2))
   if(meansOnly && se && missing(sem))stop('sem must be specified with means only and se=TRUE')
@@ -28,7 +28,7 @@
   chvec<-ym + cadj * sem
   clvec<-ym - cadj * sem
   
-  if(!log){
+  if(!logScale){
     ggp<-ggplot(data.frame(ym,doselev,chvec,clvec),aes(x=doselev,y=ym))
     ggp<-ggp + geom_point(size=4,shape=8,color='red')  
     if (se == TRUE) 

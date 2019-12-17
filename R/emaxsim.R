@@ -59,8 +59,10 @@ function(nsim, genObj, modType=3,binary=FALSE,
 	set.seed(seed)
 	rseed<-matrix(integer(nsim*7),ncol=7)
 	rseed[1,]<-as.integer(.Random.seed)
-	for(i in 2:nsim){
-		rseed[i,]<-nextRNGStream(rseed[i-1,])
+	if(nsim>1){
+		for(i in 2:nsim){
+			rseed[i,]<-nextRNGStream(rseed[i-1,])
+		}
 	}
  
 	### set up indices for computing consecutive blocks

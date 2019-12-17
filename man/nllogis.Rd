@@ -48,8 +48,16 @@ Negative log likelihood value is returned.
 \seealso{\code{\link{nlm}},  \code{\link{fitEmax}} }
 
 \examples{
-data(examples14)
-with(examples14[[8]],nllogis(parms=c(log(.17),-3.26,-0.15), y, dose))
+data('metaData')
+exdat<-metaData[metaData$taid==8,]
+
+cy<-round(exdat$sampsize*exdat$rslt)
+y<-c(rep(1,length(cy)),rep(0,length(cy)))
+cy<-c(cy,exdat$sampsize-cy)
+drep<-c(exdat$dose,exdat$dose)
+plotD(exdat$rslt,exdat$dose,se=FALSE)
+nllogis(parms=c(log(2.5),-3.26,-0.15), y, drep,count=cy)
+
 }
 
 \keyword{nonlinear}

@@ -1,9 +1,11 @@
 "plot.fitEmax" <-
   function(x,int=0,plotResid=FALSE,clev=0.9,
            predict=TRUE,plotci=TRUE,plotDif=FALSE,
-           xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
+           xlab='Dose',
+  				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
+                 'Difference With Placebo','Response')),
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE, ngrid=200,
+           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, logScale=FALSE, ngrid=200,
            plot=TRUE, ...){
   	
 	outplot<-combplot(x=x,bayes=FALSE,int=int,plotResid=plotResid,
@@ -11,7 +13,7 @@
           xlab=xlab,ylab=ylab,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
 					symbolColor=symbolColor,symbolSize=symbolSize,
-          bwidth=bwidth, xlim=xlim, xat=xat, ylim=ylim, log=log, ngrid=ngrid,
+          bwidth=bwidth, xlim=xlim, xat=xat, ylim=ylim, logScale=logScale, ngrid=ngrid,
           plot=plot, ...)
 	
 	return(invisible(outplot))  	 	
@@ -20,9 +22,11 @@
 "plot.fitEmaxB" <-
   function(x,int=0,plotResid=FALSE,clev=0.9,
            predict=TRUE,plotci=TRUE,plotDif=FALSE,
-           xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
+           xlab='Dose',
+   				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
+                 'Difference With Placebo','Response')), 				 
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, log=FALSE, ngrid=200,
+           bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, logScale=FALSE, ngrid=200,
            plot=TRUE, ...){
   	
 	outplot<-combplot(x=x,bayes=TRUE,int=int,plotResid=plotResid,
@@ -32,7 +36,7 @@
 					symbolColor=symbolColor,symbolSize=symbolSize,
           bwidth=bwidth, 
 					xlim=xlim,xat=xat,ylim=ylim,
-          log=log, ngrid=ngrid,
+          logScale=logScale, ngrid=ngrid,
           plot=plot, ...)
 	return(invisible(outplot))  	 	
 }
@@ -41,12 +45,15 @@
  combplot <-  	
   function(x,bayes,int=0,plotResid=FALSE,clev=0.9,
 	       predict=TRUE,plotci=TRUE,plotDif=FALSE,
-	       xlab='Dose',ylab=ifelse(plotResid,'Residuals','Response'),
-	       symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
+	       xlab='Dose',
+ 				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
+							'Difference With Placebo','Response')), 				  			 
+	       symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',
+ 				 symbolSize=4,
 	       bwidth=NULL,
 				 xlim=NULL, xat=NULL,
 				 ylim=NULL,
-	       log=FALSE,
+	       logScale=FALSE,
 				 ngrid=ngrid,
 	       plot=TRUE, ...){
 	
@@ -97,7 +104,7 @@
     ### global dose range
     dmax<-max(doselev)*1.1
     dmin<-min(c(0,doselev))-0.1*dmax
-    xlim<-if(is.null(xlim))xlim<-c(dmin,dmax)
+    if(is.null(xlim))xlim<-c(dmin,dmax)
     dgrid<-seq(0,xlim[2],length=ngrid)
     dgrid <- c(dgrid, doselev)
     dgrid <- sort(unique(dgrid)) 
@@ -168,11 +175,11 @@
 	      ### at each unique dose level for protocol
 	      seout<-predict(x,doselev,int=k,clev=clev)  
 	      if(!plotDif){
-	        fitp<-seout$pred
+	        fitp<-seout$predMed
 	        cil<-seout$lb     ### ci bounds 
 	        cih<-seout$ub
 	      }else{
-	        fitp<-seout$fitdif
+	        fitp<-seout$fitdifMed
 	        cil<-seout$lbdif     ### ci bounds 
 	        cih<-seout$ubdif
 	      }
@@ -194,9 +201,9 @@
 	      }
 	      
 	      ### predicted values on grid
-	      predvals<-predict(x,dgrid,int=k,clev=clev)$pred
+	      predvals<-predict(x,dgrid,int=k,clev=clev)$predMed
 	      ### predicted values for each unique dose/symbol group combination
-	      predvalSym<-predict(x,dvec,int=k,clev=clev)$pred
+	      predvalSym<-predict(x,dvec,int=k,clev=clev)$predMed
 	      if(plotDif){
 	        predvals<-predvals-predvals[1]
 	        predvalSym<-predvalSym-predvalSym[1]
@@ -291,7 +298,7 @@
     
     if(int)protlab<-protlab[int]
     
-    if(plotResid & !log){
+    if(plotResid & !logScale){
       lplot<-ggplot(data.frame(dosevecDS,residuals,symDS,protDS=factor(protDS,labels=protlab)),
                     aes(x=dosevecDS,y=residuals))
       lplot<-lplot+geom_point(aes(shape=symDS,color=symDS),size=symbolSize)        
@@ -303,7 +310,7 @@
       if(!is.null(ylim)){lplot<-lplot+coord_cartesian(xlim=xlim,ylim=ylim)
       }else lplot<-lplot+coord_cartesian(xlim=xlim)
     }
-    else if(plotResid & log){
+    else if(plotResid & logScale){
       x0 <- dosevecDS
       if(sum(x0==0)){
         xtemp <- sort(unique(dosevecDS))[2]^2/sort(unique(dosevecDS))[3]
@@ -330,7 +337,7 @@
       }else lplot<-lplot+coord_cartesian(xlim=xlimlog)
     } 
     
-    else if(!plotResid & !log){
+    else if(!plotResid & !logScale){
       
       if(is.null(bwidth)){werrbar<-min(diff(sort(unique(dosevecDS))))*(0.4)
       }else werrbar<-bwidth
@@ -353,7 +360,7 @@
       }else lplot<-lplot+coord_cartesian(xlim=xlim)
       
     }
-    else if(!plotResid & log){
+    else if(!plotResid & logScale){
       x0 <- doseLevVec 
       if(sum(x0==0)){
         
@@ -492,9 +499,9 @@
 
     
     if(!is.null(xat)){
-      if(!log)      lplot <- lplot + scale_x_continuous(breaks=xat, 
+      if(!logScale)      lplot <- lplot + scale_x_continuous(breaks=xat, 
                                           labels =xat)
-      if(log){
+      if(logScale){
         xatbench <- xat
         xat[xat==0] <- doselev[2]^2/doselev[3]
         lplot <- lplot + scale_x_continuous(breaks=log(xat), 

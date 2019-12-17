@@ -5,7 +5,7 @@ function(x,id=x$idmax,plotDif= TRUE,...)
 	### idmax dose with placebo
 	
 	if(plotDif){
-		fitdifv<-x$fitpredv-x$fitpredv[,1]
+		fitdifv<-x$fitdifv
 		fitdifP<-x$predpop-x$predpop[,1]
     }else{
        fitdifv<-x$fitpredv

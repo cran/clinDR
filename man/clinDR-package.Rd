@@ -19,8 +19,8 @@ model fits when the primary estimation fails.  Several supporting
 functions are supplied to analyze the output of \code{\link{emaxsim}}
 and \code{\link{emaxsimB}},
 including analyses for specific simulated data sets.  All of the data sets
-from two published dose response meta analyses are included in 
-\code{\link{examples14}}, and \code{\link{examples16}}.  
+from dose response meta analyses are included in 
+\code{\link{metaData}}.  
 }
 \details{
 The function \code{compileStanModels} must be executed once after the package is

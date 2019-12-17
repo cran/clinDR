@@ -49,13 +49,14 @@ Plotted output only.
 \examples{
 
 \dontrun{
-data(examples14)
-exdat<-examples14[[32]]
+data('metaData')
+exdat<-metaData[metaData$taid==32,]
 
-fitout<-fitEmax(exdat$y,exdat$dose,modType=3,count=exdat$nsize,
-								msSat=(exdat$sd)^2)
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmax(exdat$rslt,exdat$dose,modType=3,count=exdat$sampsize,
+								msSat=msSat)
 
-dgrid<-seq(0,1,length=100)
+dgrid<-seq(0,100,length=100)
 seout95<-predict(fitout,dgrid,clev=0.95)
 seout90<-predict(fitout,dgrid,clev=0.9)
 seout80<-predict(fitout,dgrid,clev=0.8)
@@ -70,11 +71,8 @@ DRDensityPlot(dgrid,qL,qH,qlevL=qlev,xlab='Dose',ylab='Diff with PBO')
 
 }
 \dontshow{
-data(examples14)
-exdat<-examples14[[32]]
 
 dgrid<-seq(0,1,length=5)
-
 qlev<-c(0.10,0.25)
 
 qL<-matrix(c(0.000000, 0.000000,

@@ -11,14 +11,15 @@ created by function \code{fitEmax}.
           x,int=0,plotResid=FALSE,clev=0.9,
           predict=TRUE,plotci=TRUE,plotDif=FALSE,
           xlab='Dose',
-          ylab=ifelse(plotResid,'Residuals','Response'),
+          ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
+                'Difference With Placebo','Response')),
           symbol=NULL,symbolLabel='Group',symbolShape=8,
           symbolColor='red',symbolSize=4,
           bwidth=NULL,
           xlim=NULL,
           xat=NULL,
           ylim=NULL,
-          log=FALSE,       
+          logScale=FALSE,       
           ngrid=200,
           plot=TRUE, ...)
 }
@@ -64,7 +65,7 @@ mean for each dose.}
   \item{xat}{The points at which tick-marks are to be drawn. Errors occur if the 
   points are outside the range of xlim. By default (when NULL) tickmark locations are    computed.}  
   \item{ylim}{Plot limits for the y-axis}
-  \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{logScale}{If \code{TRUE}, log scale is used for dose.}
   \item{ngrid}{The number doses evaluated when plotting the curve.}
   \item{plot}{Return plotting output without plotting.}
   \item{...}{No additional plotting options are currently used.}

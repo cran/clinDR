@@ -62,18 +62,25 @@ pop<-c(log(ed50),emax,e0)
 meanlev<-emaxfun(doselev,pop)  
 
 ###FixedMean is specialized constructor function for emaxsim
-gen.parm<-FixedMean(n,doselev,meanlev,sdy,pop)  
+genp<-FixedMean(n,doselev,meanlev,sdy,pop)  
 
-### 4-parameter example
+### binary example
+n<-rep(500,5)
+doselev<-c(0,5,25,50,1000)
+dose<-rep(doselev,n)
 
-est<-c( log(6.67636), 2,0, -3.18230)
-doselev<-c(0,5,10,25,50,150)
-meanlev<-emaxfun(doselev,est)
+e0<- qlogis(0.2)
+ed50<-20
+emax<-qlogis(0.6)-qlogis(0.2)
+lambda<-2
+pop<-c(log(ed50),lambda,emax,e0)
+meanlev<-plogis(emaxfun(doselev,pop))
 
-gen.parm4<-FixedMean(n=c(99,95,98,94,98,99),doselev,
-                     meanlev,resSD=3.87,parm=est)
-D4 <- emaxsim(nsim=100,gen.parm4,modType=4,negEmax=TRUE)
-summary(D4)
+genp<-FixedMean(n,doselev,meanlev,sdy,pop,binary=TRUE)  
+
+tapply(genp$genFun(genp$genP)$y,dose,mean)
+meanlev
+
 }
 \dontshow{
 ##  example changes the random number seed

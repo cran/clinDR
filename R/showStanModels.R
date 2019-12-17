@@ -1,7 +1,7 @@
-showStanModels<-function(){
+showStanModels<-function(emod=c('basemodel.stan','mrmodel.stan')){
 	
 
-	emod<-'basemodel.stan'
+	emod<-match.arg(emod)
 	emod<-system.file(package="clinDR", "models", emod)
 	
 	if(file.access(emod,mode=0)<0)stop(paste('The rstan model',

@@ -28,7 +28,7 @@ meanlev<-emaxfun(dose,pop)
 y<-rnorm(n1+n2,meanlev,sdy)
 prots<-c(rep(1,n1),rep(2,n2))
 
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,
@@ -99,7 +99,7 @@ nag<-table(dose,prots)
 nag<-as.vector(nag[nag>0])
 
 
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(ymean,doselev,prior=prior,modType=4,
@@ -169,7 +169,7 @@ ysub<-y[dose!=0]
 dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
@@ -239,7 +239,7 @@ ysub<-y[dose!=0]
 dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
@@ -321,9 +321,9 @@ if(modtype==4){pparm<-c(pop[1],1,pop[2:3])
 z<-matrix(numeric(modtype*nsim),ncol=modtype)
 zabs<-matrix(numeric(nsim*2),ncol=2)
 zdif<-matrix(numeric(nsim*2),ncol=2)
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan()
+estan<-selEstan('basemodel')
 
 for(i in 1:nsim){
 	y<-rnorm(n1+n2,meanlev,sdy)
@@ -338,7 +338,7 @@ for(i in 1:nsim){
 					tapply(y[prots==2],dose[prots==2],mean))
 	
 	testout<-fitEmaxB(ysum,doselev,prior=prior,count=n,modType=modtype,
-										msSat=msSat,mcmc=mcmc,estan=estan,diagnostics=FALSE)
+										msSat=msSat,mcmc=mcmc,estan=estan,diagnostics=FALSE,nproc=1)
 	
 	parms<-coef(testout)
 	estimate<-apply(parms,2,mean)
@@ -396,9 +396,8 @@ counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
 dvec<-c(dvec1,dvec1,dvec2,dvec2)
 
-prior<-prior.control(0,4,0,4,.5,edDF=5,binary=TRUE)
+prior<-suppressWarnings(prior.control(0,4,0,4,.5,edDF=5,binary=TRUE))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
-
 
 testout<-fitEmaxB(y,dvec,modType=modType,
 									prot=prots,
@@ -462,7 +461,7 @@ counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
 dvec<-c(dvec1,dvec1,dvec2,dvec2)
 
-prior<-prior.control(0,4,0,4,.5,edDF=5,binary=TRUE)
+prior<-suppressWarnings(prior.control(0,4,0,4,.5,edDF=5,binary=TRUE))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
@@ -521,9 +520,9 @@ sdy<-8.0
 pop.parm<-c(log(ed50),emax,e0)    
 
 modTYpe<-4
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan()
+estan<-selEstan('basemodel')
 
 dose<-rep(doselev,n)
 meanlev<-emaxfun(doselev,pop.parm)  
@@ -540,7 +539,7 @@ for (i in 1:nsim){
 	msSat<-(summary(lm(y~factor(dose)))$sigma)^2
 	testout<-fitEmaxB(ymean,doselev,prior=prior,modType=modType,count=n,
 										mcmc=mcmc,msSat=msSat,
-										estan=estan,diagnostics = FALSE)
+										estan=estan,diagnostics = FALSE,nproc=1)
 	if(is.null(testout)){
 		covci[i,]<-NA
 		covpi[i,]<-NA
@@ -609,15 +608,15 @@ covdifci<-matrix(logical(nsim*nd),ncol=nd)
 covdifpi<-matrix(logical(nsim*nd),ncol=nd)
 
 modType<-4
-prior<-prior.control(0,4,0,4,50,edDF=5,binary=TRUE)
+prior<-suppressWarnings(prior.control(0,4,0,4,50,edDF=5,binary=TRUE))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan()
+estan<-selEstan('basemodel')
 
 for (i in 1:nsim){
 	y<-rbinom(length(n),n,meanlev)
 	n01<-c(y,n-y)
 	testout<-fitEmaxB(y01,d01,prior,modType=4,
-										count=n01,diagnostics = FALSE,binary=TRUE)
+										count=n01,diagnostics = FALSE,binary=TRUE,nproc=1)
 	if(is.null(testout)){
 		covci[i,]<-NA
 		covpi[i,]<-NA
@@ -699,7 +698,7 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-0
 basevar<-matrix((10*sdy)^2,nrow=1,ncol=1)
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
@@ -768,7 +767,7 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar))
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
@@ -833,7 +832,7 @@ y<-rnorm(ntot,meanlev,sdy)
 
 basemu<-numeric(2)
 basevar<-diag(2)*(10*sdy)^2
-prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout3<-fitEmaxB(y,dose,prior=prior,modType=3,xbase=x,
@@ -898,7 +897,7 @@ y<-rbinom(ntot,1,meanlev)
 
 basemu<-numeric(2)
 basevar<-diag(2)*(4)^2
-prior<-prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout4b<-fitEmaxB(y,dose,prior=prior,modType=4,xbase=x,
@@ -968,7 +967,7 @@ basemu<-numeric(2)
 basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
 basevar<-basevar*(4)^2  ## off-diagonal elements
 
-prior<-prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+prior<-suppressWarnings(prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=3,xbase=x,

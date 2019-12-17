@@ -49,27 +49,31 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 		predref<-predref+badd
 	}
 	pred<-  apply(predout,2,mean) 
+	predMed<-  apply(predout,2,median) 
 	sepred<- sqrt( apply(predout,2,var) )
 	lb<- apply(predout,2,quantile,probs=clevlow)
 	ub<- apply(predout,2,quantile,probs=clevup)
 	names(pred)<-dosevec
+	names(predMed)<-dosevec
 	names(sepred)<-dosevec
 	names(lb)<-dosevec
 	names(ub)<-dosevec
 	
 	fitdif<-apply(predout-predref,2,mean)
+	fitdifMed<-apply(predout-predref,2,median)
 	sedif<- sqrt( apply(predout-predref,2,var) )
 	lbdif<- apply(predout-predref,2,quantile,probs=clevlow)
 	ubdif<- apply(predout-predref,2,quantile,probs=clevup)
 	names(fitdif)<-dosevec
+	names(fitdifMed)<-dosevec
 	names(sedif)<-dosevec
 	names(lbdif)<-dosevec
 	names(ubdif)<-dosevec
 	
 	colnames(predout)<-dosevec
 	
-	return(list(pred=pred,lb=lb,ub=ub,se=sepred,
-		 fitdif=fitdif,lbdif=lbdif,
+	return(list(pred=pred,predMed=predMed,lb=lb,ub=ub,se=sepred,
+		 fitdif=fitdif,fitdifMed=fitdifMed,lbdif=lbdif,
 		 ubdif=ubdif,sedif=sedif,simResp=predout,sigsim=sigsim))
 }
 

@@ -74,8 +74,9 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
-		sigmaup=30,edDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,
+		difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+		sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
 
 D1 <- emaxsimB(nsim,gen, prior, modType=3,mcmc=mcmc,check=FALSE)

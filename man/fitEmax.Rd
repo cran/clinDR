@@ -14,7 +14,7 @@ data, the Emax model is on the logit scale.
 fitEmax(y,dose,iparm,xparm,modType=3,
 	prot=rep(1,length(y)),count=rep(1,length(y)),xbase=NULL,
 	binary=FALSE,diagnostics=TRUE,msSat=NULL,
-	pboAdj=FALSE,optObj=TRUE)
+	pboAdj=rep(FALSE,max(prot)),optObj=TRUE)
 }
 
 \arguments{

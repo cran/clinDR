@@ -62,11 +62,10 @@ starting values.
 
 \seealso{\code{\link{nls}},  \code{\link{emaxalt}} }
 \examples{
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-data("examples14")
-exdat<-examples14[[6]]
-startEmax(exdat$y,exdat$dose)
-
+startEmax(exdat$rslt,exdat$dose)
 }
 \keyword{nonlinear}
 

@@ -115,9 +115,9 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 		print(round(se.mean.actlev[-1],4))
 	}
 	cat(paste("Most favorable pairwise comparison:\n"))	
-	cat(paste(round(sel.actlev,3),' Lower error(',
+	cat(paste(round(sel.actlev,3),' Intervals too low(',
 						round(sel.low.err,3),
-						') Upper error(',round(sel.up.err,3)),')\n',sep='')
+						') Intervals too low(',round(sel.up.err,3)),')\n',sep='')
 	
 	
 	bias<-apply(fitdifv-fitdifP,2,mean)
@@ -134,22 +134,13 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 	cat(paste("Bias in the most favorable pairwise comparison:\n"))	
 	cat(paste(round(sel.mbias,2),'\n'))
 
-
-	### summarize standard errors
-
-	cat(paste("\n\nReported SEs by dose group [Dose-PBO]:\n"))
-	cat(paste("Dose response modeling:","\n"))
+	### mean squared errors
 	sd.sedifv <- apply(object$sedifv, 2, mean)
 	names(sd.sedifv)<-doselev
-	print(round(sd.sedifv[-1],3))
-
-	cat(paste("\nPairwise comparisons:","\n"))
 	sd.semdifv <- apply(semdifv, 2, mean)
-	names(sd.semdifv )<-doselev
-	print(round(sd.semdifv[-1],3))
+	names(sd.semdifv )<-doselev  
 	
-	### mean squared errors
-  mse.sedifv <- sqrt( apply((fitdifv-fitdifP)^2,2,mean) )
+	mse.sedifv <- sqrt( apply((fitdifv-fitdifP)^2,2,mean) )
 	names(mse.sedifv)<-doselev
 	mse.pair<-sqrt( apply((mdifv-fitdifP)^2,2,mean)  )
 	names(mse.pair)<-doselev
@@ -169,6 +160,7 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 		cat(paste("Note:  Distinguish (Standard errors) from ",
      	          "reported non-linear estmation SE" ,"\n",sep=""))
 	}
+
 	return(invisible(list(propNoFit=mean(noFit),
 												propSwitchMod=mean(object$bigC),
 												propHighED50=mean(object$bigC),

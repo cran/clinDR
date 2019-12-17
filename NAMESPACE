@@ -11,9 +11,10 @@ export(emaxsim,emaxsimB,plot.emaxsim,plot.emaxsimB,plot.emaxsimobj,plot.emaxsimB
 			 coef.fitEmax,sigma.fitEmax,vcov.fitEmax,
 			 fitEmaxB,predict.fitEmaxB,plot.fitEmaxB,print.fitEmaxB,
 			 coef.fitEmaxB,sigma.fitEmaxB,
-			 prior.control,mcmc.control,compileStanModels,checkMonoEmax,targetBeta)
+			 emaxPrior.control,prior.control,mcmc.control,compileStanModels,checkMonoEmax,
+			 targetBeta,solveDose,solveEmax)
 import("foreach")
-importFrom("rstan","stan_model","sampling")
+importFrom("rstan","stan_model","sampling","get_sampler_params")
 importFrom("graphics", "abline", "plot", "points","mtext")
 importFrom("stats", "as.formula", "binomial", "coef", "sigma",  "glm",
              "glm.control", "lm", "median", "na.omit", "nlm", "nls",

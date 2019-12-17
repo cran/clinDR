@@ -15,7 +15,7 @@ the model-based estimated dose response curve.
     clev = 0.9, 
     plotPop=c('m','3','4'),     
     negC = FALSE, 
-    log=FALSE,
+    logScale=FALSE,
     predict=TRUE, 
     plot=TRUE, ...)
 }
@@ -41,7 +41,7 @@ used.}
   \item{negC}{If the ED50<lower ED50 limit, TRUE causes the Emax
 model to be plotted in addition to the alternative
 model selected.}
-  \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{logScale}{If \code{TRUE}, log scale is used for dose.}
   \item{predict}{When \code{TRUE}, predictive intervals are plotted
   with grey errorbars in addition to the confidence intervals.}
   \item{plot}{Return plotting output without plotting.}  

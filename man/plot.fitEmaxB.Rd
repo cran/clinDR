@@ -11,14 +11,15 @@ created by function \code{fitEmaxB}.
       x,int=0,plotResid=FALSE,clev=0.9,
       predict=TRUE,plotci=TRUE,plotDif=FALSE,
       xlab='Dose',
-      ylab=ifelse(plotResid,'Residuals','Response'),
+      ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
+            'Difference With Placebo','Response')),
       symbol=NULL,symbolLabel='Group',symbolShape=8,
       symbolColor='red',symbolSize=4,
       bwidth=NULL,
       xlim=NULL,
       xat=NULL,
       ylim=NULL,
-      log=FALSE,       
+      logScale=FALSE,       
       ngrid=200,
       plot=TRUE, ...)
 }
@@ -31,8 +32,7 @@ created by function \code{fitEmaxB}.
   value is \code{0}, which displays all protocols in a grid layout.}
   \item{plotResid}{If \code{TRUE}, a residual plot of the observed 
   dose group means/proportions  
-  less the model-based posterior mean estimates 
-  is produced instead of a dose response curve plot.}
+  less the model-based MCMC median estimates of the means/proportions.}
   \item{clev}{Level for posterior probability intervals about the 
 mean/proportion for each dose.}
   \item{predict}{When predict=TRUE, predictive intervals for sample dose group
@@ -66,7 +66,7 @@ mean/proportion for each dose.}
   \item{xat}{The points at which tick-marks are to be drawn. Errors occur if the 
   points are outside the range of xlim. By default (when NULL) tickmark locations are computed.}  
   \item{ylim}{Plot limits for the y-axis}
-  \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{logScale}{If \code{TRUE}, log scale is used for dose.}
   \item{ngrid}{The number doses evaluated when plotting the curve.}
   \item{plot}{Return plotting output without plotting.}
   \item{...}{No additional plotting options are currently used.}
@@ -78,8 +78,7 @@ limits.
 }
 
 \details{
-Model-based posterior means, posterior standard deviations, and posterior interval bounds are computed 
-using the MCMC parameters evaluated in the Emax function.   
+Model-based medians, standard deviations, and interval bounds for the dose groups means/proportions based on the MCMC parameters evaluated in the Emax function.   
 
 The function generates random numbers when \code{predict=TRUE}, so the random number generator/seed must
 be set before the function is called for exact reproducibility.
@@ -96,16 +95,19 @@ from the first protocol.
 \seealso{\code{\link{fitEmaxB}}}
 \examples{
 \dontrun{
-data("examples14")
-exdat<-examples14[[1]]
 
-prior<-prior.control(epmu=0,epsd=4,emaxmu=0,emaxsd=4,p50=0.1,
+data("metaData")
+exdat<-metaData[metaData$taid==1,]
+
+prior<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,dTarget=20,
+				p50=(2+5)/2,
 				sigmalow=0.01,sigmaup=3)
+										
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-				
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,prot=exdat$protid,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
 plot(fitout)
 }
 }

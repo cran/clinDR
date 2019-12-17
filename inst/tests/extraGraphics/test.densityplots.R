@@ -15,14 +15,16 @@ pdf(file=paste(file.path(pvar,"output.densityplot_new.pdf")))
 
 
 set.seed(12357)
-data(examples14) 
-dat<-examples14[[6]]
+data(metaData) 
+dat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 attach(dat)
 
-fit<-fitEmax(y,dose,modType=3,count=nsize,msSat=sd^2)
+msSat<-sum((dat$sampsize-1)*(dat$sd)^2)/(sum(dat$sampsize)-length(dat$sampsize))
+
+fit<-fitEmax(rslt,dose,modType=3,count=sampsize,msSat=msSat)
 
 
-dgrid<-1:100
+dgrid<-0:100
 fitout<-predict(fit, dosevec=dgrid,clev=0.95)
 qL<-fitout$lbdif
 qH<-fitout$ubdif
@@ -45,42 +47,24 @@ colnames(qH)<-NULL
 
 DRDensityPlot(dgrid,qL,qH,qlevL=qlev,xlab='Dose',ylab='Diff with PBO')
 
-qlev<-c(0.025,0.10,0.25)
-fitout<-predict(fit, dosevec=dgrid,clev=0.95)
-qL<-fitout$lbdif
-qH<-fitout$ubdif
-fitout<-predict(fit, dosevec=dgrid,clev=0.80)
-qL<-cbind(qL,fitout$lbdif)
-qH<-cbind(qH,fitout$ubdif)
-fitout<-predict(fit, dosevec=dgrid,clev=0.50)
-qL<-cbind(qL,fitout$lbdif)
-qH<-cbind(qH,fitout$ubdif)
-
-rownames(qL)<-NULL
-colnames(qL)<-NULL
-rownames(qH)<-NULL
-colnames(qH)<-NULL
-
-
-DRDensityPlot(dgrid,qL,qH,qlevL=qlev,xlab='Dose',ylab='Diff with PBO')
-
-
 
 #####################################################
 ### plotBDensity
 
-dgrid<-seq(1,100,0.5)
+dgrid<-seq(0,100,0.5)
 
-prior<-prior.control(epmu=1.78,epsd=1,emaxmu=-2.82,emaxsd=1,
-										 p50=0.04,sigmalow=0.01,1)
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+												 p50=3.75,sigmalow=0.01,sigmaup=20)
+mcmc<-mcmc.control(chains=3)
 
-fitb<-fitEmaxB(y,dose,prior,modType=4,count=nsize,msSat=sd^2)
+
+fitb<-fitEmaxB(rslt,dose,prior,modType=4,count=sampsize,msSat=msSat)
 
 parms<-coef(fitb)
-plotBdensity(dgrid,parms[,1:4])
+pout<-plotBdensity(dgrid,parms[,1:4])
 
 ### difference with pbo
-plotBdensity(dgrid,parms[,1:4],plotDif=TRUE,
+poutdif<-plotBdensity(dgrid,parms[,1:4],plotDif=TRUE,
        xlab='Dose',ylab='Dif with PBO')
 
 dev.off()

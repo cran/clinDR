@@ -2,7 +2,7 @@
 
 	modType<-x$modType	
 	doselev<-x$genObj$genP$doselev
-	fitdifv<-x$fitpredv-x$fitpredv[,1]
+	fitdifv<-x$fitdifv
 	fitdifP<-x$predpop-x$predpop[,1]
 	sedifv<-x$sedifv
 	pval<-round(x$pVal,digits)
@@ -12,6 +12,7 @@
 	est[,1]<-exp(est[,1])
 	if(modType==4)estname<-c("ED50","lambda","Emax","E0")
 	else estname<-c("ED50","Emax","E0")
+	if(x$localParm)estname<-c(estname,"difTarget")
 
 
 	if(length(nprint)==1)nprint<-c(1,nprint)

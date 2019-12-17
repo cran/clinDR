@@ -11,7 +11,7 @@ group means (with optional CI bars)
 \method{plot}{plotB}( x,
 	plotDif= FALSE, plotMed= FALSE, 
 	plotResid=FALSE, predict= TRUE,
-	log=FALSE,
+	logScale=FALSE,
 	xlim,
 	xat=NULL,
 	ylim,  
@@ -23,13 +23,16 @@ group means (with optional CI bars)
 
 \arguments{
   \item{x}{\code{\link{plotB}} object output from function \code{plotB}.}
-  \item{plotDif}{If TRUE, plot difference between doses and placebo.}
+  \item{plotDif}{Plot difference between doses and placebo. 
+  It is assumed the lowest dose is placebo. If \code{activeControl}, the
+  difference is with the active control mean, and the active 
+  controls are not plotted.}
   \item{plotMed}{If TRUE, model-based curves are medians rather than means.}
   \item{plotResid}{If TRUE, a plot of the residuals formed from the
   dose group means minus the posterior dose group means.}
   \item{predict}{When predict=TRUE, predictive intervals for sample dose group
   proportions are plotted.  They are gray-shaded bars.}
-  \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{logScale}{If \code{TRUE}, log scale is used for dose.}
   \item{xlim}{x-axis limits }
   \item{xat}{The points at which tick-marks are to be drawn. Errors occur if the 
   points are outside the range of xlim. By default (when NULL) tickmark locations are    computed.}
@@ -74,35 +77,36 @@ evaluate the prior dose response curve.
 \seealso{\code{\link{plotB}}, \code{\link{plotD}},  \code{\link{plot.fitEmax}} }
 \examples{
 \dontrun{
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-prior<-prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-				sigmalow=0.01,sigmaup=3)
+prior<-emaxPrior.control(epmu=0,epsca=100,difTargetmu=0,difTargetsca=100,dTarget=80.0,
+        p50=3.75,sigmalow=0.01,sigmaup=20)
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-coef(fitout)[1:4]   ### use first intercept
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+parms<-coef(fitout)[,1:4]  #use first intercept
 
-outB<-plotB(exdat$y,exdat$dose,parms, sigma2=(sigma(fitout))^2,
+outB<-plotB(exdat$rslt,exdat$dose,parms, sigma2=(sigma(fitout))^2,
 			ylab="Change in EDD")
 			
 plot(outB,plotDif=TRUE)
 }
 \dontshow{
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-parms<-matrix(c(-0.1665350, 0.3657811, -5.660137, 1.744753, 0.4050860,
--0.8463137, 0.3837361, -4.877676, 1.784098, 0.3943782,
--1.1811274, 0.3767222, -4.921861, 1.873861, 0.4266011,
- 0.4729616, 0.3157714, -6.322768, 1.780517, 0.3646588,
- 0.4255880, 0.3336959, -6.251558, 1.775438, 0.3657461),ncol=5,byrow=TRUE)
+parms<-matrix(c(1.611445,0.5160108,-77.73158,8.981834,
+2.606269,0.3915947, -94.49052, 7.518533,
+1.312385,0.9194756, -68.27381, 9.848746,
+2.193071,0.5296447, -81.90235, 2.330520,
+3.798612,0.3540451,-129.37529, 8.739098),ncol=4,byrow=TRUE)
+sig2<-c(78.87238,87.05488,94.88178,78.54260,89.51093,79.74265)
 
-outB<-plotB(exdat$y,exdat$dose,parms[,1:4], sigma2=(parms[,5])^2,
+outB<-plotB(exdat$rslt,exdat$dose,parms, sigma2=sig2,
 			ylab="Change in EDD")
-			
 plot(outB,plotDif=TRUE)
 }
 }

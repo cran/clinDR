@@ -8,8 +8,8 @@ Set MCMC controls.  Also control spread of initial parameter values.
 }
 \usage{
 mcmc.control(chains = 1, thin = 1, 
-	warmup = 500, iter = 5000* thin, 
-	propInit = 0.25, seed = 12357, adapt_delta = 0.8)
+	warmup = 1000, iter = 3333* thin, 
+	propInit = 0.25, seed = 12357, adapt_delta = 0.95)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,4 +39,6 @@ Seed passed to \code{rstan}.
 See \code{rstan} documentation for function \code{sampling}.
 }
 }
+\note{Some defaults were changed with version>=2.0.  For earlier versions,
+warmup = 500, iter = 5000* thin, and adapt_delta=0.8}
 

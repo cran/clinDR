@@ -1,4 +1,4 @@
-context('emaxsimB evaluations')
+context('emaxsimB evaluations updated prior')
 
 ####################################################################
 ###### check mcp testing
@@ -43,7 +43,7 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
 												sigma=sdy,placAdj=FALSE,
 												alternative="one.sided",critV=TRUE))
 
-prior<-suppressWarnings(prior.control(0,3,0,3,0.5,0.1,5,edDF=5))
+prior<-emaxPrior.control(0,3,0,3,0.5,1.0,0.1,5,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 
@@ -88,7 +88,7 @@ emaxMods1<-Mods(sigEmax=cbind(parm.mat[1,1],parm.mat[1,2]),
 								doses=doselev,placEff=e0,maxEff=-1)
 emaxMat1<-optContr(emaxMods1,w=n)
 
-prior<-suppressWarnings(prior.control(0,3,0,3,0.5,0.001,0.1,edDF=5))
+prior<-emaxPrior.control(0,3,0,3,1.0,0.5,0.001,0.1,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1 <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -155,7 +155,7 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,
 												S=V,df=Inf,placAdj=FALSE,
 												alternative="one.sided",critV=TRUE))
 
-prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE))
+prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 
@@ -168,7 +168,7 @@ test_that("check mcp power calculation",{
 
 test_that("emaxsim internal predicted values match population for binary",{
 	expect_that(max(apply(D3$fitpredv,2,mean)),
-							equals(max(plogis(emaxfun(doselev,pop))),tol=0.02,scale=1))
+							equals(max(plogis(emaxfun(doselev,pop))),tol=0.03,scale=1))
 })
 
 ###
@@ -206,7 +206,7 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE))
+prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 ### ci for a dose not in design
@@ -273,15 +273,15 @@ meanlev[5]<-meanlev[5]+1.0
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-suppressWarnings(prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
-										 sigmaup=30,edDF=5))
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+										 sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
 D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
 
 test_that("gofP is very high",{
-	expect(all(D1$gofP>0.50),'gofP not large as expected')
+	expect(all(D1$gofP>0.40),'gofP not large as expected')
 })
 
 set.seed(12357)
@@ -303,8 +303,8 @@ meanlev[5]<-meanlev[1]   ### back to pbo
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-suppressWarnings(prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
-										 sigmaup=30,edDF=5))
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+										 sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
@@ -333,7 +333,7 @@ meanlev[6]<-0.55    ## higher than expected
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE))
+prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1b <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -362,7 +362,7 @@ meanlev[6]<-meanlev[1]    ## descend to pbo
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE))
+prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1blow <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -373,7 +373,7 @@ test_that("gofP is very high: binary",{
 })
 
 ####
-set.seed(12357)
+set.seed(1244444)
 nsim<-8
 
 doselev<-c(0,0.033,2*0.033,4*0.033,8*0.033,16*0.033)
@@ -390,7 +390,7 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE))
+prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -403,5 +403,5 @@ parms<-coef(fit8)
 gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,binary=TRUE)
 
 test_that("emaxsimB gofP equals checkMonoEmax return value ",{
-	expect_equal(gofP,D2$gofP[8],tol=0.01,scale=1)
+	expect_equal(gofP,D2$gofP[8],tol=0.025,scale=1)
 })

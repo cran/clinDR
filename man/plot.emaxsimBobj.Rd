@@ -12,7 +12,7 @@ the model-based estimated (posterior means) dose response curve.
 \method{plot}{emaxsimBobj}(
 	x, clev=0.9, plotDif=FALSE, 
 	plotPop=c('m','3','4'), 
-	log=FALSE, plotResid=FALSE, 
+	logScale=FALSE, plotResid=FALSE, 
 	plot=TRUE, ... )
 }
 
@@ -25,7 +25,7 @@ the model-based estimated (posterior means) dose response curve.
 	the population Emax parameters must be supplied with the
 	data generator (see \link{FixedMean} or \link{RandEmax}).  If
 	the Emax parameters are not available, linear interpolation is used.}
-  \item{log}{Not implemented}
+  \item{logScale}{Not implemented}
   \item{plotResid}{Not implemented}
   \item{plot}{Return plotting output without plotting.}  
   \item{\dots}{Other plot parameters.  See \code{plot.fitEmaxB} for details  }
@@ -56,9 +56,32 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
+nsim<-50
+idmax<-5
+doselev<-c(0,5,25,50,100)
+n<-c(78,81,81,81,77)
+Ndose<-length(doselev)
 
-prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
-		sigmaup=30,edDF=5)
+### population parameters for simulation
+e0<-2.465375 
+ed50<-67.481113 
+emax<-4.127726
+sdy<-7.967897
+pop<-c(log(ed50),emax,e0)    
+meanlev<-emaxfun(doselev,pop)  
+
+###FixedMean is specialized constructor function for emaxsim
+gen<-FixedMean(n,doselev,meanlev,sdy)  
+
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,
+		difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+		sigmaup=30,parmDF=5)
+		
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
+
+D1 <- emaxsimB(nsim,gen, prior, modType=3,mcmc=mcmc,check=FALSE)
+
+plot(D1,id=3)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = 0.95)
 
 D1 <- emaxsimB(nsim,gen, prior, modType=3,mcmc=mcmc,check=FALSE)

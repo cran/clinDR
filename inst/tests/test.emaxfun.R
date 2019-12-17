@@ -52,6 +52,68 @@ test_that("4 parm multi-dose, multi-parm set",{
 })
 
 
+e0<-0.75
+dose<-1
+led50<-log(0.5)
+lambda<-2
+target<-1.5
+emax<-solveEmax(target,dose,led50,lambda,e0)
 
+dose1<-solveDose(target,led50,lambda,emax,e0)
 
+eout<-emaxfun(dose=dose1,parm=c(led50,lambda,emax,e0))-e0
+
+test_that("solveDose,solveEmax positive effect",{
+    expect_that(dose1,equals(1))
+    expect_that(eout,equals(target))
+})
+
+e0<-10
+dose<-1
+led50<-log(0.5)
+lambda<-2
+target<- -1.5
+emax<-solveEmax(target,dose,led50,lambda,e0)
+
+dose1<-solveDose(target,led50,lambda,emax,e0)
+
+eout<-emaxfun(dose=dose1,parm=c(led50,lambda,emax,e0))-e0
+
+test_that("solveDose,solveEmax negative effect",{
+    expect_that(dose,equals(1))
+    expect_that(eout,equals(target))
+})
+
+###
+e0<-0.75
+dose<-1
+led50<-log(0.5)
+lambda<-2
+target<-1.5
+emax<-solveEmax(target,dose,led50,lambda,e0,pboadj=FALSE)
+
+dose1<-solveDose(target,led50,lambda,emax,e0,pboadj=FALSE)
+
+eout<-emaxfun(dose=dose1,parm=c(led50,lambda,emax,e0))
+
+test_that("solveDose,solveEmax positive effect",{
+    expect_that(dose1,equals(1))
+    expect_that(eout,equals(target))
+})
+
+e0<-10
+dose<-1
+led50<-log(0.5)
+lambda<-2
+target<- -1.5
+emax<-solveEmax(target,dose,led50,lambda,e0,pboadj=FALSE)
+
+dose1<-solveDose(target,led50,lambda,emax,e0,pboadj=FALSE)
+
+eout<-emaxfun(dose=dose1,parm=c(led50,lambda,emax,e0))
+
+test_that("solveDose,solveEmax negative effect",{
+    expect_that(dose,equals(1))
+    expect_that(eout,equals(target))
+})
 

@@ -1,11 +1,13 @@
-selEstan<-function(){
+selEstan<-function(emod=c('basemodel.rds','mrmodel.rds')){
 	
 
-	if(isTRUE(grep("64",Sys.getenv("R_ARCH"))>0)){
-		emod<-'comp64'
-	}else emod<-'comp32'
+	emod<-match.arg(emod)
 	
-	emod<-file.path(emod,'basemodel.rds')
+	if(isTRUE(grep("64",Sys.getenv("R_ARCH"))>0)){
+		ebase<-'comp64'
+	}else ebase<-'comp32'
+	
+	emod<-file.path(ebase,emod)
 	
 	emod<-system.file(package="clinDR", "models", emod)
 	
@@ -16,7 +18,7 @@ selEstan<-function(){
 	
 	estan<-readRDS(emod)	
 	
-	if(class(estan)!='stanmodel')stop('unable to create estan model')		
+	if(!inherits(estan,'stanmodel'))stop('unable to create estan model')		
 	
 	return(estan)
 }

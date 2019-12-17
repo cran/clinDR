@@ -2,7 +2,7 @@
 
    ### re-use code for other input types if emaxalt 
    ### and fitType is "3" or "4" 
-   simIn<-(class(fit)=='emaxalt' || class(fit)=='emaxsimobj')
+   simIn<-(inherits(fit,'emaxalt') || inherits(fit,'emaxsimobj'))
 	if(simIn){
 		fitType<-fit$fitType
 		binary<-fit$binary
@@ -19,7 +19,7 @@
    ### process all but 2-parameter model fits
    if(!simIn){
        ### coef=(ed50,lambda,emax,e0) or (ed50,emax,e0)
-       if(class(fit)=='nls'){
+       if(inherits(fit,'nls')){
           parm<-coef(fit)[1:modType]
           vfcov <- vcov(fit)[1:modType,1:modType]
        }else{

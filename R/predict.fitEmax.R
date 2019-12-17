@@ -16,7 +16,17 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	if(! int%in%(c(1:nprot)))stop('The intercept specification is invalid')
 
 	clev<- 0.5+clev/2
-	if(pboAdj)parmstot<-c(parmstot,rep(0,nprot))  ## put into standard form
+	
+	## put estimate into standard form
+	if(all(pboAdj)){
+		parmstot<-c(parmstot,rep(0,nprot))  
+	}else if(any(pboAdj)){
+		indp<-which(!pboAdj)
+		parmhold<-numeric(modType+nprot-1)	
+		parmhold[1:(modType-1)]<-parmstot[1:(modType-1)]
+		parmhold[modType+indp-1]<-parmstot[modType+sum(!pboAdj)-1]
+		parmstot<-parmhold
+	}
 	
 	nparm<-length(parmstot)
 	nsub<-nparm-nprot-nbase
@@ -25,16 +35,24 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	if(nbase>0)parms<-c(parms,parmstot[c((1+nparm-nbase):nparm)])
 	
 	### put vc into standard form before applying subsetting code for one int
-	if(pboAdj){
+	if(any(pboAdj)){
 		if(modType==3){
 			tmpcov<-diag(2+nprot)
 			diag(tmpcov)<-0
-			tmpcov[1:2,1:2]<-vc
+			if(all(pboAdj)){
+				tmpcov[1:2,1:2]<-vc
+			}else{
+				tmpcov[c(1:2,2+indp),c(1:2,2+indp)]<-vc
+			}
 			vc<-tmpcov
 		}else{
 			tmpcov<-diag(3+nprot)
 			diag(tmpcov)<-0
-			tmpcov[1:3,1:3]<-vc
+			if(all(pboAdj)){
+				tmpcov[1:3,1:3]<-vc
+			}else{
+				tmpcov[c(1:3,3+indp),c(1:3,3+indp)]<-vc
+			}
 			vc<-tmpcov
 		}
 	}

@@ -4,8 +4,7 @@
 Set the parameters of the prior distribution for the Emax model implemented in \code{fitEmaxB}.
 }
 \description{
-Set the parameters of the prior distribution for the Emax model implemented in \code{fitEmaxB}.
-}
+Set the parameters of the prior distribution for the Emax model implemented in \code{fitEmaxB}.  \code{prior.control} is deprecated.  See \code{emaxPrior.control}.}
 \usage{
 prior.control(epmu = NULL, epsd = NULL, emaxmu = NULL, 
 	emaxsd = NULL, p50 = NULL, 
@@ -106,4 +105,5 @@ Neal Thomas
 \seealso{
 \code{fitEmaxB}
 }
+
 

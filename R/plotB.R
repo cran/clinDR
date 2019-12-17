@@ -4,10 +4,10 @@ function(y,dose,parm,sigma2,
 	predict= TRUE,plotDif=FALSE,plotMed=FALSE,
 	plotResid=FALSE,clev=0.8,
 	binary=c('no','logit','probit','BinRes'),BinResLev,
-	BinResDir=c('>','<'),	activeControl=FALSE,ac,yac,dac,countac=rep(1,length(yac)),
+	BinResDir=c('>','<'),	activeControl=FALSE,ac,yac,countac=rep(1,length(yac)),
 	labac='Act Comp',shapeac=8,colac='red',
 	symbol,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
-	xlim,ylim,xlab="Dose",ylab=ifelse(plotDif,"Diff with Comparator","Mean"),
+	xlim,ylim,xat=NULL,xlab="Dose",ylab=ifelse(plotDif,"Diff with Comparator","Mean"),
 	modelFun=emaxfun,makePlot=TRUE, ...) {
 
 	ny<-length(y)
@@ -19,8 +19,9 @@ function(y,dose,parm,sigma2,
 
 	nsym<-length(symbol)
 	if(nsym!=ny)stop('Symbol variable has invalid length')
+	if(is.factor(symbol))symlev<-sort(unique(levels(symbol)))
 	symbol<-as.character(symbol)  ### make sure symbol is character until output
-	symlev<-sort(unique(symbol))
+	if(!exists('symlev'))symlev<-sort(unique(symbol))
 	nsymlev<-length(symlev)
 	nshape<-length(symbolShape)
 	if(nshape!=nsymlev){
@@ -195,8 +196,8 @@ function(y,dose,parm,sigma2,
 		aclowLpred <- quantile(acpred,low.clev)
 		acupLpred<- quantile(acpred,up.clev)
 		AC<-c(acmean,acmed,aclowL,acupL,aclowLpred,
-			acupLpred,ymac,dac)
-		names(AC)<-c('acmean','acmed','aclowL','acupL','aclowLpred','acupLpred','yac','dac')
+			acupLpred,ymac)
+		names(AC)<-c('acmean','acmed','aclowL','acupL','aclowLpred','acupLpred','yac')
 	}else{
 		AC<-NULL
 		ymdif<-ym - ym[1]
@@ -215,7 +216,8 @@ function(y,dose,parm,sigma2,
 					lowLdifGpred,upLdifGpred)
 	rownames(modelDIFG)<-dgrid
 
-    plotBobj<-structure(list(pairwise=pairwise,dose=dosesub,symbol=factor(symsub),nolegend=nolegend, 
+    plotBobj<-structure(list(pairwise=pairwise,dose=dosesub,
+    		symbol=factor(symsub,levels=symlev),nolegend=nolegend, 
 				modelABS=modelABS,
 				modelDIF=modelDIF, 
 				modelABSG=modelABSG,
@@ -228,7 +230,7 @@ function(y,dose,parm,sigma2,
 		print(plot(plotBobj,
 		plotDif=plotDif,plotMed=plotMed,plotResid=plotResid, 
 		predict=predict,
-		xlim=xlim, ylim=ylim, xlab = xlab, ylab = ylab, 
+		xlim=xlim, ylim=ylim, xat=xat, xlab = xlab, ylab = ylab, 
 		labac=labac,shapeac=shapeac,colac=colac,
 		symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
 		symbolColor=symbolColor,symbolSize=symbolSize))

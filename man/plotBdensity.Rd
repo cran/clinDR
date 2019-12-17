@@ -57,28 +57,26 @@ A list containing two matrices with the number of rows equal to the number dose 
 \examples{
 
 \dontrun{
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-prior<-prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-				sigmalow=0.01,sigmaup=3)
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+        p50=3.75,sigmalow=0.01,sigmaup=20)
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
-parms<-coef(fitout)[1:4]   ## use first intercept
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+parms<-coef(fitout)[,1:4]  #use first intercept
 
 dgrid<-seq(0,1,length=100)
 
-plotBdensity(dgrid,parm=parms)
+pout<-plotBdensity(dgrid,parm=parms)
 
-plotBdensity(dgrid,parm=parms,plotDif=TRUE,
+pout2<-plotBdensity(dgrid,parm=parms,plotDif=TRUE,
        xlab='Dose',ylab='Dif with PBO')
 }
 \dontshow{
-data("examples14")
-exdat<-examples14[[6]]
-
 parms<-matrix(c(-0.1665350, 0.3657811, -5.660137, 1.744753, 0.4050860,
 -0.8463137, 0.3837361, -4.877676, 1.784098, 0.3943782,
 -1.1811274, 0.3767222, -4.921861, 1.873861, 0.4266011,

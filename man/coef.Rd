@@ -11,13 +11,16 @@ Matrix of MCMC generated parameters for fitEmaxB.
 }
 \usage{
 	\method{coef}{fitEmax}(object, ...)
-	\method{coef}{fitEmaxB}(object, ...)
+	\method{coef}{fitEmaxB}(object, local=FALSE, ...)
 	\method{coef}{emaxsim}(object, ...)
-	\method{coef}{emaxsimB}(object, ...)
+	\method{coef}{emaxsimB}(object, local=FALSE, ...)
 }
 \arguments{
 	\item{object}{ Output of Emax fitting function }
-	\item{\dots}{ None additional inputs supported }
+	\item{local}{When a prior distribution of type 'emaxPrior' was used to
+	create the object, specifying \code{local=TRUE} will output the local
+	'difTarget' parameter estimates.}
+	\item{\dots}{ No additional inputs supported }
 }
 
 \value{

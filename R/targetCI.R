@@ -1,6 +1,6 @@
   targetCI<-function(object,target,dgrid,cilev=0.80,high= TRUE){
 
-	if(class(object)!='emaxsim')stop('Input must be of class emaxsim')
+	if(!inherits(object,'emaxsim'))stop('Input must be of class emaxsim')
 	if(length(dgrid)==1){
 	 doselev<-object$genObj$genP$doselev
 	 dgrid<-seq(0,max(doselev),length=dgrid)

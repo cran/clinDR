@@ -24,7 +24,7 @@ function(y,dose,parm,sigma2,nvec=rep(1,length(dose)),xbase=NULL,
 		nparm<-nparm-nbase
 	}	
 	
-	tol<-.Machine$double.eps
+	tol<-sqrt(.Machine$double.eps)
 	
 	
 	nsim<-nrow(parm)

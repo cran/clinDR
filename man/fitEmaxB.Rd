@@ -10,7 +10,7 @@ Emax model.  Different intercepts for multiple protocol-data are supported.  For
 data, the Emax model is on the logit scale.
 }
 \usage{
-fitEmaxB(y, dose, prior, modType = 3, prot = rep(1, length(y)), 
+fitEmaxB(y, dose, prior, modType = 4, prot = rep(1, length(y)), 
 	count = rep(1, length(y)), xbase=NULL,
 	binary = FALSE, msSat = NULL,
 	pboAdj = FALSE, mcmc = mcmc.control(), estan = NULL, 
@@ -23,9 +23,13 @@ fitEmaxB(y, dose, prior, modType = 3, prot = rep(1, length(y)),
 are are not permitted.  Dose/protocol group means for grouped continuous data.  For binary
 data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \item{dose}{Dose for each patient.}
-  \item{prior}{Prior specification through a list of parameter values.  See \code{\link{prior.control}}
-  for details.
-}
+  \item{prior}{Prior specification through an object of type 'emaxPrior' or 'prior'.  
+  See \code{\link{emaxPrior.control}} and \code{\link{prior.control}} for details.  
+  The 'emaxPrior' specifies
+  the magnitude of the potential effect for a specified dose (typically the highest
+  anticipated dose and/or the dose in a POC study), while the 'prior' specifies the
+  theoretical maximum effect (the emax parameter).  The 'prior' specification is 
+  deprecated and will be removed.}
   \item{modType}{modType=3 (default) for the 3-parameter hyperbolic Emax model.
   modType=4 for the 4-parameter sigmoidal Emax model.} 
   \item{prot}{Protocol (group) membership used to create multiple intercepts.  
@@ -46,9 +50,9 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   \item{msSat}{If continuous \code{Y} are dose/protocol group means rather than
   individual measurements, the within group variance, \code{msSat}, should be 
   supplied.  This variance is the mean square from the model saturated in
-  dose and protocol.  It is used for goodness-of-fit (GOF) testing, and to 
+  dose and protocol.  It is used to 
   improve the residual variance estimate for the Emax model.  If it is not
-  supplied, statistics needed for GOF will not be available, and the
+  supplied, the
   residual SD (and associated SE) will have low degrees of freedom.}
   \item{pboAdj}{For published data with only pbo-adjusted dose group means and
   SEs, the model is fit without an intercept(s).  If initial parameters
@@ -85,6 +89,7 @@ A list assigned class "fitEmaxB" with:
 modType, binary, pboAdj, nbase, 
 msSat, prior, mcmc}{Input values.}
 }
+\note{The default modType was changed from 3 to 4 for clinDR version >2.0}
 \references{
 Thomas, N., Sweeney, K., and Somayaji, V. (2014).  Meta-analysis of clinical dose response in a large drug development portfolio, Statistics in Biopharmaceutical Research, Vol. 6, No.4, 302-317.
 <doi:10.1080/19466315.2014.924876>
@@ -103,16 +108,19 @@ Neal Thomas
 \examples{
 \dontrun{
 
-data("examples14")
-exdat<-examples14[[1]]
+data("metaData")
+exdat<-metaData[metaData$taid==1,]
 
-prior<-prior.control(epmu=0,epsd=4,emaxmu=0,emaxsd=4,p50=0.1,
+prior<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,dTarget=20,
+				p50=(2+5)/2,
 				sigmalow=0.01,sigmaup=3)
 										
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,prot=exdat$protid,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+plot(fitout)
 }
 }
 

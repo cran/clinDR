@@ -74,32 +74,33 @@ Returns a scalar Bayesian predictive p-value.
 \examples{
 \dontrun{
 
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-prior<-prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-				sigmalow=0.01,sigmaup=3)
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+        p50=3.75,sigmalow=0.01,sigmaup=20)
 mcmc<-mcmc.control(chains=3)
 
-fitout<-fitEmaxB(exdat$y,exdat$dose,prior,modType=4,prot=exdat$prot,
-				count=exdat$nsize,msSat=(exdat$sd)^2,mcmc=mcmc)
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
 parms<-coef(fitout)[,1:4]  #use first intercept
 
-checkMonoEmax(y=exdat$y, dose=exdat$dose, parm=parms, sigma2=(sigma(fitout))^2,
-      nvec=exdat$nsize, trend='negative')
+checkMonoEmax(y=exdat$rslt, dose=exdat$dose, parm=parms, sigma2=(sigma(fitout))^2,
+      nvec=exdat$sampsize, trend='negative')
       
 }
 \dontshow{
 
-data("examples14")
-exdat<-examples14[[6]]
+data("metaData")
+exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
 
-parms<-cbind(rnorm(5,-.69,.2),rnorm(5,.5,.01),rnorm(5,-5.19,0.2),rnorm(5,1.8,.02))
-sig2<-rnorm(5,0.4,0.01)
+parms<-cbind(rnorm(5,1.85,1.9),rnorm(5,.5,.17),rnorm(5,-70.19,11),rnorm(5,2.3,2.7))
+sig2<-rnorm(5,9.6,0.9)
 
-checkMonoEmax(y=exdat$y, dose=exdat$dose, parm=parms, sigma2=sig2^2,
-      nvec=exdat$nsize, trend='negative')
+checkMonoEmax(y=exdat$rslt, dose=exdat$dose, parm=parms, sigma2=sig2^2,
+      nvec=exdat$sampsize, trend='negative')
 }
 }
 \keyword{nonlinear}

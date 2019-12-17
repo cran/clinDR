@@ -22,9 +22,15 @@ compileStanModels <- function()
 												 save_dso=TRUE,auto_write=FALSE,model_name='base')
 	,file=NULL)
 	
+		capture.output(
+	mrmodel<-stan_model(file=file.path(fileloc,'mrmodel.stan'),
+												 save_dso=TRUE,auto_write=FALSE,model_name='mrmod')
+	,file=NULL)
+		
 	saveRDS(basemodel,file=file.path(filelocnew,"basemodel.rds"))
+	saveRDS(mrmodel,file=file.path(filelocnew,"mrmodel.rds"))
 	
-	cat('basemodel.rds created\n')
+	cat('basemodel.rds and mrmodel.rds created\n')
 	flush.console()
 
 	return(invisible())

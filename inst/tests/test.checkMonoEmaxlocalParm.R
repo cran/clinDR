@@ -1,4 +1,4 @@
-context('checkMonoEmax')
+context('checkMonoEmax local parameters')
 
 
 ### continuous with aggregate data
@@ -6,13 +6,13 @@ context('checkMonoEmax')
 data("metaData")
 exdat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 
-prior<-suppressWarnings(prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-										 sigmalow=0.01,sigmaup=3))
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+        p50=3.75,sigmalow=0.01,sigmaup=20)
 mcmc<-mcmc.control(chains=3)
 
 msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
 fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
-								 count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
 parm<-coef(fitout)[,1:4]  #use first intercept
 sigsim<-sigma(fitout)
 
@@ -20,7 +20,7 @@ p1<-checkMonoEmax(exdat$rslt,exdat$dose,parm,(sigsim)^2,
 									nvec=exdat$sampsize,trend='negative')
 
 test_that("continuous model fit is good",{
-	expect_gt(p1,0.5)
+  expect_gt(p1,0.5)
 })
 
 ### make high group decline (do not rerun mcmc for altered fit)
@@ -42,9 +42,9 @@ dose<-rep(exdat$dose,exdat$sampsize)
 popmean<-rep(popmean,exdat$sampsize)
 y<-rnorm(length(popmean),popmean,exdat$sd)
 
-
-prior<-suppressWarnings(prior.control(epmu=0,epsd=10,emaxmu=0,emaxsd=10,p50=0.25,
-										 sigmalow=0.01,sigmaup=3))
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,
+												 dTarget=80,p50=3.75,
+										 sigmalow=0.01,sigmaup=3)
 mcmc<-mcmc.control(chains=3)
 
 fitouti<-fitEmaxB(y,dose,prior,modType=4, mcmc=mcmc)
@@ -93,7 +93,7 @@ popparms<-apply(parms,2,median)
 
 dose<-rep(drep,cy)
 modp<-plogis(emaxfun(dose,popparms))
-modp[dose==4]<-modp[dose==4]+.1
+modp[dose==4]<-modp[dose==4]+.10
 modp[dose==2.5]<-modp[dose==2.5]+.05
 
 yb<-rbinom(length(modp),1,modp)
@@ -191,7 +191,7 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-suppressWarnings(prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar))
+prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
@@ -253,7 +253,7 @@ basemu<-numeric(2)
 basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
 basevar<-basevar*(4)^2  ## off-diagonal elements
 
-prior<-suppressWarnings(prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TRUE))
+prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=4,xbase=x,

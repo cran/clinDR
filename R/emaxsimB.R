@@ -1,5 +1,5 @@
 "emaxsimB" <-
-function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
+function(nsim, genObj, prior, modType=4,binary=FALSE,seed=12357,
 				 check=FALSE,nproc=parallel::detectCores(),
 				 negEmax=FALSE,ed50contr=NULL, lambdacontr=NULL,testMods=NULL,
          idmax=length(doselev),mcmc=mcmc.control(),customCode=NULL,
@@ -13,6 +13,8 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
   if(! modType %in% c(3,4))stop("modType must be 3 or 4")
   if(length(ed50contr)!=length(lambdacontr))stop('The number of ED50 and Lambda defining contrasts must be equal')
 	if(isTRUE( binary!=prior$binary ))stop('Binary specification in prior and model do not match')
+	
+	if(inherits(prior,'emaxPrior'))localParm<-TRUE else localParm<-FALSE
 	
 	if(exists('.Random.seed'))save.seed<-.Random.seed
 	save.rng<-RNGkind()[1]
@@ -29,7 +31,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	nfrac2<-0.5*nfrac
 	dose<-genObj$genP$dose
 	
-	estan<-selEstan()
+	if(localParm)estan<-selEstan('mrmodel') else estan<-selEstan('basemodel')
 
 	 ### set up emax-model contrasts for null hypothesis test
 	contMat<-NULL
@@ -66,8 +68,10 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
   set.seed(seed)
   rseed<-matrix(integer(nsim*7),ncol=7)
   rseed[1,]<-as.integer(.Random.seed)
-  for(i in 2:nsim){
-  	rseed[i,]<-nextRNGStream(rseed[i-1,])
+  if(nsim>1){
+	  for(i in 2:nsim){
+	  	rseed[i,]<-nextRNGStream(rseed[i-1,])
+	  }
   }
   
   if(isTRUE(.Platform$OS.type=='unix') && missing(nproc))
@@ -105,7 +109,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 						check=check,estan=estan,prior=prior,mcmc=mcmc,
 						customCode=customCode,customParms=customParms,
 						nfrac=nfrac,nfrac2=nfrac2,n=n,
-						ulev=ulev,llev=llev)
+						ulev=ulev,llev=llev,localParm=localParm)
 
 	if(nproc==1){
 		simout<-simrepB(1,inlist)
@@ -125,15 +129,18 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 
 	predpop <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	fitpredv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
+	fitdifv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	sepredv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	sedifv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	mv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	msSat<-rep(NA,nsim)
   pVal<-rep(NA,nsim)
+  divergence<-rep(NA,nsim)
   gofP<-rep(NA,nsim)
   selContrast<-rep(NA,nsim)
   colnames(predpop)<-doselev
   colnames(fitpredv)<-doselev
+  colnames(fitdifv)<-doselev
   colnames(sepredv)<-doselev
   colnames(sedifv)<-doselev
   colnames(mv)<-doselev
@@ -145,6 +152,8 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
   }else{
    colnames(est)<-c("led50","lambda","emax","e0")
   }
+	if(localParm) est<-cbind(est,difTarget=rep(NA,nsim))
+	
 	if(!binary){
 		sdv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	}else sdv<-NULL
@@ -164,12 +173,14 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 	for(j in 1:nproc){
 		predpop[indmat[j,1]:indmat[j,2],]<-simout[[j]]$predpop	
 		fitpredv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$fitpredv
+		fitdifv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$fitdifv
 		sepredv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$sepredv
 		sedifv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$sedifv
 		mv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$mv
 		sdv[indmat[j,1]:indmat[j,2],]<-simout[[j]]$sdv
 		msSat[indmat[j,1]:indmat[j,2]]<-simout[[j]]$msSat
 		pVal[indmat[j,1]:indmat[j,2]]<-simout[[j]]$pVal
+		divergence[indmat[j,1]:indmat[j,2]]<-simout[[j]]$divergence
 		gofP[indmat[j,1]:indmat[j,2]]<-simout[[j]]$gofP
 		selContrast[indmat[j,1]:indmat[j,2]]<-simout[[j]]$selContrast
 		residSD[indmat[j,1]:indmat[j,2]]<-simout[[j]]$residSD
@@ -181,7 +192,7 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
 		popSD<-c(popSD,simout[[j]]$popSD)		
 	}
   
-	return(structure(list(description=description,
+	return(structure(list(description=description,localParm=localParm,
 				binary=binary,modType=modType,genObj=genObj, 
         pop=pop,popSD=popSD,mcmc=mcmc,prior=prior,
 				est=est,residSD=residSD,
@@ -190,8 +201,8 @@ function(nsim, genObj, prior, modType=3,binary=FALSE,seed=12357,
         negEmax=negEmax,
         predpop=predpop,        
         mv = mv, sdv = sdv, msSat=msSat, fitpredv = fitpredv,
-        sepredv = sepredv, sedifv = sedifv, 
-				lb=lb,ub=ub,
+        sepredv = sepredv, fitdifv = fitdifv, sedifv = sedifv, 
+				lb=lb,ub=ub,divergence=divergence,
         rseed=rseed, idmax=idmax,customOut=customOut
         ),class="emaxsimB") )
 
@@ -224,6 +235,7 @@ simrepB<-function(j,inlist)
 	n<-inlist$n
 	llev<-inlist$llev
 	ulev<-inlist$ulev
+	localParm<-inlist$localParm
 	
  	nrep<-indmat[j,2]-indmat[j,1]+1 
  	
@@ -233,14 +245,17 @@ simrepB<-function(j,inlist)
  	
 	predpop <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	fitpredv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
+	fitdifv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	sepredv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	sedifv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	mv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	msSat<-rep(NA,nrep)
   pVal<-rep(NA,nrep)
+  divergence<-rep(NA,nrep)
   selContrast<-rep(NA,nrep)
   colnames(predpop)<-doselev
   colnames(fitpredv)<-doselev
+  colnames(fitdifv)<-doselev
   colnames(sepredv)<-doselev
   colnames(sedifv)<-doselev
   colnames(mv)<-doselev
@@ -253,6 +268,8 @@ simrepB<-function(j,inlist)
   }else{
    colnames(est)<-c("led50","lambda","emax","e0")
   }
+	if(localParm) est<-cbind(est,difTarget=rep(NA,nrep))
+		
 	if(!binary){
 		sdv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	}else sdv<-NULL
@@ -334,13 +351,17 @@ simrepB<-function(j,inlist)
     }
 
     ### assign simulation output
+    sampler <- get_sampler_params(bfit$estanfit, inc_warmup = FALSE)
+    sampler<-sampler[[1]]
+    divergence[i] <- mean(sampler[,'divergent__'])
     mv[i,  ]  <- tapply(y,dose,mean)
 		if(!binary){
 			sdv[i,  ] <- sqrt(tapply(y,dose,var))
 		}
     
     simout<-predict(bfit,doselev)
-    fitpredv[i,]<-simout$pred
+    fitpredv[i,]<-simout$predMed
+    fitdifv[i,]<-simout$fitdifMed
     sepredv[i,  ] <-simout$se
     sedifv[i,  ] <-simout$sedif
     simdif<-simout$simResp[,2:Ndose]-simout$simResp[,1]
@@ -356,7 +377,9 @@ simrepB<-function(j,inlist)
 			sigsim<- sigma(bfit)
 			residSD[i]<-median(sigsim)
 		}
-    est[i,]<- apply(parms,2,median)
+    if(localParm){
+    	est[i,]<- c(apply(parms,2,median),median(coef(bfit,local=TRUE)))
+    }else est[i,]<- apply(parms,2,median)
     
     ### compute gof test
     gofP[i]<-checkMonoEmax(yin,din,parms,sigsim^2,cin,
@@ -382,7 +405,8 @@ simrepB<-function(j,inlist)
         pVal=pVal,selContrast=selContrast,
         gofP=gofP,predpop=predpop,        
         mv = mv, sdv = sdv, msSat=msSat, fitpredv = fitpredv,
-        sepredv = sepredv, sedifv = sedifv, lb=lb,ub=ub,
+        fitdifv = fitdifv,sepredv = sepredv, sedifv = sedifv, lb=lb,ub=ub,
+				divergence=divergence,
 				customOut=customOut
         ))
 }

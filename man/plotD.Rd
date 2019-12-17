@@ -10,7 +10,7 @@ SDs
 \usage{
 plotD(y, dose, baseline, se = TRUE, line = TRUE, 
     meansOnly=FALSE,sem=NULL,clev = 0.8, 
-    xlab='Dose',ylab='Response', log=FALSE)
+    xlab='Dose',ylab='Response', logScale=FALSE)
 }
 
 \arguments{
@@ -27,7 +27,7 @@ baseline.  Baseline is optional.}
   \item{clev}{Level of CI for dose group means}
   \item{xlab}{Label for x-axis}
   \item{ylab}{Label for y-axis}
-  \item{log}{If \code{TRUE}, log scale is used for dose.}
+  \item{logScale}{If \code{TRUE}, log scale is used for dose.}
 }
 
 \value{
@@ -38,8 +38,9 @@ the dose group means and their standard errors.}
 
 \seealso{ \code{\link{plot.fitEmax}}, \code{\link{plotB}} }
 \examples{
-data(examples14)
-with(examples14[[2]],plotD(y,dose,meansOnly=TRUE,se=TRUE,sem=sem,ylab=
+data("metaData")
+exdat<-metaData[metaData$taid==2 & metaData$etype==1,]
+with(exdat,plotD(rslt,dose,meansOnly=TRUE,se=TRUE,sem=se,ylab=
 "Y",xlab="Dose(mg)"))
 }
 \keyword{hplot}

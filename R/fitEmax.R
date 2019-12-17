@@ -1,15 +1,16 @@
 "fitEmax"<-
 function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y)),
-		 xbase=NULL,binary=FALSE,diagnostics=TRUE,msSat=NULL,pboAdj=FALSE,optObj=TRUE){
+		 xbase=NULL,binary=FALSE,diagnostics=TRUE,msSat=NULL,
+		 pboAdj=rep(FALSE,max(prot)),optObj=TRUE){
 
-	tol<-.Machine$double.eps
+	tol<-sqrt(.Machine$double.eps)
 	protorig<-factor(prot)             #ensure that prot is a factor
 	prot<-as.numeric(protorig)         #convert to 1,2,3,....
   nprot<-max(prot)
 	dlev<-sort(unique(dose))
 
 	### check input consistency
-	if(isTRUE(pboAdj && binary))stop('PBO adjustment not available with binary data')
+	if(isTRUE(any(pboAdj) && binary))stop('PBO adjustment not available with binary data')
 
   nbase<-0
   if(!is.null(xbase)){
@@ -23,7 +24,7 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
   
   if(nbase>0){
   	if(!all(abs(count-1)<tol))stop('Covariate adjustment cannot be requested when counts!=1')
-  	if(pboAdj)stop('Covariate adjustment cannot be combined with PBO adjustment')
+  	if(any(pboAdj))stop('Covariate adjustment cannot be combined with PBO adjustment')
   	if(nbase>1 & !all.equal(dim(xbase),c(length(y),nbase))){
   		stop('Dimensions of xbase are invalid')
   	}
@@ -32,14 +33,16 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
   		xm<-tapply(xbase[,i],prot,mean)
   		if(!all(abs(xm)<tol))stop('Xbase must be centered about the protocol means')
   	}
-  }
 	
 	### check for missing data
+  }
 	if(any(is.na(y)))stop('Missing y data should be imputed or deleted')
 
 	### check input consistency
 	lengthvec<-c(length(y),length(dose),length(prot),length(count))
+	if(any(lengthvec)==0)stop('y, dose, prot, or count has length 0')
 	if(any(abs(lengthvec-lengthvec[1])>tol))stop('Length of y and dose must be equal')
+	if(length(pboAdj)!=max(prot))stop('pboAdj length should match the number of protocols')
 
   if(missing(iparm)){
   	if(nbase){
@@ -49,16 +52,23 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
   	}else iparm<-startEmax(y,dose,count=count,modType=modType,binary=binary)
   }else{
     if(modType==3){
-		if(length(iparm)!=3)stop('Incorrect number of starting parameters')
-		names(iparm)<-c('led50','emax','e0')
+			if(length(iparm)!=3)stop('Incorrect number of starting parameters')
+			names(iparm)<-c('led50','emax','e1')
 		}else if(modType==4){
 			if(length(iparm)!=4)stop('Incorrect number of starting parameters')
-			names(iparm)<-names(iparm)<-c('led50','lambda','emax','e0')
+			names(iparm)<-names(iparm)<-c('led50','lambda','emax','e1')
 		}
   }  
  	### replicate intercept for multiple protocols
-  svec<-c(iparm,rep(iparm[modType],nprot-1))
-  for(i in modType:(modType+nprot-1))names(svec)[i]<-paste('e',i+1-modType,sep='') 	
+  svec<-iparm[1:(modType-1)]
+  indi<-modType-1
+  for(i in 1:nprot){
+  	if(!pboAdj[i]){
+	  	indi<-indi+1
+	  	svec<-c(svec,iparm[modType])
+	  	names(svec)[indi]<-paste('e',i,sep='') 	
+  	}
+  }
   
   if(nbase){
 	  if(missing(xparm))stop('xparm must be specified when iparm and xbase are specifed')
@@ -90,7 +100,7 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 			#### var-cov computation
 			vcfail<-FALSE
 			ev<-try(eigen(fit$hessian,symmetric=TRUE),silent=!diagnostics)
-			if(class(ev)=='try-error'){
+			if(inherits(ev,'try-error')){
 			   vcfail<-TRUE
 			}else{
 				evals<-ev$values
@@ -152,7 +162,7 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 
         fitl<-list(fit=fitl,y=y,dose=dose,modType=modType,prot=protorig,count=count,
         	nbase=nbase, xbase=xbase,
-				  nprot=nprot,binary=binary,pboAdj=FALSE,
+				  nprot=nprot,binary=binary,pboAdj=pboAdj,
 				  residSD=NULL,gofTest=gofTest,nll=c(nllMod=nllMod,nllSat=nllSat),
 				  df=c(dfMod=dfMod,dfSat=0),optObj=optObj)
 		class(fitl)<-"fitEmax"
@@ -163,16 +173,16 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 	#### continuous data
 	}else{
     ### form strata indicators
-    for(i in 1:nprot)assign(paste("I",i,sep=""),1*(prot==i))
-
-    intCode<-'+e1*I1'
-    if(nprot>1){
-        for(i in 2:nprot)intCode<-paste(intCode,' + e',i,'*I',i,sep='')
+    for(i in 1:nprot){
+    	if(!pboAdj[i]){
+	    	assign(paste("I",i,sep=""),1*(prot==i))
+    	}
     }
-		if(pboAdj){
-			intCode<-''
-			svec<-svec[1:(modType-1)]
-		}
+
+    if(!pboAdj[1])intCode<-'+e1*I1' else intCode<-''
+    if(nprot>1){
+        for(i in 2:nprot)if(!pboAdj[i])intCode<-paste(intCode,' + e',i,'*I',i,sep='')
+    }
     if(nbase>0){
     	xCode<-'+b1*xbase[,1]'
     	if(nbase>1)for(i in 2:nbase)xCode<-paste(xCode,'+b',i,'*xbase[,',i,']',sep='')
@@ -190,11 +200,11 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
                   maxiter = 100),trace=diagnostics,na.action=na.omit),
 									silent=!diagnostics) 
 
-    if(class(nlsW.fit)!='nls'){
+    if(!inherits(nlsW.fit,'nls')){
             
-        intCode<-',e1=I1'
+        if(!pboAdj[1])intCode<-',e1=I1' else intCode<-''
         if(nprot>1){
-            for(i in 2:nprot)intCode<-paste(intCode,',e',i,'=I',i,sep='')
+            for(i in 2:nprot)if(!pboAdj[i])intCode<-paste(intCode,',e',i,'=I',i,sep='')
         }
 				if(nbase>0){
 		    	xCode<-',b1=xbase[,1]'
@@ -202,16 +212,13 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 		    }else xCode<-NULL
  
         if(modType==3){
-					if(!pboAdj)chform<-paste('y ~ cbind(emax=dose/(dose + exp(led50))',
+					chform<-paste('y ~ cbind(emax=dose/(dose + exp(led50))',
 														 intCode,xCode,')',sep='')
-   				if(pboAdj)chform<-paste('y ~ cbind(emax=dose/(dose + exp(led50))',')',sep='')
-            svsub<-svec[1]
+          svsub<-svec[1]
         }else{
-					if(!pboAdj)chform<-paste('y ~ cbind(emax=(dose^lambda)/(dose^lambda + (exp(led50))^lambda)',
+					chform<-paste('y ~ cbind(emax=(dose^lambda)/(dose^lambda + (exp(led50))^lambda)',
 											 intCode,xCode,')',sep='')
-					if(pboAdj)chform<-paste('y ~ cbind(emax=(dose^lambda)/(dose^lambda + (exp(led50))^lambda)', ')',
-											sep='')
-		                       svsub<-svec[1:2]
+					svsub<-svec[1:2]
         } 
         nlsW.fit <- try(nls(as.formula(chform), 
 						            start = c(svsub), weights=count, control = nls.control(
@@ -219,13 +226,13 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 										silent= !diagnostics)
     }
 		badvar<-FALSE
-		if(class(nlsW.fit)=='nls'){
+		if(inherits(nlsW.fit,'nls')){
 			vc<-try(vcov(nlsW.fit),silent=!diagnostics)
-			if(class(vc)=='try-error'){ badvar<-TRUE
+			if(inherits(vc,'try-error')){ badvar<-TRUE
 			}else if(any(is.na(vc)))badvar<-TRUE
 		}
 
-    if(class(nlsW.fit)!='nls'){
+    if(!inherits(nlsW.fit,'nls')){
         if(diagnostics)warning('nls failed to converge to a stable solution')
         return(NULL)
 		}else if(badvar){
@@ -236,9 +243,7 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 			if(any(count>1) & is.null(msSat)){  ### msSat not supplied with aggregate data
 				gofTest<-NA
 				residSD<-summary(nlsW.fit)$sigma
-				if(pboAdj){
-					dfMod<-length(y)-(nprot+modType-2)
-				}else dfMod<-length(y)-(nprot+modType-1)
+				dfMod<-length(y)-(sum(!pboAdj)+modType-1)
 				msMod<-residSD^2
 				nllMod<-msMod*dfMod
 				dfSat<-NA
@@ -252,17 +257,19 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 				### compute ss from the emax model because the nls weighted ss is not 
 				### appropriate if there are replicated dose group means within a protocol
 				ssMod<-0
+				inti<-0
 				for(i in 1:nprot){
+					ecoef<-coef(nlsW.fit)
+					if(pboAdj[i]){
+						ecoef<-c(ecoef,0)
+					}else{
+						inti<-inti+1
+						ecoef[modType]<-ecoef[modType+inti-1]
+						ecoef<-ecoef[1:modType]
+					}				
 					for(d in dlev){
 						if(sum(dose==d & prot==i)>0){
 							ind<-(dose==d & prot==i)
-							ecoef<-coef(nlsW.fit)
-							if(pboAdj){
-								ecoef<-c(ecoef,0)
-							}else{
-								ecoef[modType]<-ecoef[modType+i-1]
-								ecoef<-ecoef[1:modType]
-							}
 							ehat<-emaxfun(d,ecoef) 
 							ym<-weighted.mean(y[ind],count[ind])
 							nm<-sum(count[ind])
@@ -271,15 +278,13 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 					}
 				}
 				### decomposition into within-saturated model, and saturated model within emax model
-				if(pboAdj){
-					dfMod<-totdp-(nprot+modType-2)
-				}else dfMod<-totdp-(nprot+modType-1)
+				dfMod<-totdp-(sum(!pboAdj)+modType-1)
 				if(dfMod>0){
 					msMod<-ssMod/dfMod
 					gofTest<-pf(msMod/msSat,
 						 dfMod,dfSat,lower.tail=FALSE)
 					ssMod<-ssMod+ssSat  ### improve error estimate using ss from sat also
-					dfMod<-sum(count)-(nprot+modType-(1+pboAdj*1))
+					dfMod<-sum(count)-(sum(!pboAdj)+modType-1)
 					msMod<-ssMod/dfMod
 					residSD<-sqrt(msMod)
 					nllMod<-ssMod
@@ -316,9 +321,7 @@ function(y,dose,iparm,xparm,modType=3,prot=rep(1,length(y)),count=rep(1,length(y
 					dfSat<-length(y)-sum(!is.na(coef(lmout)))
 					ssSat<-dfSat*(sigma(lmout))^2
 				}
-				if(pboAdj){
-					dfMod<-sum(count)-(modType+nbase-1)
-				}else dfMod<-sum(count)-(nprot+modType+nbase-1)
+				dfMod<-sum(count)-(nprot+modType+nbase-1)
 				msMod<-(summary(nlsW.fit)$sigma)^2
 				if((dfSat>0) & (dfMod-dfSat>0)){
 					msSat<-ssSat/dfSat

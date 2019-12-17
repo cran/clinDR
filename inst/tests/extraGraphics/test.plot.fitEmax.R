@@ -149,13 +149,13 @@ dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
 
-testout<-fitEmax(ysub,dsub,iparm=pop.parm,modType=3,prot=protsub,pboAdj=TRUE)
+testout<-fitEmax(ysub,dsub,iparm=pop.parm,modType=3,prot=protsub,pboAdj=c(TRUE,TRUE))
 
 plot(testout)
 plot(testout, log=TRUE)
 
 testout4<-fitEmax(ysub,dsub,iparm=c(pop.parm[1],1,pop.parm[2],0),
-				  modType=4,prot=protsub,pboAdj=TRUE)
+				  modType=4,prot=protsub,pboAdj=c(TRUE,TRUE))
 
 plot(testout4)
 plot(testout4, log=TRUE)

@@ -12,7 +12,15 @@ automatically for  single execution, so the model does not
 need to be pre-loaded.
 }
 \usage{
-selEstan()
+
+selEstan(emod=c('basemodel.rds','mrmodel.rds'))
+}
+
+\arguments{
+\item{emod}{Two parameterizations of the emax function are currently supported.  
+'basemodel'  uses the maximal effect 'emax' parameter.  'mrmodel'  uses the effect
+of the drug at a high dose specified by the user versus placebo.  The 'emax' effect model is
+deprecated and will be eliminated.}
 }
 
 \value{

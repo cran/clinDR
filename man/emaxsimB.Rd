@@ -6,12 +6,12 @@ Simulate Emax Bayesian estimation
 \description{
 
 Simulate dose response data and apply 4- or 3- parameter
-sigmoidal or hyperbolic Bayesian estimation.  The prior distributions
-are input by the user based on the empirical distributions estimated
+sigmoidal or hyperbolic Bayesian estimation.  The prior distribution
+is input by the user with default values for some parameters based on the empirical distribution estimated
 from dose response meta-analyses.  For binary response data, the Emax
 model is fit on the logit scale, and then back-transformed}
 \usage{
-emaxsimB(nsim, genObj, prior, modType = 3, 
+emaxsimB(nsim, genObj, prior, modType = 4, 
 	binary = FALSE, seed=12357,
 	check = FALSE, nproc=parallel::detectCores(), 
 	negEmax = FALSE, ed50contr = NULL, 
@@ -30,12 +30,15 @@ Object containing inputs and function to create simulated
 data sets.  These objects are created by special constructor
 functions; the current choices are \code{\link{FixedMean}} and \code{\link{RandEmax}}.
 }
-  \item{prior}{
-Prior distribution input using \code{\link{prior.control}}
-}
-  \item{modType}{
-Specifies sigmoidal or hyperbolic emax model.
-}
+  \item{prior}{Prior specification through an object of type 'emaxPrior' or 'prior'.  
+  See \code{\link{emaxPrior.control}} and \code{\link{prior.control}} for details.  
+  The 'emaxPrior' specifies
+  the magnitude of the potential effect for a specified dose (typically the highest
+  anticipated dose and/or the dose in a POC study), while the 'prior' specifies the
+  theoretical maximum effect (the emax parameter).  The 'prior' specification is 
+  deprecated and will be removed.}
+	\item{modType}{When \code{modType=3}, a hyperbolic Emax model is fit.  
+	When \code{modType=4}, a sigmoid Emax model is fit.}
   \item{binary}{
 When specified, the Emax model is fit on the logit scale, and then
  the results are back-transformed to proportions.
@@ -123,8 +126,10 @@ inputs must be (parms,pVal,dose,y,customParms) or (parms,residSD,pVal,dose,y,cus
   A list is returned with class(emaxsim) containing:
 
 	\item{description}{User description of simulation}
+	\item{localParm}{\code{localParm=TRUE} when the prior 
+	prior distribution is input using \code{emaxPrior}.}
 	\item{binary}{Binary response data.}
-	\item{modType}{User supplied starting Emax model}
+	\item{modType}{Type of Emax model fit (3 or 4 parameters)}
 	\item{genObj}{List object with data and function used to generate study
 data}
 	\item{pop}{Matrix with rows containing population parameters
@@ -135,7 +140,8 @@ constructor function generating study data.}
 	\item{mcmc}{mcmc input settings}
 	\item{prior}{Input prior distribution.}
 	\item{est}{Matrix with posterior median parameter estimates for each simulation:
-	(led50,lambda,emax,e0) or (led50,emax,e0).}
+	(led50,lambda,emax,e0,difTarget) or (led50,emax,e0,difTarget).  The \code{difTarget} are
+	omitted for the deprecated distribution.}
 	\item{residSD}{The posterior median of the residual SD for each simulation.}
 	\item{pVal}{The \code{nsim} p-values from the global null test.  The p-values are 
 	1-sided computed using MCP-Mod.}
@@ -150,13 +156,17 @@ constructor function generating study data.}
 	\item{sdv}{Matrix with rows containing dose group sample SD}
 	\item{msSat}{Pooled within-dose group sample variance}
 	\item{fitpredv}{Matrix with rows containing dose groups means
-estimated by the posterior means.}
+estimated by the posterior medians of the MCMC generated values.}
 	\item{sepredv}{Matrix with rows containing SE (posterior SD) associated with fitpredv}
-	\item{sedifv}{Matrix with rows containing SE (posterior SD) for the posterior means of the
+		\item{fitdifv}{Matrix with rows containing dose groups mean
+		differences wih placebo
+estimated by the posterior medians of the differences of the MCMC generated values.}
+	\item{sedifv}{Matrix with rows containing SE (posterior SD) for the 
 differences with placebo}
 	\item{lb,ub}{Array with lower posterior (0.025,0.05,0.1) and upper posterior
 (0.975,0.95,0.9) percentiles of differences between dose group means and 
 placebo.  The array ordering is dose group minus placebo, simulation, and percentile.}
+	\item{divergence}{The proportion of divergent MCMC iterations from each simulated analysis.}
 	\item{rseed}{Starting random
 number seed for each simulated data set set that can be assigned to \code{.Random.seed}.
 To reproduce the data, the random number generator must also be changed to
@@ -165,6 +175,7 @@ To reproduce the data, the random number generator must also be changed to
 (e.g., for plotting Z-statistics).}
 	\item{customOut}{List with customized output. It will be \code{NULL} if \code{customCOde} is not specified.}
 }
+\note{The default modType was changed from 3 to 4 for clinDR version >2.0}
 \references{
 Thomas, N., Sweeney, K., and Somayaji, V. (2014).  Meta-analysis of clinical dose response in a large drug development portfolio, Statistics in Biopharmaceutical Research, Vol. 6, No.4, 302-317.
 <doi:10.1080/19466315.2014.924876>
@@ -206,8 +217,9 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,sigmalow=0.1,
-		sigmaup=30,edDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,
+		difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+		sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 		propInit=0.15,adapt_delta = 0.95)
 
@@ -224,7 +236,7 @@ customCode<-function(parms,residSD,pVal,dose,y,customParms){
 	return(c(td=tdest,lb=lb,ub=ub))
 }
 
-D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE,
+D1 <- emaxsimB(nsim,gen, prior, modType=4,seed=12357,mcmc=mcmc,check=FALSE,
 				customCode=customCode,customParms=1.0)
 D1
 }

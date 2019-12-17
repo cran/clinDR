@@ -1,6 +1,6 @@
 "plot.emaxsimobj" <-
   function(x,xlim,xat=NULL,ylim,xlab,ylab,plotDif=FALSE,
-           plotResid=FALSE,clev=0.9,plotPop=c('m','3','4'),negC= FALSE,log=FALSE, 
+           plotResid=FALSE,clev=0.9,plotPop=c('m','3','4'),negC= FALSE,logScale=FALSE, 
   				 predict=TRUE,plot=TRUE,...)
   {
     binary<-x$binary
@@ -81,14 +81,14 @@
     }else if(missing(ylab))ylab<-"Y" 
     
     
-    if(plotResid & !log){
+    if(plotResid & !logScale){
       gp2<-ggplot(data.frame(doselev,resid),aes(x=doselev,y=resid))+
         geom_point(shape=8,color='red',size=4)
       gp2<-gp2+xlab(xlab)+ylab(ylab)
       gp2<-gp2+coord_cartesian(xlim=xlim,ylim=ylim)
       gp2<-gp2+geom_hline(yintercept=0,linetype=2)
       #return(invisible())
-    }else if(plotResid & log){
+    }else if(plotResid & logScale){
       x0 <- doselev       
       if(sum(x0==0)){
         xtemp <- doselev[2]^2/doselev[3]
@@ -113,7 +113,7 @@
     
     werrbar<-min(diff(sort(unique(doselev))))*(0.4)
     
-    if(!plotResid & !log){
+    if(!plotResid & !logScale){
       
       df1<-data.frame(low,high,as.numeric(lowP),as.numeric(highP),doselev,dm)
       names(df1)<-c('low','high','lowP','highP','doselev','dm')
@@ -166,7 +166,7 @@
                              col='black')
         }
       }
-    }else if(!plotResid & log){
+    }else if(!plotResid & logScale){
       
       x0 <- doselev 
       
@@ -314,9 +314,9 @@
                       panel.grid.major.y=element_line(size=0.1))   
     
     if(!is.null(xat)){
-      if(!log)      gp2 <- gp2 + scale_x_continuous(breaks=xat, 
+      if(!logScale)      gp2 <- gp2 + scale_x_continuous(breaks=xat, 
                                                         labels =xat)
-      if(log){
+      if(logScale){
         xatbench <- xat
         xat[xat==0] <- doselev[2]^2/doselev[3]
         gp2 <- gp2 + scale_x_continuous(breaks=log(xat), 
@@ -328,16 +328,16 @@
     if(plot){
       print(gp2)
       if(!plotResid) cat("Note:  Dashed curve is population, solid curve is estimated\n")
-      if(!plotResid & !plotDif & log) cat("Note:  Blue curve is the approximate curve in log scale\n")
+      if(!plotResid & !plotDif & logScale) cat("Note:  Blue curve is the approximate curve in log scale\n")
     }
     return(invisible(gp2))
   }
 
 "plot.emaxsimBobj" <-
 function(x, clev=0.9, plotDif=FALSE, plotPop=c('m','3','4'), 
-				 log=FALSE, plotResid=FALSE, plot=TRUE, ... )
+				 logScale=FALSE, plotResid=FALSE, plot=TRUE, ... )
 {
-	if(!missing(log) || !missing(plotResid))stop('log and plotResid options not currently implemented')
+	if(!missing(logScale) || !missing(plotResid))stop('logScale and plotResid options not currently implemented')
 	out<-plot(x$bfit, clev=clev, plotDif=plotDif, plot=FALSE, ... )  	
 	lplot<-out$lplot
 	
@@ -359,7 +359,7 @@ function(x, clev=0.9, plotDif=FALSE, plotPop=c('m','3','4'),
 	
 	if(plotDif){
 		popg<-popg-popg[1]
-		if(log){
+		if(logScale){
 			popg<-popg[-1]
 			dgrid<-dgrid[-1]
 		}

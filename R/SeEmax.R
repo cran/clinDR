@@ -4,7 +4,7 @@ function(fit,doselev,modType,dref=0,nbase=0,x=NULL,
 
 	if(! modType %in% c(3,4))stop("modType must be 3 or 4")
 
-	if(class(fit)=='nls'){
+	if(inherits(fit,'nls')){
 		if(!is.null(x))stop(paste('Baseline covariates and multiple',
 			'protocols are not supported with objects of class NLS.  Use list input.'))
 		parm<-coef(fit)

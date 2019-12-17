@@ -1,5 +1,42 @@
 Changes to clinDR:
 ======================
+Update 2.2
+-  metaData updated with removal of a duplicate 
+compound-indication.  Meta-prior default values
+also updated in second decimal places.
+Update 2.1
+-  New parameterization of the Emax function has been implemented in
+fitEmaxB and emaxsimB.  The 'emax' parameter has been replaced by
+the difference in response at a targeted dose versus placebo.  Corresponding 
+changes have been made in the supporting methods.  Each parameter nows
+has a prior t-distribution with DF that can be specified.  The default
+values in the prior distributions are based on meta-data updated through
+August 2019.
+-  The proportion of divergent MCMC iterations for each emaxsimB 
+simulated analysis is now returned as part of the output
+-  Plot symbols are printed on top of error bars for better visibility
+-  Several bug fixes for function plotB relating to plots with active
+controls.  xat option added to control axis labeling. The dac option was 
+removed.
+-  Plotting of Bayes estimates in fitEmaxB and plotB is now based (default) on the posterior median
+rather than the mean to avoid problems with occassion extreme values in MCMC output.  Posterior
+medians were added to means in output of predict.fitEmaxB.
+-  Changed log option to logScale option in plotting functions to avoid masking of the log function.
+-  Meta data in examples14 and examples16 has been replaced by the data metaData, which aggregates all
+of the dose response meta data from previous studies through August 2019.  The meta data from all 
+compounds are now in a single file with a common format.
+-  Added functions solveDose and solveEmax.  solveDose returns the dose yielding a target
+response for the input Emax model parameters.  solveEmax returns the Emax parameter 
+yielding a target response at a specified dose
+Update 1.9.5
+- Additional input error checking
+- pboAdj in fitEmax can now fit multiple protocols with/without placebo
+adjustment
+= Changed check for centered covariates in fitEmax(B) to accept larger difference with zero
+- Created new metaData with all dose response studies included in 
+the meta-analyses through Aug 2019.  A new unified data format is used. 
+The older examples14 and examples16 data have been removed (they are 
+part of metaData)
 Update 1.9
 - Add support for baseline covariates in fitEmax, fitEmaxB and supporting
 functions

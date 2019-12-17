@@ -25,7 +25,7 @@ Package \code{rstan} must be functional for \code{CompileStanModels} to be succe
 
 }
 \value{
-'basemodel.rds' should be created in the package directory
+'basemodel.rds' and 'mrmodel.rds' should be created in the package directory
 in the sub-directory 'models'.
 }
 \author{

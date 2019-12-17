@@ -11,33 +11,32 @@ if(file.exists(file.path(pvar,"output.plotB_new.pdf"))) file.rename(file.path(pv
 pdf(file=paste(file.path(pvar,"output.plotB_new.pdf")))
 
 
-
 set.seed(12357)
-data(examples14)
-dat<-examples14[[6]]
+data(metaData) 
+dat<-metaData[metaData$taid==6 & metaData$poptype==1,]
 attach(dat)
 
-fit<-fitEmax(y,dose,modType=3,count=nsize,msSat=sd^2)
+msSat<-sum((dat$sampsize-1)*(dat$sd)^2)/(sum(dat$sampsize)-length(dat$sampsize))
+fit<-fitEmax(rslt,dose,modType=3,count=sampsize,msSat=msSat)
 
-prior<-prior.control(epmu=1.78,epsd=1,emaxmu=-2.82,emaxsd=1,
-										 p50=0.04,sigmalow=0.01,1)
+prior<-emaxPrior.control(epmu=0,epsca=10,difTargetmu=0,difTargetsca=10,dTarget=80.0,
+												 p50=3.75,sigmalow=0.01,sigmaup=20)
 
-fitb<-fitEmaxB(y,dose,prior,modType=4,count=nsize,msSat=sd^2,
+fitb<-fitEmaxB(rslt,dose,prior,modType=4,count=sampsize,msSat=msSat,
 							 mcmc=mcmc.control(iter=20000))
-
 parms<-coef(fitb)
 sigsim<-sigma(fitb)
 
 
 ##### basic plot
-outB<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,
-      ylab="Y")
+outB<-plotB(rslt,dose,parms[,1:4],(sigsim)^2,count=sampsize,
+      ylab="Y",xat=c(0, 40, 80))
 
 plot(outB)
-plot(outB, xat=c(0, 25, 100)/100)
+plot(outB, xat=c(0, 40, 80))
 
 plot(outB, log=TRUE)
-plot(outB, log=TRUE, xat=c(0, 5, 25, 100)/100)
+plot(outB, log=TRUE, xat=c(0, 5, 40, 80))
 
 
 ##### resid plot
@@ -47,7 +46,7 @@ plot(outB,plotResid=TRUE,predict=FALSE, log=TRUE)
 ##### test symbol plotting
 symbol<-rep(2,length(dose))
 symbol[1:floor(length(dose)/2)]<-1
-outB<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
+outB<-plotB(rslt,dose,parms[,1:4],(sigsim)^2,count=sampsize,symbol=symbol,
       ylab="Cholesterol")
 
 plot(outB,symbolShape=8:9,symbolColor=c('red','blue'),
@@ -75,67 +74,64 @@ plot(outB,symbolShape=8:9,symbolColor=c('red','blue'),
 #####                             points are discrete with big
 #####                             jumps
 ymeans<-predict(fitb,dose)$pred
-ymeans<-rep(ymeans,nsize)
+ymeans<-rep(ymeans,sampsize)
 yvec<-rnorm(length(ymeans),ymeans,sd)
-dvec<-rep(dose,nsize)
+dvec<-rep(dose,sampsize)
 outBB<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
       ylab="Change in LDL", log=TRUE)
 plot(outBB,log=TRUE)
 outBB<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
-      ylab="Change in LDL",binary='BinRes',BinResLev=-0.5,BinResDir='<')
+      ylab="Change in LDL",binary='BinRes',BinResLev=-40,BinResDir='<')
 plot(outBB,log=TRUE)
 plot(outBB)
-plot(outBB, log=TRUE)
-
 
 ##### test active comparator
 set.seed(12357)
 nac<-10
 msd<-median(sigsim)
-yac<-rnorm(nac,mean(y),msd)
+yac<-rnorm(nac,mean(rslt),msd)
 ac<-rnorm(nrow(parms),mean(yac),msd/sqrt(nac))
 
-outac<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,
+outac<-plotB(rslt,dose,parms[,1:4],(sigsim)^2,count=sampsize,
       ylab="Change in LDL vs Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
-	  dac=10,labac='Active',plotDif=TRUE)
+	  labac='Active',plotDif=TRUE)
 
-plot(outac,labac='Active')
-plot(outac,labac='Active', log=TRUE)
+plot(outac,labac='Active',xat=c(0,.25,.5,.75,1))
+plot(outac,labac='Active', log=TRUE, xat=c(0,.1,.5,1))
 
 symbol<-rep(2,length(dose))
 symbol[1:floor(length(dose)/2)]<-1
-outac<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
-		symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
+outac<-plotB(rslt,dose,parms[,1:4],(sigsim)^2,count=sampsize,symbol=symbol,
+		symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TRT GROUP',
       ylab="LDL with Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
-	  dac=10,labac='Prednisone',shapeac=9,colac='red')
+	  labac='Prednisone',shapeac=8,colac='green',xat=c(0,.25,.5,.75,1))
 
 
-hold<-plotB(y,dose,parms[,1:4],(sigsim)^2,count=nsize,symbol=symbol,
+plot(outac,xat=c(0,.25,.5,.75,1),
              symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
              ylab="LDL with Active Comparator",activeControl=TRUE,yac=yac,ac=ac,
-             dac=10,labac='Prednisone',shapeac=9,colac='red')
-plot(hold)
+             labac='Prednisone',shapeac=8,colac='green')
 
 #### with responder outcome
-symvec<-rep(symbol,nsize)
+symvec<-rep(symbol,sampsize)
 outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
       ylab="Change in LDL vs Active Comparator",
-	  activeControl=TRUE,yac=yac,ac=ac,dac=2,
-	  binary='BinRes',BinResLev=0,BinResDir = '<')
+	  activeControl=TRUE,yac=yac,ac=ac,
+	  binary='BinRes',BinResLev=-40,BinResDir = '<')
 
 outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,symbol=symvec,
 		symbolShape=9:10,symbolColor=c('red','blue'),symbolLabel='TESTNAME',
       ylab="Change in LDL vs Active Comparator",
-	  activeControl=TRUE,yac=yac,ac=ac,dac=2,
-	  binary='BinRes',BinResLev=0,shapeac=9,colac='red')
+	  activeControl=TRUE,yac=yac,ac=ac,
+	  binary='BinRes',BinResLev=-40,shapeac=8,colac='orange')
 
 outac<-plotB(yvec,dvec,parms[,1:4],(sigsim)^2,
              ylab="Change in EDD vs Active Comparator",
-             activeControl=TRUE,yac=yac,ac=ac,dac=2,
-             binary='BinRes',BinResLev=0)
+             activeControl=TRUE,yac=yac,ac=ac,
+             binary='BinRes',BinResLev=-40)
 
 plot(outac,symbolShape=9:10,symbolColor=c('red','blue'),
-     xat=c(0, 50, 100)/100)
+     xat=c(0, 40, 80))
 
 
 dev.off()
