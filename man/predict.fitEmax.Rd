@@ -60,7 +60,11 @@ n<-c(78,81,81,81,77,80)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-8.0
 pop.parm<-c(log(ed50),emax,e0)    
 dose<-rep(doselev,n)
@@ -79,7 +83,11 @@ n<-c(78,81,81,81,77,80)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-8.0
 pop.parm<-c(log(ed50),emax,e0)    
 dose<-rep(doselev,n)

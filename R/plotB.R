@@ -2,7 +2,7 @@
 function(y,dose,parm,sigma2,
 	count=rep(1,length(y)),dgrid=sort(unique(c(seq(0,max(dose),length=50), dose))),
 	predict= TRUE,plotDif=FALSE,plotMed=FALSE,
-	plotResid=FALSE,clev=0.8,
+	plotResid=FALSE,clev=0.9,
 	binary=c('no','logit','probit','BinRes'),BinResLev,
 	BinResDir=c('>','<'),	activeControl=FALSE,ac,yac,countac=rep(1,length(yac)),
 	labac='Act Comp',shapeac=8,colac='red',

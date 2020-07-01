@@ -154,11 +154,17 @@ function(nsim, genObj, prior, modType=4,binary=FALSE,seed=12357,
   }
 	if(localParm) est<-cbind(est,difTarget=rep(NA,nsim))
 	
+	np1<-ncol(est)
+	nlev<-length(llev)
+	estlb<-array(numeric(np1*nsim*nlev),dim=c(np1,nsim,nlev))
+	estub<-array(numeric(np1*nsim*nlev),dim=c(np1,nsim,nlev))
+	dimnames(estlb)<-list(colnames(est),1:nsim,llev)
+	dimnames(estub)<-list(colnames(est),1:nsim,ulev)
+		
 	if(!binary){
 		sdv <- matrix(rep(NA, nsim * Ndose), ncol = Ndose)
 	}else sdv<-NULL
 
-	nlev<-length(llev)
 	nd1<-Ndose-1
 	lb<-array(numeric(nd1*nsim*nlev),dim=c(nd1,nsim,nlev))
 	ub<-array(numeric(nd1*nsim*nlev),dim=c(nd1,nsim,nlev))
@@ -185,6 +191,8 @@ function(nsim, genObj, prior, modType=4,binary=FALSE,seed=12357,
 		selContrast[indmat[j,1]:indmat[j,2]]<-simout[[j]]$selContrast
 		residSD[indmat[j,1]:indmat[j,2]]<-simout[[j]]$residSD
 		est[indmat[j,1]:indmat[j,2],]<-simout[[j]]$est
+		estlb[,indmat[j,1]:indmat[j,2],]<-simout[[j]]$estlb
+		estub[,indmat[j,1]:indmat[j,2],]<-simout[[j]]$estub		
 		lb[,indmat[j,1]:indmat[j,2],]<-simout[[j]]$lb
 		ub[,indmat[j,1]:indmat[j,2],]<-simout[[j]]$ub
 		customOut[indmat[j,1]:indmat[j,2]]<-simout[[j]]$customOut
@@ -195,7 +203,7 @@ function(nsim, genObj, prior, modType=4,binary=FALSE,seed=12357,
 	return(structure(list(description=description,localParm=localParm,
 				binary=binary,modType=modType,genObj=genObj, 
         pop=pop,popSD=popSD,mcmc=mcmc,prior=prior,
-				est=est,residSD=residSD,
+				est=est,estlb=estlb,estub=estub,residSD=residSD,
         pVal=pVal,selContrast=selContrast,
 				testMods=testMods,gofP=gofP,
         negEmax=negEmax,
@@ -270,11 +278,17 @@ simrepB<-function(j,inlist)
   }
 	if(localParm) est<-cbind(est,difTarget=rep(NA,nrep))
 		
+	np1<-ncol(est)
+	nlev<-length(llev)
+	estlb<-array(numeric(np1*nrep*nlev),dim=c(np1,nrep,nlev))
+	estub<-array(numeric(np1*nrep*nlev),dim=c(np1,nrep,nlev))
+	dimnames(estlb)<-list(colnames(est),1:nrep,llev)
+	dimnames(estub)<-list(colnames(est),1:nrep,ulev)
+		
 	if(!binary){
 		sdv <- matrix(rep(NA, nrep * Ndose), ncol = Ndose)
 	}else sdv<-NULL
 
-	nlev<-length(llev)
 	nd1<-Ndose-1
 	lb<-array(numeric(nd1*nrep*nlev),dim=c(nd1,nrep,nlev))
 	ub<-array(numeric(nd1*nrep*nlev),dim=c(nd1,nrep,nlev))
@@ -364,13 +378,7 @@ simrepB<-function(j,inlist)
     fitdifv[i,]<-simout$fitdifMed
     sepredv[i,  ] <-simout$se
     sedifv[i,  ] <-simout$sedif
-    simdif<-simout$simResp[,2:Ndose]-simout$simResp[,1]
-    for(k in 1:nlev){
-    	qtile<-apply(simdif,2,quantile,c(llev[k],ulev[k]))
-    	lb[,i,k]<-qtile[1,]
-    	ub[,i,k]<-qtile[2,]
-    }
-    
+   
     ### extract generated parameters
   	parms<-coef(bfit)
 		if(!binary){
@@ -378,9 +386,20 @@ simrepB<-function(j,inlist)
 			residSD[i]<-median(sigsim)
 		}
     if(localParm){
-    	est[i,]<- c(apply(parms,2,median),median(coef(bfit,local=TRUE)))
-    }else est[i,]<- apply(parms,2,median)
+    	parms1<- cbind(parms,coef(bfit,local=TRUE))
+    }else parms1<-parms
+  	est[i,]<- apply(parms1,2,median)
     
+    simdif<-simout$simResp[,2:Ndose]-simout$simResp[,1]
+    for(k in 1:nlev){
+    	qtile<-apply(simdif,2,quantile,c(llev[k],ulev[k]))
+    	lb[,i,k]<-qtile[1,]
+    	ub[,i,k]<-qtile[2,]
+    	qtile<-apply(parms1,2,quantile,c(llev[k],ulev[k]))
+    	estlb[,i,k]<-qtile[1,]
+    	estub[,i,k]<-qtile[2,]    
+    }
+  	
     ### compute gof test
     gofP[i]<-checkMonoEmax(yin,din,parms,sigsim^2,cin,
     											 trend=trend,binary=binary)
@@ -401,7 +420,7 @@ simrepB<-function(j,inlist)
 	}
 
 	return(list(pop=pop,popSD=popSD,  
-        est=est,residSD=residSD,
+        est=est,estlb=estlb,estub=estub,residSD=residSD,
         pVal=pVal,selContrast=selContrast,
         gofP=gofP,predpop=predpop,        
         mv = mv, sdv = sdv, msSat=msSat, fitpredv = fitpredv,

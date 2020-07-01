@@ -48,6 +48,7 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 		predout<-predout+badd
 		predref<-predref+badd
 	}
+	if(length(dosevec)==1)predout<-matrix(predout,ncol=1)
 	pred<-  apply(predout,2,mean) 
 	predMed<-  apply(predout,2,median) 
 	sepred<- sqrt( apply(predout,2,var) )

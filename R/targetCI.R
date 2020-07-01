@@ -1,4 +1,4 @@
-  targetCI<-function(object,target,dgrid,cilev=0.80,high= TRUE){
+  targetCI<-function(object,target,dgrid,clev=0.90,high= TRUE){
 
 	if(!inherits(object,'emaxsim'))stop('Input must be of class emaxsim')
 	if(length(dgrid)==1){
@@ -8,7 +8,7 @@
 	ngrid<-length(dgrid)
 	nsim<-length(object$fitType)
 
-	cnorm<-qnorm(cilev)
+	cnorm<-qnorm(clev)
 	predout<-predict(object,dgrid)
 	fitdif<-predout$fitdif
 	sedif<-predout$sedif

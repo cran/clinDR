@@ -9,7 +9,7 @@ SDs
 }
 \usage{
 plotD(y, dose, baseline, se = TRUE, line = TRUE, 
-    meansOnly=FALSE,sem=NULL,clev = 0.8, 
+    meansOnly=FALSE,sem=NULL,clev = 0.9, 
     xlab='Dose',ylab='Response', logScale=FALSE)
 }
 

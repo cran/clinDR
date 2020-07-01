@@ -6,6 +6,7 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
   nsim<-length(object$fitType)
   modType<-object$modType
   doselev<-object$genObj$genP$doselev
+	Ndose<-length(doselev)
   n<-object$genObj$genP$n
   negEmax<-object$negEmax
   dirEff<- 1-2*(negEmax)
@@ -59,14 +60,21 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 				scale=(n[1]+n-2))
 		semdifv<-sqrt(scale(vp,center=FALSE,scale=1/(1/n[1] + 1/n)))
 	}else{
-		semdifv<-sqrt(object$mv[,1]*(1-object$mv[,1])/n[1] + 
-								scale(object$mv*(1-object$mv),center=FALSE,scale=n))
+		### add 1/2 y/n if 0/1 rate for se
+		tol<-sqrt(.Machine$double.eps)
+		tmpm<-object$mv
+		for(i in 1:Ndose){
+			tmpm[object$mv[,i]<tol,i]<- 0.5/(n[i]+1)
+			tmpm[object$mv[,i]>1-tol,i]<-(n[i]+0.5)/(n[i]+1)
+		}
+		semdifv<-sqrt(tmpm[,1]*(1-tmpm[,1])/n[1] + 
+								scale(tmpm*(1-tmpm),center=FALSE,scale=n))
 	}
 
 	### power
 	cat(paste("\nPower for 1-sided tests at level ", testalpha," :",sep=""))
 	pow<- mean(pVal<=testalpha)
-	mean.pow <- mean(dirEff*mdifv[,idmax-1]/semdifv[,idmax-1] >qnorm(1-testalpha))
+	mean.pow <- mean(dirEff*mdifv[,idmax]/semdifv[,idmax] >qnorm(1-testalpha))
 	if(seSim== TRUE){
 	cat(paste("\n  Global null test based on MCP-mod:                          ",round(pow,3),
         "(",round(sqrt(mean(pow)*(1-mean(pow))/nsim),4),")",
@@ -84,8 +92,8 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 	### confidence interval coverage and bias
 	actlev <- apply(abs(fitdifv - fitdifP)/object$sedifv <=qnorm(clev+(1-clev)/2),2,mean)
 	mean.actlev<- apply(abs(mdifv - fitdifP)/semdifv <=qnorm(clev+(1-clev)/2),2,mean)
-	seldif<-apply(mdifv,1,f)
-	seldif<-cbind(seq_along(seldif),seldif)
+	seldif<-apply(mdifv[,2:Ndose],1,f)
+	seldif<-cbind(seq_along(seldif),seldif+1) #skip pbo
 	bestm<-mdifv[seldif]
 	bestpop<-fitdifP[seldif]
 	sel.actlev <- mean(abs(bestm - bestpop)/semdifv[seldif]<=
@@ -124,7 +132,7 @@ function(object,testalpha=0.05,clev=0.9,seSim= FALSE,...)
 	se.bias<-sqrt( apply(fitdifv,2,var)/nsim )
 	names(bias)<-doselev
 	names(se.bias)<-doselev
-	cat(paste("\n\nBias from dose response modeling [EST-POP]:\n"))
+	cat(paste("\n\nBias from dose response modeling [DOSE-PBO, EST-POP]:\n"))
 	print(round(bias[-1],2))
 	if(seSim== TRUE){
 		cat(paste("Simulation standard errors:\n"))

@@ -100,6 +100,23 @@ test_that("check asymptotic distributions for 4-parm model",{
 	expect_that(as.numeric(parmmed),equals(pop,tol=0.01))
 })
 
+popmat<-matrix(rep(pop,nsim),ncol=length(pop),byrow=T)
+cov95<-apply(t(D1$estlb[,,1])<popmat & t(D1$estub[,,1])>popmat,2,mean)
+
+test_that("check posterior 95 bounds for model parameter",{
+	expect_that(as.numeric(cov95),equals(rep(0.95,length(pop)),tol=0.01))
+})
+cov90<-apply(t(D1$estlb[,,2])<popmat & t(D1$estub[,,2])>popmat,2,mean)
+
+test_that("check posterior 90 bounds for model parameter",{
+	expect_that(as.numeric(cov90),equals(rep(0.90,length(pop)),tol=0.015))
+})
+cov80<-apply(t(D1$estlb[,,3])<popmat & t(D1$estub[,,3])>popmat,2,mean)
+
+test_that("check posterior 80 bounds for model parameter",{
+	expect_that(as.numeric(cov80),equals(rep(0.80,length(pop)),tol=0.015))
+})
+
 test_that("emaxsim internal predicted values match population",{
 	expect_that(max(apply(D1$fitpredv,2,mean)),
 							equals(max(emaxfun(doselev,pop)),tol=0.01,scale=1))

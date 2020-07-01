@@ -228,7 +228,7 @@ D1 <- emaxsim(nsim,gen.parm,modType=3)
 
 target<-6
 tD<- ( (target*ed50)/(emax-target) )
-selectedDose<-targetCI(D1,target,dgrid=seq(tD-3,tD+3,length=200),cilev=0.80,high=TRUE)
+selectedDose<-targetCI(D1,target,dgrid=seq(tD-3,tD+3,length=200),clev=0.80,high=TRUE)
 
 outp<-emaxfun(selectedDose,pop)-emaxfun(0,pop)
 
@@ -258,7 +258,7 @@ D1 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE)
 
 target<-0.2
 tD<- (qlogis(target+plogis(e0))-e0)*ed50/(emax-(qlogis(target+plogis(e0))-e0)) 
-selectedDose<-targetCI(D1,target,dgrid=seq(tD-3,tD+3,length=200),cilev=0.80,high=TRUE)
+selectedDose<-targetCI(D1,target,dgrid=seq(tD-3,tD+3,length=200),clev=0.80,high=TRUE)
 
 outp<-plogis(emaxfun(selectedDose,pop))-plogis(emaxfun(0,pop))
 

@@ -142,6 +142,8 @@ constructor function generating study data.}
 	\item{est}{Matrix with posterior median parameter estimates for each simulation:
 	(led50,lambda,emax,e0,difTarget) or (led50,emax,e0,difTarget).  The \code{difTarget} are
 	omitted for the deprecated distribution.}
+	\item{estlb,estub}{Array with lower posterior (0.025,0.05,0.1) and upper posterior
+(0.975,0.95,0.9) percentiles of the model parameters.  The array ordering is model parameters, simulation, and percentile.}
 	\item{residSD}{The posterior median of the residual SD for each simulation.}
 	\item{pVal}{The \code{nsim} p-values from the global null test.  The p-values are 
 	1-sided computed using MCP-Mod.}
@@ -209,7 +211,11 @@ Ndose<-length(doselev)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-4.127726
+
+dtarget<-100
+diftarget<-2.464592
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)    
 meanlev<-emaxfun(doselev,pop)  

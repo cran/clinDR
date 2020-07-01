@@ -60,7 +60,8 @@ emaxalt<-function(y,dose,modType=3,binary=FALSE,iparm=NA,
 					 optObj=FALSE)
 		
 		### check for acceptable convergence and compute se's if ok
-		if(!is.null(fit) && (fit$fit$estimate[2]<=truncLambda)){
+		if(!is.null(fit) && (fit$fit$estimate[2]<=truncLambda)
+			  && (fit$fit$estimate[2]>=0.1)){
 			est4<-fit$fit$estimate
 			ed50<-exp(est4[1])
 		

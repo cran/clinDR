@@ -1,5 +1,17 @@
 Changes to clinDR:
 ======================
+Update 2.3
+- Added percentiles of the posterior distribution of the 
+model parameter to the output object of emaxsimB
+- Standardized default Emax model to 4-parameter sigmoid.  
+Changes made to fitEmax and emaxsim that may affect
+execution of older code.
+- Standardized confidence/posterior level to clev=0.9.  
+Changes made to summary.emaxsimB, plotB, plotD, targetCI.
+- SE calculation adjusted by add 1/2 0/1 to rates in
+emaxsim(B) to avoid NA in pairwise comparisons with
+low response rate data
+- Several minor bug fixes in emaxsim
 Update 2.2
 -  metaData updated with removal of a duplicate 
 compound-indication.  Meta-prior default values

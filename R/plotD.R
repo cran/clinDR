@@ -1,5 +1,5 @@
 "plotD"<-function (y, dose, baseline, se = TRUE, line = TRUE, 
-                   meansOnly=FALSE,sem=NULL,clev = 0.8, 
+                   meansOnly=FALSE,sem=NULL,clev = 0.9, 
                    xlab='Dose',ylab='Response', logScale=FALSE) 
 {
   cadj <- abs(qnorm((1 - clev)/2))

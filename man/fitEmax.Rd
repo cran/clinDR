@@ -11,7 +11,7 @@ Emax model.  Different intercepts for multiple protocol-data are supported.  For
 data, the Emax model is on the logit scale.
 }
 \usage{
-fitEmax(y,dose,iparm,xparm,modType=3,
+fitEmax(y,dose,iparm,xparm,modType=4,
 	prot=rep(1,length(y)),count=rep(1,length(y)),xbase=NULL,
 	binary=FALSE,diagnostics=TRUE,msSat=NULL,
 	pboAdj=rep(FALSE,max(prot)),optObj=TRUE)
@@ -100,7 +100,12 @@ n<-c(78,81,81,81,77,80)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
+
 sdy<-8.0
 pop<-c(log(ed50),emax,e0)    
 dose<-rep(doselev,n)

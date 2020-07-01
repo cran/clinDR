@@ -11,7 +11,7 @@ change from placebo for each simulated data set in an emaxsim object.
 targetCI (object,
 	target,
 	dgrid,
-	cilev=0.80,
+	clev=0.90,
 	high= TRUE)
 }
 \arguments{
@@ -21,7 +21,7 @@ targetCI (object,
 user-specified grid of doses.  If dgrid is a single value, it is
 interpreted as the number of equally-spaced doses to select from 
 zero to the highest dose in the simulated design.}
-  \item{cilev}{One-sided confidence interval level.}
+  \item{clev}{One-sided confidence interval level.}
   \item{high}{When TRUE, lower bounds are computed and must be higher
 than the target.  When FALSE, upper bounds must be less than the target.} 
 }
@@ -50,7 +50,11 @@ number of estimates and SEs are computed.
 		### population parameters for simulation
 		e0<-2.465375 
 		ed50<-67.481113 
-		emax<-15.127726
+		
+		dtarget<-100
+		diftarget<-9.032497
+		emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 		sdy<-7.967897
 		pop<-c(log(ed50),emax,e0)    
 		meanlev<-emaxfun(doselev,pop)  
@@ -62,7 +66,7 @@ number of estimates and SEs are computed.
 
 		target<-6
 		tD<- ( (target*ed50)/(emax-target) )
-		selectedDose<-targetCI(D1,target,dgrid=c(1:100)+0.5,cilev=0.80,high=TRUE)
+		selectedDose<-targetCI(D1,target,dgrid=c(1:100)+0.5,clev=0.80,high=TRUE)
 	}
 	\dontshow{
 
@@ -74,7 +78,11 @@ number of estimates and SEs are computed.
 		### population parameters for simulation
 		e0<-2.465375 
 		ed50<-67.481113 
-		emax<-15.127726
+		
+		dtarget<-100
+		diftarget<-9.032497
+		emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 		sdy<-7.967897
 		pop<-c(log(ed50),emax,e0)    
 		meanlev<-emaxfun(doselev,pop)  
@@ -86,7 +94,7 @@ number of estimates and SEs are computed.
 
 		target<-6
 		tD<- ( (target*ed50)/(emax-target) )
-		selectedDose<-targetCI(D1,target,dgrid=c(1:100)+0.5,cilev=0.80,high=TRUE)
+		selectedDose<-targetCI(D1,target,dgrid=c(1:100)+0.5,clev=0.80,high=TRUE)
 	}
 }
 \keyword{nonlinear}

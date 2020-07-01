@@ -70,7 +70,6 @@ mcmc<-mcmc.control(chains=3)
 msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
 fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,
 				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
-parms<-coef(fitout)[,1:4]  #use first intercept
 
 predout<-predict(fitout,dosevec=sort(unique(exdat$dose)))
 }

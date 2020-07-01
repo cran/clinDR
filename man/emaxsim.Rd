@@ -83,7 +83,8 @@ conditions (1) or (2) cause a simpler model to be used.}
   \item{truncLambda}{When \code{modType=4} and the converged estimate of
 	  the Hill parameter lambda exceeds \code{truncLambda}, the model fit
 	  is judged unstable and discarded.  Set \code{truncLambda=Inf} for 
-	  no truncation.}
+	  no truncation.  Four parameter model fits are also discarded
+	  when lambda is less than 0.1.}
 	\item{description}{Optional text describing the simulation setting that
 is stored with the simulation output.}
 }
@@ -196,7 +197,11 @@ Ndose<-length(doselev)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-4.127726
+
+dtarget<-100
+diftarget<-2.464592
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)    
 meanlev<-emaxfun(doselev,pop)  
@@ -220,7 +225,11 @@ Ndose<-length(doselev)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-4.127726
+
+dtarget<-100
+diftarget<-2.464592
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)    
 meanlev<-emaxfun(doselev,pop)  

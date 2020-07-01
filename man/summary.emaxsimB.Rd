@@ -8,7 +8,7 @@ and comparison with simple pairwise comparisons.
 }
 \usage{
 \method{summary}{emaxsimB}(object, testalpha = 0.05, 
-	clev = c('0.95','0.9','0.8'),
+	clev = c('0.9','0.95','0.8'),
 	seSim = FALSE, ...)
 }
 
@@ -50,7 +50,11 @@ Ndose<-length(doselev)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-4.127726
+
+dtarget<-100
+diftarget<-2.464592
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)    
 meanlev<-emaxfun(doselev,pop)  

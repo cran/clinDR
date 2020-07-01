@@ -1,5 +1,5 @@
 "summary.emaxsimB" <-
-function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
+function(object,testalpha=0.05,clev=c('0.9','0.95','0.8'),seSim= FALSE,...)
 {
 	clev<-match.arg(clev)
 	jsel<-match(clev,c('0.95','0.9','0.8'))
@@ -38,11 +38,17 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 				scale=(n[1]+n[2:Ndose]-2))
 		semdifv<-sqrt(scale(vp,center=FALSE,scale=1/(1/n[1] + 1/n[2:Ndose])))
 	}else{
-		semdifv<-sqrt(mv[,1]*(1-mv[,1])/n[1] + 
-								scale(mv[,2:Ndose]*(1-mv[,2:Ndose]),
+		### add 1/2 y/n if 0/1 rate for se
+		tol<-sqrt(.Machine$double.eps)
+		tmpm<-mv
+		for(i in 1:Ndose){
+			tmpm[mv[,i]<tol,i]<- 0.5/(n[i]+1)
+			tmpm[mv[,i]>1-tol,i]<-(n[i]+0.5)/(n[i]+1)
+		}
+		semdifv<-sqrt(tmpm[,1]*(1-tmpm[,1])/n[1] + 
+								scale(tmpm[,2:Ndose]*(1-tmpm[,2:Ndose]),
 											center=FALSE,scale=n[2:Ndose]))
 	}
-	
 
 	### power
 	cat(paste("\nPower for 1-sided tests at level ", testalpha," :",sep=""))
@@ -106,7 +112,7 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 	se.bias<-sqrt( apply(fitdifv,2,var)/nsim )
 	names(bias)<-doselev[2:Ndose]
 	names(se.bias)<-doselev[2:Ndose]
-	cat(paste("\n\nBias from Bayesian dose response modeling [DOSE-PBO, est=posterior median]:\n"))
+	cat(paste("\n\nBias from Bayesian dose response modeling [DOSE-PBO, EST-POP, EST=posterior median]:\n"))
 	print(round(bias,2))
 	if(seSim== TRUE){
 		cat(paste("Simulation standard errors:\n"))
@@ -134,7 +140,7 @@ function(object,testalpha=0.05,clev=c('0.95','0.9','0.8'),seSim= FALSE,...)
 	sel.mse.pair<-sqrt( mean((bestm-bestpop)^2) )
 
 	cat(paste("\n\nSquare Root Mean Squared Error [Dose-PBO]:\n"))
-	cat(paste("Bayesian dose response modeling (est=posterior median) :","\n"))
+	cat(paste("Bayesian dose response modeling (EST=posterior median) :","\n"))
 	print(round(mse.sedifv,3))
 	cat(paste("\n","Pairwise comparisons:","\n"))
 	print(round(mse.pair,3))

@@ -85,8 +85,12 @@ dose<-rep(doselev,n)
 e0<-2.465375 
 ed50<-67.481113 
 led50<-log(ed50)
-emax<-15.127726
 lambda=1.8
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),lambda,e0)
+
 sdy<-7.967897
 pop<-c(led50=led50,lambda=lambda,emax=emax,e0=e0)    
 meanresp<-emaxfun(dose,pop)  
@@ -110,8 +114,12 @@ dose<-rep(doselev,n)
 e0<-2.465375 
 ed50<-67.481113 
 led50<-log(ed50)
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
 lambda=1.8
+emax<-solveEmax(diftarget,dtarget,log(ed50),lambda,e0)
+
 sdy<-7.967897
 pop<-c(led50=led50,lambda=lambda,emax=emax,e0=e0)    
 meanresp<-emaxfun(dose,pop)  

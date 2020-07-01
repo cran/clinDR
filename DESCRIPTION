@@ -1,6 +1,6 @@
 Package: clinDR
-Version: 2.2.1
-Date: 2019-12-16
+Version: 2.3
+Date: 2020-06-30
 Title: Simulation and Analysis Tools for Clinical Dose Response
         Modeling
 Authors@R: c(person("Neal","Thomas",role=c("aut","cre"),
@@ -21,8 +21,8 @@ Imports:
         foreach,graphics,ggplot2,DoseFinding,stats,utils,parallel,doParallel
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2019-12-17 04:10:46 UTC; ThomasN
+Packaged: 2020-06-30 23:19:31 UTC; snthomas99
 Author: Neal Thomas [aut, cre] (<https://orcid.org/0000-0002-1915-8487>),
   Jing Wu [aut]
 Repository: CRAN
-Date/Publication: 2019-12-17 17:10:06 UTC
+Date/Publication: 2020-07-01 05:00:02 UTC

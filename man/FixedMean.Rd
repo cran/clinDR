@@ -16,7 +16,8 @@ FixedMean(n, doselev, meanlev, resSD, parm = NULL, binary=FALSE)
   \item{n}{ Sample size for each dose group }
   \item{doselev}{Dose levels (including 0 for placebo) in the
 study corresponding to \code{n}.  Must be in increasing order.}
-  \item{meanlev}{ Mean response at each doselev }
+  \item{meanlev}{ Mean response at each doselev.  For binary data, these
+  are the proportion of responders (no logit transformation).}
   \item{resSD}{ Standard deviation for residuals within each dose
 group (assumed common to all dose groups) }
   \item{parm}{ Population parameters that are 
@@ -55,7 +56,11 @@ n<-c(78,81,81,81,77)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)  
   
@@ -71,8 +76,11 @@ dose<-rep(doselev,n)
 
 e0<- qlogis(0.2)
 ed50<-20
-emax<-qlogis(0.6)-qlogis(0.2)
+diftarget<-qlogis(0.6)-qlogis(0.2)
 lambda<-2
+dtarget<-100
+emax<-solveEmax(diftarget,dtarget,log(ed50),lambda,e0)
+
 pop<-c(log(ed50),lambda,emax,e0)
 meanlev<-plogis(emaxfun(doselev,pop))
 
@@ -91,7 +99,11 @@ n<-c(78,81,81,81,77)
 ### population parameters for simulation
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
 sdy<-7.967897
 pop<-c(log(ed50),emax,e0)  
   

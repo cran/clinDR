@@ -641,24 +641,24 @@ for (i in 1:nsim){
 
 test_that("plot.fitEmax CI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covci,2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covci,2,mean,na.rm=TRUE))),
 										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
 })
 test_that("plot.fitEmax PI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covpi,2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covpi,2,mean,na.rm=TRUE))),
 										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
 })
 
 
 test_that("plot.fitEmax CI DIF for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
 										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
 })
 test_that("plot.fitEmax PI DIF for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
 										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
 })
 

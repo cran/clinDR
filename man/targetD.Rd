@@ -60,7 +60,11 @@ Asymptotic SE computed using the delta method
     ### population parameters for simulation
     e0<-2.465375 
     ed50<-67.481113 
-    emax<-15.127726
+    
+   	dtarget<-100
+		diftarget<-9.032497
+		emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
     sdy<-7.967897
     pop<-c(led50=log(ed50),emax=emax,e0=e0)    
     meanresp<-emaxfun(dose,pop)  
@@ -95,7 +99,11 @@ Asymptotic SE computed using the delta method
     ### population parameters for simulation
     e0<-2.465375 
     ed50<-67.481113 
-    emax<-15.127726
+    
+ 		dtarget<-100
+		diftarget<-9.032497
+		emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
     sdy<-7.967897
     pop<-c(led50=log(ed50),emax=emax,e0=e0)    
     meanresp<-emaxfun(dose,pop)  

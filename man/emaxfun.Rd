@@ -37,8 +37,12 @@ the 'plinear' algorithm in function nls.
 doselev<-c(0,5,25,50,100)
 e0<-2.465375 
 ed50<-67.481113 
-emax<-15.127726
+
+dtarget<-100
+diftarget<-9.032497
 lambda=2
+emax<-solveEmax(diftarget,dtarget,log(ed50),lambda,e0)
+
 parm<-c(log(ed50),lambda,emax,e0)
 plot(doselev,emaxfun(doselev,parm))
 
