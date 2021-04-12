@@ -1,5 +1,11 @@
 Changes to clinDR:
 ======================
+Update 2.3.5
+- Added shiny interface for emaxsim(B) initiated with runShiny()
+- Changed the default prior scale parameter for loglambda from 
+ 0.85 to 0.425.  This change effects fitEmaxB and emaxsimB
+- Changed the default sample size in mcmc.control to yield 9999
+samples of the model parameters by default
 Update 2.3
 - Added percentiles of the posterior distribution of the 
 model parameter to the output object of emaxsimB

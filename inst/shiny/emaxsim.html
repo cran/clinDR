@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Simulate Emax maximum likelihood estimation</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+
+<table width="100%" summary="page for emaxsim"><tr><td>emaxsim</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Simulate Emax maximum likelihood estimation</h2>
+
+<h3>Description</h3>
+
+<p>Simulate dose response data and apply 4- or 3- parameter Emax MLE
+estimation.  For binary data, the model is fit on the logit scale
+and then back-transformed.  When
+MLE estimation fails, models with fewer parameters (including models
+linear in their parameters) are substituted.  Summaries of estimation
+performance are returned for further analyses.  An MCP-MOD test is
+also performed for each simulated data set.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+emaxsim(
+	nsim, 
+	genObj, 
+	modType=3,
+	binary=FALSE,
+	seed=12357,
+	nproc = parallel::detectCores(),
+	negEmax=FALSE,
+	ed50contr=NULL,
+	lambdacontr=NULL,
+	testMods=NULL,
+	idmax=length(doselev), 
+	iparm=NA,
+	ed50cutoff=2.5*max(doselev), 
+	ed50lowcutoff=doselev[2]/1000,
+	switchMod= TRUE,
+	truncLambda=6,
+	description="")
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>nsim</code></td>
+<td>
+<p>Number of simulation replications</p>
+</td></tr>
+<tr valign="top"><td><code>genObj</code></td>
+<td>
+<p> Object containing inputs and function to create simulated  
+data sets.  These objects are created by special constructor
+functions; the current choices are <code>FixedMean</code> and <code>RandEmax</code>.
+</p>
+</td></tr>
+<tr valign="top"><td><code>modType</code></td>
+<td>
+<p>When modType=4, the fitting begins with the 4
+parameter model.  If estimation fails or modType=3, the 3-parameter estimation
+is applied.  If it fails, a best-fitting model linear in its parameters is
+selected.</p>
+</td></tr>
+<tr valign="top"><td><code>binary</code></td>
+<td>
+<p>When specified, the Emax model is fit on the logit scale, and then
+the results are back-transformed to proportions.</p>
+</td></tr>
+<tr valign="top"><td><code>seed</code></td>
+<td>
+<p>Seed for random number generator used to create data.</p>
+</td></tr> 
+<tr valign="top"><td><code>nproc</code></td>
+<td>
+<p>The number of processors to use in parallel computation of the
+simulations, which are divided into equal-sized computational blocks.  When <code>nproc=1</code>
+a single local processor.</p>
+</td></tr>
+<tr valign="top"><td><code>negEmax</code></td>
+<td>
+<p>When <code>TRUE</code>, the intended effect is assumed to be negative.</p>
+</td></tr>
+<tr valign="top"><td><code>ed50contr</code></td>
+<td>
+<p>A vector of ED50 values for creating a global null test using the
+MCP-MOD package DoseFinding based on Emax model-based contrasts.
+The default is 3 contrasts: the mid-point between pbo and the lowest
+dose, the mid-point between the 2 highest doses, and the 
+median of the dose levels.  When there are &lt;=4 doses including pbo,
+the median-based contrast is excluded.</p>
+</td></tr>
+<tr valign="top"><td><code>lambdacontr</code></td>
+<td>
+<p>Hill parameters matched to the ed50contr.  The default value is 1
+for each contrast model.</p>
+</td></tr>
+<tr valign="top"><td><code>testMods</code></td>
+<td>
+<p>The model object for a MCP-MOD test
+created by <code>Mods</code> from package <code>DoseFinding</code>.  If 
+specified, the other contrast inputs are ignored.  The  <code>Mods</code> 
+call should
+use the unique sorted dose levels.  The direction of the trend should be specificed in the call to <code>Mods</code>.  The <code>negEmax</code> is stored for use by support functions, but it does not determine the direction of the effect when <code>testMods</code> is specified.  The validity of
+<code>testMods</code> is not checked.</p>
+</td></tr>
+<tr valign="top"><td><code>idmax</code></td>
+<td>
+<p>Index of the default dose group for comparison to placebo.  
+Most analysis functions allow other dose groups to be
+specified.  The default is the index of the highest dose.</p>
+</td></tr>
+<tr valign="top"><td><code>iparm</code></td>
+<td>
+<p>Starting values for the  Emax fit.  If
+unspecified, starting values are computed.  The
+order of the variables is (log(ED50),Emax,E0) or
+(log(ED50),lambda,Emax,E0).  Note the transformation of ED50.</p>
+</td></tr>
+<tr valign="top"><td><code>ed50cutoff</code></td>
+<td>
+<p>The upper limit for the ED50 parameter estimates.The default is large
+enough to ensure a near linear fit to the data from an 
+Emax model.</p>
+</td></tr>
+<tr valign="top"><td><code>ed50lowcutoff</code></td>
+<td>
+<p>Lower allowed limit for the ED50 estimates.</p>
+</td></tr>
+<tr valign="top"><td><code>switchMod</code></td>
+<td>
+<p>If switchMod is TRUE, the algorithm substitutes a
+simpler model if (1) convergence is not achieved, (2) the information
+matrix is not positive definite at the converged values, (3) the ED50
+estimates are outside the cutoff bounds.  If switchMod is F, only
+conditions (1) or (2) cause a simpler model to be used.</p>
+</td></tr>
+<tr valign="top"><td><code>truncLambda</code></td>
+<td>
+<p>When <code>modType=4</code> and the converged estimate of
+the Hill parameter lambda exceeds <code>truncLambda</code>, the model fit
+is judged unstable and discarded.  Set <code>truncLambda=Inf</code> for 
+no truncation.  Four parameter model fits are also discarded
+when lambda is less than 0.1.</p>
+</td></tr>
+<tr valign="top"><td><code>description</code></td>
+<td>
+<p>Optional text describing the simulation setting that
+is stored with the simulation output.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>Continuous data can be simulated from any dose response curve with homogeneous
+normally distributed residuals. The estimation procedure starts with
+ML estimation of a 4- or 3- parameter Emax model depending on modType.
+If modType=3 or 4-parameter estimation fails, a 3 parameter Emax model is fit by
+maximum likelihood non-linear least squares.  If 1) nls fails to converge for a 3 parameter Emax model, 2) the
+ED50 estimate is &lt;=0, or 3) the ED50 estimate exceeds ed50cutoff, a
+linear, log-linear (offset of 1.0), or scaled exponental
+(exp(dose/max(dose))), is fit using simple linear least squares
+estimation.  The model selected has the smallest residual SS.    
+</p>
+<p>Binary data are handled similarly using maximum likelihood implemented
+with the nlm function.  The models are fit on the logit scale and then 
+back-transformed for estimation of dose response.  Reduced linear models are 
+selected based on the corresponding likelihood deviance.  
+</p>
+<p>MCP-MOD tests are created from contrasts based on the Emax function using 
+the <code>DoseFinding</code> package.  Different
+ED50 and lambda (Hill) parameters can be specified to form the contrasts. A contrast
+matrix output from the DoseFinding package can be specified instead, allowing for
+other contrast choices.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list is returned with class(emaxsim) containing:
+</p>
+<table summary="R valueblock">
+<tr valign="top"><td><code>description</code></td>
+<td>
+<p>User description of simulation</p>
+</td></tr>
+<tr valign="top"><td><code>binary</code></td>
+<td>
+<p>Binary response data.</p>
+</td></tr>
+<tr valign="top"><td><code>modType</code></td>
+<td>
+<p>User supplied starting Emax model</p>
+</td></tr>
+<tr valign="top"><td><code>genObj</code></td>
+<td>
+<p>List object with data and function used to generate study
+data</p>
+</td></tr>
+<tr valign="top"><td><code>pop</code></td>
+<td>
+<p>Matrix with rows containing population parameters
+for each simulation.  Type of parameter depends on
+constructor function generating study data.</p>
+</td></tr>
+<tr valign="top"><td><code>popSD</code></td>
+<td>
+<p>Vector containing the population SD used to generate
+continuous data.  <code>NULL</code> for binary data.</p>
+</td></tr>
+<tr valign="top"><td><code>init</code></td>
+<td>
+<p>Matrix with rows containing the starting Emax parameters
+for each simulation</p>
+</td></tr>
+<tr valign="top"><td><code>est4</code></td>
+<td>
+<p>Matrix with 4 parmameter Emax fit.  NA if failed to
+converge or modType=3</p>
+</td></tr>
+<tr valign="top"><td><code>est3</code></td>
+<td>
+<p>Matrix with 3 parmameter Emax fit.  NA if failed to
+converge or 4-parameter estimation was successful.</p>
+</td></tr>
+<tr valign="top"><td><code>estA</code></td>
+<td>
+<p>Matrix with alternative parameter estimates.  NA if
+Emax model fit successfully</p>
+</td></tr>
+<tr valign="top"><td><code>vc</code></td>
+<td>
+<p>Variance-covariance matrix for the
+estimated parameters stored as a
+vector for each simulation.  The vc vector stored has 16,9, or 4
+elements 
+depending on fitType (with NA values on the end if elements are unused).</p>
+</td></tr>
+<tr valign="top"><td><code>residSD</code></td>
+<td>
+<p>The residual SD based on the selected model.</p>
+</td></tr>
+<tr valign="top"><td><code>fitType</code></td>
+<td>
+<p>Character vector with &quot;4&quot;, &quot;3&quot;, &quot;L&quot;, &quot;LL&quot;, or &quot;E&quot; for
+4-Emax, 3-Emax, linear,
+log-linear, or exponential when an alternative model is selected.</p>
+</td></tr>
+<tr valign="top"><td><code>pVal</code></td>
+<td>
+<p>The <code>nsim</code> p-values from the global null test.  The p-values are 
+1-sided computed using MCP-Mod.</p>
+</td></tr>
+<tr valign="top"><td><code>selContrast</code></td>
+<td>
+<p>The index of the test contrast producing the smallest p-value.</p>
+</td></tr>
+<tr valign="top"><td><code>testMods</code></td>
+<td>
+<p>Object of class Mods from R package <code>DoseFinding</code> that defines
+the contrasts used in MCP-MOD testing.  The functions can be plotted with
+<code>DoseFinding</code> loaded.</p>
+</td></tr>
+<tr valign="top"><td><code>negEmax</code></td>
+<td>
+<p>User input stored for subsequent reference.</p>
+</td></tr>
+<tr valign="top"><td><code>ed50cutoff</code></td>
+<td>
+<p>Upper allowed limit for ED50 estimates</p>
+</td></tr>
+<tr valign="top"><td><code>ed50lowcutoff</code></td>
+<td>
+<p>Lower allowed limit for the ED50 estimates.</p>
+</td></tr>
+<tr valign="top"><td><code>switchMod</code></td>
+<td>
+<p>If switchMod is TRUE, the algorithm substitutes a
+simpler model if (1) convergence is not achieved, (2) the information
+matrix is not positive definite at the converged values, (3) the ED50
+estimates are outside the cutoff bounds.  If switchMod is F, only
+conditions (1) or (2) cause a simpler model to be used.</p>
+</td></tr>
+<tr valign="top"><td><code>negC</code></td>
+<td>
+<p>negC=TRUE if the primary fit (from modType) yielded a
+ED50 estimate &lt; ED50 lower limit.</p>
+</td></tr>
+<tr valign="top"><td><code>bigC</code></td>
+<td>
+<p>bigC=TRUE if the primary fit (from modType) yielded an 
+ED50&gt; ED50 upper limit.</p>
+</td></tr>
+<tr valign="top"><td><code>predpop</code></td>
+<td>
+<p>Matrix with population means for each dose group</p>
+</td></tr>
+<tr valign="top"><td><code>mv</code></td>
+<td>
+<p>Matrix with rows containing dose group sample means</p>
+</td></tr>
+<tr valign="top"><td><code>sdv</code></td>
+<td>
+<p>Matrix with rows containing dose group sample SD</p>
+</td></tr>
+<tr valign="top"><td><code>fitpredv</code></td>
+<td>
+<p>Matrix with rows containing dose groups means
+estimated from the model</p>
+</td></tr>
+<tr valign="top"><td><code>sepredv</code></td>
+<td>
+<p>Matrix with rows containing SE for fitpredv</p>
+</td></tr>
+<tr valign="top"><td><code>sedifv</code></td>
+<td>
+<p>Matrix with rows containing SE for model-based
+differences with placebo</p>
+</td></tr>
+<tr valign="top"><td><code>rseed</code></td>
+<td>
+<p>Starting random
+number seed for each simulated data set set that can be assigned to <code>.Random.seed</code>.
+To reproduce the data, the random number generator must also be changed to
+<code>RNGkind("L'Ecuyer-CMRG")</code>.</p>
+</td></tr>
+<tr valign="top"><td><code>idmax</code></td>
+<td>
+<p>Index of default dose group for comparison to placebo
+(e.g., for plotting Z-statistics).</p>
+</td></tr>
+</table>
+
+
+<h3>Author(s)</h3>
+
+<p> Neal Thomas </p>
+
+
+<h3>See Also</h3>
+
+  <p><code>print.emaxsim</code>, 
+<code>summary.emaxsim</code>, <code>plot.emaxsim</code>, 
+<code>coef.emaxsim</code>, <code>sigma.emaxsim</code>,
+<code>vcov.emaxsim</code>, <code>predict.emaxsim</code>,
+<code>emaxfun</code></p>
+
+
+<h3>Examples</h3>
+
+<pre>
+
+## Not run: 
+## emaxsim changes the random number seed
+nsim&lt;-50
+idmax&lt;-5
+doselev&lt;-c(0,5,25,50,100)
+n&lt;-c(78,81,81,81,77)
+Ndose&lt;-length(doselev)
+
+### population parameters for simulation
+e0&lt;-2.465375 
+ed50&lt;-67.481113 
+
+dtarget&lt;-100
+diftarget&lt;-2.464592
+emax&lt;-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+
+sdy&lt;-7.967897
+pop&lt;-c(log(ed50),emax,e0)    
+meanlev&lt;-emaxfun(doselev,pop)  
+
+###FixedMean is specialized constructor function for emaxsim
+gen&lt;-FixedMean(n,doselev,meanlev,sdy)  
+
+D1 &lt;- emaxsim(nsim,gen,modType=3)
+summary(D1,testalph=0.05)
+
+D4 &lt;- emaxsim(nsim,gen,modType=4)
+summary(D4,testalph=0.05)
+
+## End(Not run)
+
+</pre>
+
+
+</body></html>

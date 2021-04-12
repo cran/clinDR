@@ -294,7 +294,7 @@ test_that("pboadj4 check absolute levels",{
 ### 4 parm model and grouped data, one protocol
 ### and replicated measurement per dose/protocol condition
 set.seed(12357)
-nsim<-1000
+nsim<-500
 doselev<-c(0,5,25,50,100,350)
 n<-20*c(78,81,81,81,77,80)
 n1<-sum(n)
@@ -528,7 +528,7 @@ dose<-rep(doselev,n)
 meanlev<-emaxfun(doselev,pop.parm)  
 meanrep<-emaxfun(dose,pop.parm)  
 clev<-0.9
-nsim<-1000
+nsim<-500
 covci<-matrix(logical(nsim*nd),ncol=nd)
 covpi<-matrix(logical(nsim*nd),ncol=nd)
 covdifci<-matrix(logical(nsim*nd),ncol=nd)
@@ -601,7 +601,7 @@ meanlev<-plogis(emaxfun(doselev,pop.parm))
 y01<-c(rep(1,length(meanlev)),rep(0,length(meanlev)))
 d01<-c(doselev,doselev)
 clev<-0.9
-nsim<-1000
+nsim<-500
 covci<-matrix(logical(nsim*nd),ncol=nd)
 covpi<-matrix(logical(nsim*nd),ncol=nd)
 covdifci<-matrix(logical(nsim*nd),ncol=nd)

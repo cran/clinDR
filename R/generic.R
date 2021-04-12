@@ -20,6 +20,7 @@ coef.fitEmaxB<-function(object, local=FALSE, ...){
 	binary<-object$binary
 	matm<-as.matrix(object$estanfit)	
 	localParm<-object$localParm
+	modType<-object$modType
 	if(is.null(localParm))localParm<-FALSE
 	if(local & !localParm)stop('local=TRUE but no local parameters fit')
 	
@@ -28,7 +29,14 @@ coef.fitEmaxB<-function(object, local=FALSE, ...){
 		matm<-matm[,'difTarget',drop=FALSE]
 	}else{
 		if(localParm){ 
-			if(binary)nc<-ncol(matm)-3 else nc<-ncol(matm)-4
+			if(modType==3){
+				offb<-2
+				offc<-3
+			}else{
+				offb<-3
+				offc<-4
+			}
+			if(binary)nc<-ncol(matm)-offb else nc<-ncol(matm)-offc
 		}else  if(binary)nc<-ncol(matm)-1 else nc<-ncol(matm)-2
 	}
 	

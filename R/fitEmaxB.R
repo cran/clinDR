@@ -1,7 +1,7 @@
 "fitEmaxB"<-
 function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 		 xbase=NULL,binary=FALSE,msSat=NULL,pboAdj=FALSE,
-		 mcmc=mcmc.control(),estan=NULL,diagnostics=TRUE,
+		 mcmc=mcmc.control(),estan=NULL,diagnostics=FALSE,
 		 nproc=getOption("mc.cores", 1L)){
 
 	if(nproc>parallel::detectCores())nproc<-parallel::detectCores()
@@ -39,10 +39,10 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 	if(nbase>0){
 		if(!all(abs(count-1)<tol))stop('Covariate adjustment cannot be requested when counts!=1')
 		if(pboAdj)stop('Covariate adjustment cannot be combined with PBO adjustment')
-		if(nbase>1 & !all.equal(dim(xbase),c(length(y),nbase))){
+		if(nbase>1 && !all.equal(dim(xbase),c(length(y),nbase))){
 			stop('Dimensions of xbase are invalid')
 		}
-		if(nbase==1 & length(xbase)!=length(y))stop('Length of xbase does not match y')
+		if(nbase==1 && length(xbase)!=length(y))stop('Length of xbase does not match y')
 		for(i in 1:nbase){
 			xm<-tapply(xbase[,i],prot,mean)
 			if(!all(abs(xm)<tol))stop('Xbase must be centered about the protocol means')
@@ -225,7 +225,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
 									 parmvec=array(loged50init[j],dim=1))				
 					}	
-					parameters<-c('led50','emax','e0','difTarget','loglambda')
+					parameters<-c('led50','emax','e0','difTarget')
 				}
 			}else{
 				if(modType==4){
@@ -242,7 +242,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
 									 parmvec=array(loged50init[j],dim=1),bslope=array(binit[,j],dim=nbase))				
 					}	
-					parameters<-c('led50','emax','e0','bslope','difTarget','loglambda')
+					parameters<-c('led50','emax','e0','bslope','difTarget')
 				}			
 			}
 			
@@ -286,7 +286,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 								list(e0=array(rep(e0init[j],nprot),dim=nprot),max=difTargetinit[j],
 										 parmvec=array(loged50init[j],dim=1), sigma=array(siginit[j],dim=1) )				
 						}	
-						parameters<-c('led50','emax','e0','sigma','difTarget','loglambda')
+						parameters<-c('led50','emax','e0','sigma','difTarget')
 					}
 				}else{
 					if(modType==4){
@@ -305,7 +305,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 										 parmvec=array(loged50init[j],dim=1),bslope=array(binit[,j],dim=nbase),
 										 sigma=array(siginit[j],dim=1) )				
 						}	
-						parameters<-c('led50','emax','e0','bslope','sigma','difTarget','loglambda')
+						parameters<-c('led50','emax','e0','bslope','sigma','difTarget')
 					}			
 				}
 			}else{  ### pbo excluded
@@ -322,7 +322,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 							list(difTarget=difTargetinit[j],
 									 parmvec=array(loged50init[j],dim=1),sigma=array(siginit[j],dim=1))				
 					}								
-					parameters<-c('led50','emax','sigma','difTarget','loglambda')
+					parameters<-c('led50','emax','sigma','difTarget')
 				}
 			}	
 		}
@@ -562,12 +562,12 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 										 )		
 	}else{
 		capture.output(
-		estanfit<-sampling(estan,data=indata,
+		estanfit<-suppressWarnings(sampling(estan,data=indata,
 											 warmup=warmup,iter=iter,thin=thin,seed=seed,
 											 chains=chains,init=inits,pars=parameters,
 											 control=list(adapt_delta=adapt_delta),
 											 verbose=FALSE,open_progress=FALSE,refresh=-1,
-											 cores = nproc )
+											 cores = nproc ))
 		,file=NULL)
 	}
 	
@@ -641,7 +641,7 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 														p50=NULL,sigmalow=NULL,sigmaup=NULL,
 														effDF=parmDF,parmDF=5,
 														loged50mu=0.0,loged50sca=1.73,
-														loglammu=0.0,loglamsca=0.85,parmCor=-0.45,
+														loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
 														basemu=NULL,basevar=NULL,
 														binary=FALSE)
 {
@@ -689,7 +689,7 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 	return(prior)
 }
 
-mcmc.control<-function(chains=1,thin=1,warmup=1000,iter=3333*thin,
+mcmc.control<-function(chains=1,thin=1,warmup=1000,iter=3333*thin+warmup,
 											 propInit=0.25,seed=12357,
 											 adapt_delta=0.95)
 {

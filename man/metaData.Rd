@@ -43,7 +43,7 @@ row of the data frame.
 		\item{\code{primtype}}{Primary endpoint is BINARY, CONTINOUS, TIMETOEVEN}
 		\item{\code{primtime}}{time units to primary endpoint from randomization}
 		\item{\code{timeunit}}{DAY, HR, MIN, MONTH, WK for primary endpoint}
-		\item{\code{indiction}}{Disease description}
+		\item{\code{indication}}{Disease description}
 		\item{\code{broadta}}{Broad TA classification of the indication}
 		\item{\code{endpointLong,endpointShort}}{Endpoint name and an abbreviated form using 
 		for example, cfb and pcfb for 

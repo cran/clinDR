@@ -13,7 +13,7 @@ emaxPrior.control(epmu=NULL,epsca=NULL,
 	sigmalow=NULL,sigmaup=NULL,
 	effDF=parmDF,parmDF=5,
 	loged50mu=0.0,loged50sca=1.73,
-	loglammu=0.0,loglamsca=0.85,parmCor=-0.45,
+	loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
 	basemu=NULL,basevar=NULL,binary=FALSE)
 }
 \arguments{

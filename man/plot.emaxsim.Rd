@@ -5,7 +5,8 @@
 \description{
   A Q-Q plot of the dose response estimate of the mean at a specified dose minus
 the population value divided by the standard error of the estimator
-(computed using the delta method)
+(computed using the delta method).  Estimates based on alternative
+models when the Emax estimation fails are highlighted in red.
 }
 \usage{
 \method{plot}{emaxsim}(x, id = x$idmax, plotDif= TRUE, ...)

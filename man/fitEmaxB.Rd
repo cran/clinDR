@@ -14,7 +14,7 @@ fitEmaxB(y, dose, prior, modType = 4, prot = rep(1, length(y)),
 	count = rep(1, length(y)), xbase=NULL,
 	binary = FALSE, msSat = NULL,
 	pboAdj = FALSE, mcmc = mcmc.control(), estan = NULL, 
-	diagnostics = TRUE, nproc = getOption("mc.cores", 1L))
+	diagnostics = FALSE, nproc = getOption("mc.cores", 1L))
 }
 
 \arguments{
@@ -67,7 +67,7 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   automatically.  It can be load to an object using the function
   \code{selEstan} and passed to \code{fitEmaxB} for repeated executions to
   improve efficiency and stability.}
-  \item{diagnostics}{Print output from rstan.}
+  \item{diagnostics}{Printed output from rstan.  See \code{Details} for more information.}
   \item{nproc}{The number of processor requested for \code{STAN} MCMC
   computations.  Defaults to the value set by the 
   \code{rstan} installation.   When set explicitly, \code{nproc} 
@@ -81,7 +81,18 @@ code before \code{fitEmaxB} can be used.
 MCMC fit of a Bayesian hyperbolic or sigmoidal Emax model.  The prior
 distributions available are based on the publication  
 Thomas, Sweeney, and Somayaji (2014) and
-Thomas and Roy (2016).}
+Thomas and Roy (2016).
+
+The posterior distributions are complex because the distributions of the \code{Emax} and \code{ED50} parameters 
+change substantially as a function of the \code{lambda}, often
+creating 'funnel' type conditions. Small numbers of 
+divergences are common and do not appear easily avoided.
+Extensive simulation using evaluations with \code{emaxsimB}
+support the utility of the resulting approximate 
+posterior distributions. The number of divergences can be
+viewed using \code{diagnostics=TRUE}. The usual convergence
+diagnostics should always be checked.
+}
 \value{
 A list assigned class "fitEmaxB" with:
 \item{estanfit}{The \code{rstan} object with the model fit.}

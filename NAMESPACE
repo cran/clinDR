@@ -12,9 +12,9 @@ export(emaxsim,emaxsimB,plot.emaxsim,plot.emaxsimB,plot.emaxsimobj,plot.emaxsimB
 			 fitEmaxB,predict.fitEmaxB,plot.fitEmaxB,print.fitEmaxB,
 			 coef.fitEmaxB,sigma.fitEmaxB,
 			 emaxPrior.control,prior.control,mcmc.control,compileStanModels,checkMonoEmax,
-			 targetBeta,solveDose,solveEmax)
-import("foreach")
-importFrom("rstan","stan_model","sampling","get_sampler_params")
+			 targetBeta,solveDose,solveEmax,runShiny)
+import(foreach,shiny,waiter)
+importFrom("rstan","stan_model","sampling","get_sampler_params", "rstan_options")
 importFrom("graphics", "abline", "plot", "points","mtext")
 importFrom("stats", "as.formula", "binomial", "coef", "sigma",  "glm",
              "glm.control", "lm", "median", "na.omit", "nlm", "nls",
@@ -33,6 +33,12 @@ importFrom("ggplot2","ggplot","aes","coord_cartesian","geom_point",
 					 "geom_ribbon","theme_bw","scale_fill_grey","labs",
 					 "theme","element_blank","element_line",
 					 "geom_line","xlab","ylab","scale_x_continuous")
+importFrom("magrittr","%>%")
+importFrom("purrr", "map2","map_dbl")
+importFrom("tibble", "as_tibble")
+importFrom("dplyr", "mutate", "select", "rename", "bind_rows")
+importFrom("tidyr", "pivot_longer")
+importFrom("glue", "glue")
 S3method("[",emaxsim)
 S3method("[",emaxsimB)
 S3method(coef,emaxsimB)
