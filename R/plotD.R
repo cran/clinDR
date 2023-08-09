@@ -74,9 +74,9 @@
   }
   
 
-  ggp <- ggp +ylab(ylab) + xlab(xlab) + theme_bw()   
+  ggp <- ggp +ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()   
   ## remove the vertical grid lines
-  ggp <- ggp+ theme(panel.grid.major.x=element_blank(),
+  ggp <- ggp+ ggplot2::theme(panel.grid.major.x=element_blank(),
                     panel.grid.minor.x=element_blank(),
                     panel.grid.major.y=element_line(size=0.1))  
   

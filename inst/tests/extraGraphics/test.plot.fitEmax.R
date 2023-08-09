@@ -32,6 +32,7 @@ testout<-fitEmax(y,dose,modType=4)
 
 ### basic test
 plot(testout)
+plot(testout,ncol=1)
 #plot(testout, xat=c(-100, 0, 5, 100, 350)) #fail planned
 #plot(testout, xat=c(0, 5, 100, 350, 400)) #fail planned
 plot(testout, xat=c(0, 100, 350))
@@ -62,6 +63,10 @@ plot(testout,symbol=symbol,
 plot(testout,symbol=symbol, log=TRUE,
      symbolLabel='TESTGROUP',
      symbolShape=c(8,10),symbolColor=c('blue','red'),plotDif=TRUE)
+plot(testout,symbol=symbol, log=TRUE,
+     symbolLabel='TESTGROUP',
+     symbolShape=c(8,10),symbolColor=c('blue','red'),plotDif=TRUE,
+		 ncol=1)
 
 ### residual plot
 
@@ -98,6 +103,9 @@ testout2<-fitEmax(y,dose,modType=3,prot=prot)
 
 plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
 	 symbolShape=symbolShape,symbolColor=symbolColor)
+plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
+	 symbolShape=symbolShape,symbolColor=symbolColor,ncol=1)
+
 
 plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
      symbolShape=symbolShape,symbolColor=symbolColor, log=TRUE)
@@ -152,6 +160,7 @@ protsub<-prots[dose!=0]
 testout<-fitEmax(ysub,dsub,iparm=pop.parm,modType=3,prot=protsub,pboAdj=c(TRUE,TRUE))
 
 plot(testout)
+plot(testout,ncol=1)
 plot(testout, log=TRUE)
 
 testout4<-fitEmax(ysub,dsub,iparm=c(pop.parm[1],1,pop.parm[2],0),
@@ -193,6 +202,7 @@ testout<-fitEmax(y,dvec,modType=4,parms[1:4],
 plot(testout)
 plot(testout, log=TRUE)
 plot(testout, log=TRUE, xat=c(0.1, 0.2, 0.4, 0.6, 1.0))
+plot(testout, log=TRUE, xat=c(0.1, 0.2, 0.4, 0.6, 1.0),ncol=1)
 
 
 plot(testout,plotDif=TRUE)
@@ -245,6 +255,8 @@ prots<-c(rep(1,n1),rep(2,n2))
 testout2<-fitEmax(y,dose,modType=4,prot=prots,xbase=x,diagnostics = FALSE)
 
 plot(testout2)
+plot(testout2,ncol=1)
+
 plot(testout2, log=TRUE)
 
 plot(testout2,plotDif=TRUE)

@@ -8,7 +8,8 @@ Creates a list object that contains inputs and a function to create
 simulated data sets for emaxsim.  Data sets are created by
 generating random parameters from beta or log-normal distributions for 
 a 3/4 parameter Emax model. For binary data, the Emax model is on the logit scale
-and then back-transformed.
+and then back-transformed. \code{RandEmax} is deprecated.  
+See \code{randomEmax}.
 }
 \usage{
 RandEmax(n, doselev, 

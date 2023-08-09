@@ -1,7 +1,7 @@
 "fitEmaxB"<-
 function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
-		 xbase=NULL,binary=FALSE,msSat=NULL,pboAdj=FALSE,
-		 mcmc=mcmc.control(),estan=NULL,diagnostics=FALSE,
+		 xbase=NULL,binary=FALSE,msSat=NULL,vcest=NULL,pboAdj=FALSE,
+		 mcmc=mcmc.control(),estan=NULL,diagnostics=TRUE,
 		 nproc=getOption("mc.cores", 1L)){
 
 	if(nproc>parallel::detectCores())nproc<-parallel::detectCores()
@@ -12,6 +12,21 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 	dlev<-sort(unique(dose))
 	sigmoid<-1*(modType==4)
 	intercept<-1*(!pboAdj)
+	
+	if(!missing(vcest)){
+		if(!is.matrix(vcest) || nrow(vcest)!=ncol(vcest) )
+			stop('vcest must be a square matrix')
+		dimFit<-nrow(vcest)	
+		if(!missing(xbase))stop('only one of vcest and xbase can be specified')
+		if(!isSymmetric(unname(vcest)))stop('vcest is not symmetric')
+		npd<-any(eigen(vcest,symmetric=TRUE)$values<=0)
+		if(npd)stop('vcest must be a positive-definite variance-covariance matrix')
+		if(!missing(count))stop('only one of vcest and count can be specified')
+		if(!missing(msSat))stop('only one of vcest and msSat can be specified')
+	}else{
+		dimFit<-0
+		vcest<-matrix(1,nrow=1,ncol=1)
+	}
 
 	### check input consistency
 	if(isTRUE(pboAdj && binary))stop('PBO adjustment not available with binary data')
@@ -48,12 +63,14 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 			if(!all(abs(xm)<tol))stop('Xbase must be centered about the protocol means')
 		}
 	}
+	
 
-	patDat<-isTRUE(all(count==1))
+	patDat<-isTRUE(all(count==1) && !dimFit)
 	
 
 	### make local copy of control variables
 	if(inherits(prior,'emaxPrior'))localParm<-TRUE else localParm<-FALSE
+	if(!localParm && dimFit)stop('vcest available only with emaxPrior input')
 
 	p50<-prior$p50
 	
@@ -77,6 +94,11 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 		loglammu<-prior$loglammu
 		loglamsca<-prior$loglamsca
 		parmCor<-prior$parmCor
+		### truncation of extreme ed50,lambda
+		lowled50<-prior$lowled50
+		highled50<-prior$highled50
+		lowllam<-prior$lowllam
+		highllam<-prior$highllam
 	}else{
 		epmu<-prior$epmu
 		epsd<-prior$epsd
@@ -90,7 +112,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 		lamsca<-prior$lamsca
 	}
 	
-	if(!binary){
+	if(!binary && !dimFit){
 		sigmalow<-prior$sigmalow
 		sigmaup<-prior$sigmaup
 	}else { # placeholder values ignored by stan but required for input
@@ -114,6 +136,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 	propInit<-mcmc$propInit
 	seed<-mcmc$seed
 	adapt_delta<-mcmc$adapt_delta
+	
 
 	## locate compiled stan models
 	if(!is.null(estan) && !inherits(estan,'stanmodel'))stop('estan model invalid')	
@@ -133,7 +156,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 			e0init<-epmu
 			difTargetinit<-difTargetmu
 			loged50init<-loged50mu
-			if(modType==4)loglaminit<-loglammu
+			loglaminit<-loglammu
 			if(nbase>0){
 				binit<-matrix(numeric(nbase),nrow=nbase)
 				binit[,1]<-basemu
@@ -155,11 +178,10 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 			high<- propInit*loged50sca
 			loged50init<-seq(low,high,length=chains)				
 			
-			if(modType==4){
-				low<- -propInit*loglamsca
-				high<- propInit*loglamsca
-				loglaminit<-seq(low,high,length=chains)				
-			}
+			low<- -propInit*loglamsca
+			high<- propInit*loglamsca
+			loglaminit<-seq(low,high,length=chains)				
+				
 			if(nbase>0){
 				blow<-basemu-propInit*sqrt(diag(basevar))
 				bhigh<-basemu+propInit*sqrt(diag(basevar))
@@ -177,62 +199,71 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 		}
 		
 		###############################################################################
-		#### binary data
-		if(binary){
+		#### binary data for fitted model input 
+		if(binary || dimFit){
 			gp<-0  ## placeholder not used in stan
 			cont<-0
-			### y must be coded 0/1
-			if(any(y!=0 & y!=1))stop("y must be 0/1")
 			
-			
-			### data summaries for input to stan
-			
-			protv<-prot
-			if(!(nbase>0)){
-				xind<-unique(cbind(dose,prot))		
-				N<-nrow(xind)
-				dv<-numeric(N)
-				yvb<-numeric(N)
-				nvb<-numeric(N)
+			if(binary && !dimFit){
+				### y must be coded 0/1
+				if(any(y!=0 & y!=1))stop("y must be 0/1")
 				
-				protv<-numeric(N)
-				for(i in 1:N){
-					nvb[i]<-sum(count[dose==xind[i,1] & prot==xind[i,2]])	
-					yvb[i]<-sum(count[dose==xind[i,1] & prot==xind[i,2] & y==1])	
-					dv[i]<-xind[i,1]
-					protv[i]<-xind[i,2]
+				### data summaries for input to stan
+				
+				protv<-prot
+				if(!(nbase>0)){
+					xind<-unique(cbind(dose,prot))		
+					N<-nrow(xind)
+					dv<-numeric(N)
+					yvb<-numeric(N)
+					nvb<-numeric(N)
+					
+					protv<-numeric(N)
+					for(i in 1:N){
+						nvb[i]<-sum(count[dose==xind[i,1] & prot==xind[i,2]])	
+						yvb[i]<-sum(count[dose==xind[i,1] & prot==xind[i,2] & y==1])	
+						dv[i]<-xind[i,1]
+						protv[i]<-xind[i,2]
+					}
+				}else{
+					N<-length(y); yvb<-y;  dv<-dose; nvb<-count 
 				}
-			}else{
-				N<-length(y); yvb<-y;  dv<-dose; nvb<-count 
+				yv<-numeric(N)  ## placeholder for stan	
+				nv<-numeric(N)  ## 
+			}else{  #fitted model
+				N<-length(dose)
+				### data summaries for input to stan
+				yv<-y;  dv<-dose; nv<-count; protv<-prot
+				### placeholder for binary
+				yvb<-numeric(N); nvb<-numeric(N)
 			}
+			
 			df2<-0;  ## placeholder for stan
 			ssy<-0   ##
-			yv<-numeric(N)  ## 
-			nv<-numeric(N)  ## placeholder for stan	
-			
+
 			inits<- vector("list", chains)
-			if(nbase==0){
+			if(nbase==0 && !pboAdj){
 				if(modType==4){
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-									 parmvec=c(loged50init[j],loglaminit[j]))				
+									 loged50=loged50init[j],llam=loglaminit[j])				
 					}	
 					parameters<-c('led50','lambda','emax','e0','difTarget','loglambda')
 				}else{
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-									 parmvec=array(loged50init[j],dim=1))				
+									 loged50=loged50init[j],llam=loglaminit[j])
 					}	
 					parameters<-c('led50','emax','e0','difTarget')
 				}
-			}else{
+			}else if(!pboAdj){
 				if(modType==4){
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-									 parmvec=c(loged50init[j],loglaminit[j]),
+									 loged50=loged50init[j],llam=loglaminit[j],
 									 bslope=array(binit[,j],dim=nbase))				
 					}	
 					parameters<-c('led50','lambda','emax','e0','bslope','difTarget','loglambda')
@@ -240,11 +271,28 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-									 parmvec=array(loged50init[j],dim=1),bslope=array(binit[,j],dim=nbase))				
+									 loged50=loged50init[j],llam=loglaminit[j],
+									 bslope=array(binit[,j],dim=nbase))				
 					}	
 					parameters<-c('led50','emax','e0','bslope','difTarget')
 				}			
-			}
+			} else{  ### pbo excluded, applies with vcest only
+				if(modType==4){
+					for(j in 1:chains){
+						inits[[j]]<-
+							list(difTarget=difTargetinit[j],
+									 loged50=loged50init[j],llam=loglaminit[j])				
+					}					
+					parameters<-c('led50','lambda','emax','difTarget','loglambda')
+				}else{
+					for(j in 1:chains){
+						inits[[j]]<-
+							list(difTarget=difTargetinit[j],
+									 loged50=loged50init[j],llam=loglaminit[j])				
+					}								
+					parameters<-c('led50','emax','difTarget')
+				}
+			}			
 			
 			###############################################################################
 			#### continuous data
@@ -268,15 +316,13 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 			}
 			
 			inits<- vector("list", chains)
-			lamt<-numeric(1)
-			sigma<-numeric(1)
 			if(!pboAdj){
 				if(nbase==0){
 					if(modType==4){
 						for(j in 1:chains){
 							inits[[j]]<-
 								list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-										 parmvec=c(loged50init[j],loglaminit[j]),
+										 loged50=loged50init[j],llam=loglaminit[j],
 										 sigma=array(siginit[j],dim=1))
 						}	
 						parameters<-c('led50','lambda','emax','e0','sigma','difTarget','loglambda')
@@ -284,7 +330,8 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 						for(j in 1:chains){
 							inits[[j]]<-
 								list(e0=array(rep(e0init[j],nprot),dim=nprot),max=difTargetinit[j],
-										 parmvec=array(loged50init[j],dim=1), sigma=array(siginit[j],dim=1) )				
+										 loged50=loged50init[j],llam=loglaminit[j], 
+										 sigma=array(siginit[j],dim=1) )				
 						}	
 						parameters<-c('led50','emax','e0','sigma','difTarget')
 					}
@@ -293,7 +340,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 						for(j in 1:chains){
 							inits[[j]]<-
 								list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-										 parmvec=c(loged50init[j],loglaminit[j]),
+										 loged50=loged50init[j],llam=loglaminit[j], 
 										 bslope=array(binit[,j],dim=nbase),
 										 sigma=array(siginit[j],dim=1))
 						}	
@@ -302,7 +349,8 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 						for(j in 1:chains){
 							inits[[j]]<-
 								list(e0=array(rep(e0init[j],nprot),dim=nprot),difTarget=difTargetinit[j],
-										 parmvec=array(loged50init[j],dim=1),bslope=array(binit[,j],dim=nbase),
+										 loged50=loged50init[j],llam=loglaminit[j], 
+										 bslope=array(binit[,j],dim=nbase),
 										 sigma=array(siginit[j],dim=1) )				
 						}	
 						parameters<-c('led50','emax','e0','bslope','sigma','difTarget')
@@ -313,14 +361,16 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(difTarget=difTargetinit[j],
-									 parmvec=c(loged50init[j],loglaminit[j]),sigma=array(siginit[j],dim=1))				
+									loged50=loged50init[j],llam=loglaminit[j], 
+									 sigma=array(siginit[j],dim=1))				
 					}					
 					parameters<-c('led50','lambda','emax','sigma','difTarget','loglambda')
 				}else{
 					for(j in 1:chains){
 						inits[[j]]<-
 							list(difTarget=difTargetinit[j],
-									 parmvec=array(loged50init[j],dim=1),sigma=array(siginit[j],dim=1))				
+									loged50=loged50init[j],llam=loglaminit[j], 
+									 sigma=array(siginit[j],dim=1))				
 					}								
 					parameters<-c('led50','emax','sigma','difTarget')
 				}
@@ -333,7 +383,8 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 							'yv','nv','yvb','nvb','dv','xbase','df2','ssy',
 							'epmu','epsca','difTargetmu','difTargetsca','dTarget','sigmalow','sigmaup','p50',
 							'loged50mu','loged50sca','e0DF','diftDF','parmDF','loglammu','loglamsca',
-							'parmCor','basemu','basevar')		
+							'parmCor','basemu','basevar','lowled50','highled50','lowllam','highllam',
+							'dimFit','vcest')		
 	}else{
 		### create initial values
 		if(chains==1){ 
@@ -538,10 +589,9 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 							'yv','nv','yvb','nvb','dv','xbase','df2','ssy',
 					'epmu','epsd','emaxmu','emaxsd','sigmalow','sigmaup','p50',
 						'led50mu','led50sca','edDF','lama','lamb','lamsca',
-					'basemu','basevar')		
+					'basemu','basevar','dimFit','vcest')		
 	}
 #######################################################################
-	
 	### assign compiled model file
 	if(is.null(estan)){
 		emod<-system.file(package="clinDR", "models", emod)
@@ -575,7 +625,7 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 	fit<-list(
 		estanfit=estanfit,
 		y=y, dose=dose, prot=protorig,count=count,
-		nbase=nbase,xbase=xbase,
+		nbase=nbase,xbase=xbase,dimFit=dimFit,vcest=vcest,
 		modType=modType,binary=binary,pboAdj=pboAdj,
 		msSat=msSat,prior=prior,mcmc=mcmc,localParm=localParm		
 	)
@@ -642,6 +692,8 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 														effDF=parmDF,parmDF=5,
 														loged50mu=0.0,loged50sca=1.73,
 														loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
+														lowled50=log(0.001),highled50=log(1000),
+														lowllam=log(0.3),highllam=log(4.0),
 														basemu=NULL,basevar=NULL,
 														binary=FALSE)
 {
@@ -667,6 +719,10 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 	if(is.null(dTarget))stop('dTarget must be specified')
 	if(!missing(effDF) && (length(effDF)>2))stop('effDF must have length <=2')
 	
+	default<-FALSE
+	if(missing(loged50mu) && missing(loged50sca) &&
+		 missing(loglammu) && missing(loglamsca))default<-TRUE 
+	
 	prior<-list(epmu=epmu,
 							epsca=epsca,
 							difTargetmu=difTargetmu,
@@ -682,16 +738,21 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 							loglammu=loglammu,
 							loglamsca=loglamsca,
 							parmCor=parmCor,
+							lowled50=lowled50,
+							highled50=highled50,
+							lowllam=lowllam,
+							highllam=highllam,
 							basemu=basemu,
 							basevar=basevar,
-							binary=binary)
+							binary=binary,
+							default=default)
 	class(prior)<-'emaxPrior'
 	return(prior)
 }
 
 mcmc.control<-function(chains=1,thin=1,warmup=1000,iter=3333*thin+warmup,
-											 propInit=0.25,seed=12357,
-											 adapt_delta=0.95)
+											 propInit=0.50,seed=12357,
+											 adapt_delta=0.90)
 {
 	list(chains=chains,thin=thin,warmup=warmup,iter=iter,propInit=propInit,
 			 seed=seed,adapt_delta=adapt_delta)	

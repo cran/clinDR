@@ -1,30 +1,36 @@
-"checkMonoEmax" <-
-function(y,dose,parm,sigma2,nvec=rep(1,length(dose)),xbase=NULL,
-			modelFun=emaxfun,trend='positive',binary=FALSE,logit=binary)
+"bpchkMonoEmax" <-
+function(x, trend='positive', protSel=1)
 {
-		.Deprecated("checkMonEmax",package="clinDR",
-		msg=paste0('This function has been replaced by bpchkMonoEmax',
-							'that inputs the output of fitEmaxB ',
-							'checkMonoEmax will be removed in a  ',
-							'function version of package clinDR'))
-
-	if(any(is.na(c(y,dose))))stop('Missing data are not allowed')
-	if(!is.matrix(parm))stop('parm must be a matrix')
+	if(!inherits(x,'fitEmaxB'))stop('first input must be fitEmaxB output object')
 	
-	if(!missing(logit)){
-		if(logit!=binary)stop('binary and logit contradict.  logit is deprecated, use binary')
-		warning('logit is deprecated, use binary')	
-	}
-	
-	nparm<-ncol(parm)
+	prot<-as.numeric(factor(x$prot))         #convert to 1,2,3,....
+  nprot<-max(prot)
+	if(protSel<0 || protSel>nprot)stop('invalid protSel specified')
+  
+	y<-x$y[prot==protSel]
+	dose<-x$dose[prot==protSel]
+	parm<-coef(x)
+	modType<-x$modType
+	nvec<-x$count
 	nbase<-0
-	if(!is.null(xbase)){
-		if(any(nvec!=1))stop('nvec!=1 not allowed with covariates')
-		if(is.vector(xbase))xbase<-as.matrix(xbase,ncol=1)
-		if(!is.matrix(xbase))stop('xbase must be a matrix with rows matching y')
-		if(nrow(xbase)!=length(y))stop('rows of xbase not equal to length of y')
+	xbase<-x$xbase
+	if(length(xbase)){
 		nbase<-ncol(xbase)
-		if(nbase>=nparm)stop('Number of parameters specified must exceed columns of xbase')
+		xbase<-xbase[prot==protSel,]
+	}
+	binary<-x$binary
+	dimFit<-x$dimFit
+	vcest<-x$vcest
+	if(modType==3) parm<-cbind(parm[,1],rep(1,nrow(parm)),parm[,2:ncol(parm)])
+	if(nbase){
+		parm<-cbind(parm[,1:3],parm[,3+protSel],
+								parm[,(4+nprot):(3+nprot+nbase)])
+	}else parm<-cbind(parm[,1:3],parm[,3+protSel])
+	nparm<-ncol(parm)
+	
+	if(!binary && !dimFit)sigma2<-(sigma(x)^2)else sigma2<-NULL
+	
+	if(nbase){
 		bparm<-parm[,(1+nparm-nbase):nparm]
 		parm<-parm[,1:(nparm-nbase)]
 		nparm<-nparm-nbase
@@ -62,19 +68,21 @@ function(y,dose,parm,sigma2,nvec=rep(1,length(dose)),xbase=NULL,
 	}
 	
 	if(!nbase){
-		ypred<-modelFun(dvec,parm)
+		ypred<-emaxfun(dvec,parm)
 	}else{
-		ypred<-modelFun(dose,parm)
+		ypred<-emaxfun(dose,parm)
 		ypred<-ypred+bparm%*%t(xbase)
 	}
-	if(binary)ypred<-plogis(ypred)
+	if(binary && !dimFit)ypred<-plogis(ypred)
 	
 	
 	Bpval<-numeric(nsim)
 	ymsim<-numeric(ndose)
 	for(i in 1:nsim){
 		if(!nbase){
-	    if(!binary){
+			if(dimFit){
+					ymsim[1:ndose]<-ypred[i,]+rmvnorm(1,rep(0,dimFit),vcest)
+	    }else if(!binary){
 	        ymsim[1:ndose]<-rnorm(ndose,ypred[i,],sqrt(sigma2[i]/nd))
 	    }else ymsim[1:ndose]<-rbinom(ndose,nd,ypred[i,])/nd
 		}else{

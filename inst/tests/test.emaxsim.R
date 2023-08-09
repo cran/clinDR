@@ -43,13 +43,13 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
             sigma=sdy,placAdj=FALSE,
             alternative="one.sided",critV=TRUE))
 
-D3 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3)
+D3 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,nproc=nprocdef)
 
 
 test_that("check mcp power calculation",{ expect_that(mean(D3$pVal<0.05),equals(pow3,tol=2.5*sqrt(pow3*(1-pow3)/nsim))) })
 
 ### check initial value specification
-D3i <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,iparm=pop)
+D3i <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,iparm=pop,nproc=nprocdef)
 
 test_that("check spec of initial values",{
 	expect_lt(abs(max(apply((D3$fitpredv-D3i$fitpredv),1,max))),0.2)
@@ -100,7 +100,7 @@ pow3n<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
             sigma=sdy,placAdj=FALSE,
             alternative="one.sided",critV=TRUE))
 
-D3n <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,negEmax=TRUE)
+D3n <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,negEmax=TRUE,nproc=nprocdef)
 
 
 test_that("check mcp power calculation",{
@@ -124,7 +124,7 @@ pow3n3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
 D3n3 <- emaxsim(nsim,gen.parm,modType=4,
 							 ed50contr=as.vector(parm.mat[,1]),
 							 lambdacontr = as.vector(parm.mat[,2]),
-							 negEmax=TRUE)
+							 negEmax=TRUE,nproc=nprocdef)
 
 
 test_that("check mcp power calculation",{
@@ -168,7 +168,7 @@ emaxMods1<-Mods(sigEmax=cbind(parm.mat[1,1],parm.mat[1,2]),
                doses=doselev,placEff=e0,maxEff=-1)
 emaxMat1<-optContr(emaxMods1,w=n)
 
-D1 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods1)
+D1 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods1,nproc=nprocdef)
 
 parmmean<-apply(coef(D1)$est,2,mean)
 
@@ -213,7 +213,7 @@ meanlev<-emaxfun(doselev,parm=pop)
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)  
 
 ### 1 contrast
-D1 <- emaxsim(nsim,gen.parm,modType=3)
+D1 <- emaxsim(nsim,gen.parm,modType=3,nproc=nprocdef)
 
 parmmean<-apply(coef(D1)$est[,1:3],2,mean)
 
@@ -233,7 +233,7 @@ test_that("predict.emaxsim matches emaxsim internal values",{
                 equals((as.numeric(D1$sedifv[,2]))))
 })
 
-D1i <- emaxsim(nsim,gen.parm,modType=3,iparm=pop)
+D1i <- emaxsim(nsim,gen.parm,modType=3,iparm=pop,nproc=nprocdef)
 
 test_that("check spec of initial values with 3-parm model",{
 	expect_lt(abs(max(apply((D1$fitpredv-D1i$fitpredv),1,max))),0.2)
@@ -295,7 +295,7 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,
             alternative="one.sided",critV=TRUE))
 
 rseed<<-.Random.seed
-D3 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,binary=TRUE)
+D3 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,binary=TRUE,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
     expect_that(mean(D3$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -304,7 +304,7 @@ test_that("check mcp power calculation",{
 ### 3 parameter fit, different format for testing contrasts
 .Random.seed<<-rseed
 D3 <- emaxsim(nsim,gen.parm,modType=3,ed50contr=parm.mat[,1],
-			  lambdacontr=parm.mat[,2],binary=TRUE)
+			  lambdacontr=parm.mat[,2],binary=TRUE,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
     expect_that(mean(D3$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -330,7 +330,7 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-D4 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,binary=TRUE)
+D4 <- emaxsim(nsim,gen.parm,modType=4,testMods=emaxMods3,binary=TRUE,nproc=nprocdef)
 
 ###
 test_that("check DR for coverage",{
@@ -358,7 +358,7 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-D2e <- emaxsim(nsim,gen, modType=3)
+D2e <- emaxsim(nsim,gen, modType=3,nproc=nprocdef)
 sink("NUL")
 out2e<-summary(D2e)
 sink()
@@ -383,7 +383,7 @@ meanlev<-emaxfun(doselev,pop)
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
 
-D2en <- emaxsim(nsim,gen, modType=3,negEmax=TRUE)
+D2en <- emaxsim(nsim,gen, modType=3,negEmax=TRUE,nproc=nprocdef)
 
 
 sink("NUL")

@@ -5,6 +5,7 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 
 	modType<-object$modType
 	binary<-object$binary
+	dimFit<-object$dimFit
 	pboAdj<-object$pboAdj
 	prot<-object$prot
 	nprot<-max(as.numeric(prot))
@@ -23,7 +24,7 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	if(pboAdj){
 		parms<-cbind(parms,rep(0,nrow(parms)))		
 	}else parms<-coef(object)[,c(1:(modType-1),modType+(int-1))]
-	if(!binary) sigsim<-sigma(object) else sigsim<-NULL
+	if(!binary && !dimFit) sigsim<-sigma(object) else sigsim<-NULL
 	
 	predout<- emaxfun(dosevec,parms)
 	predref<- as.vector(emaxfun(dref,parms))

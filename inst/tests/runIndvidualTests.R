@@ -1,9 +1,13 @@
 library(clinDR)
 library(testthat)
 library(DoseFinding)
+library(nlme)
+library(parallel)
+library(doParallel)
 
 
 if(file.exists("./clinDR/inst/tests")) setwd("./clinDR/inst/tests")
+nprocdef<-15
 
 RNGkind("default")
 test_file('test.emaxsim.R')
@@ -34,6 +38,8 @@ test_file('test.fitEmax.R')
 
 RNGkind("default")
 test_file('test.fitEmaxBlocalParm.R')
+
+RNGkind("default")
 
 # RNGkind("default")
 # test_file('test.fitEmaxB.R')

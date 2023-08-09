@@ -3,7 +3,7 @@ startEmax<-function(y,dose,baseline,count=rep(1,length(y)),
             lbED50=doselev[2]/10,ubED50=max(doselev),
             lbLambda=0.5,ubLambda=5){
 
-    if(binary && !(y%in%c(0,1)))stop('y must be 0/1 for binary data')
+    if(binary && !all(y%in%c(0,1)))stop('y must be 0/1 for binary data')
     if(! modType%in%c(3,4))stop("modType must be 3 or 4")
 
     ### require at least 4 points because ends of designs

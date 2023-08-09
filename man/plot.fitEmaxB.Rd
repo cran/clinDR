@@ -13,6 +13,7 @@ created by function \code{fitEmaxB}.
       xlab='Dose',
       ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
             'Difference With Placebo','Response')),
+      ncol=NULL,
       symbol=NULL,symbolLabel='Group',symbolShape=8,
       symbolColor='red',symbolSize=4,
       bwidth=NULL,
@@ -45,6 +46,9 @@ mean/proportion for each dose.}
   dose in each protocol is placebo.}
   \item{xlab}{Label for the x-axis}
   \item{ylab}{Label for the y-axis}
+   \item{ncol}{When more than one protocol is plotted, \code{ncol} specifies
+  the number of side by side plots in the plot grid.  The default is 3 or
+  5 depending on the plot type} 
   \item{symbol}{An optional grouping variable.  
   The values of symbol must correspond to the original data used in 
   \code{fitEmax}.}

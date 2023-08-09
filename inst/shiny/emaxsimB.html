@@ -1,9 +1,20 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Simulate Emax Bayesian estimation</title>
+<!DOCTYPE html><html><head><title>R: Simulate Emax Bayesian estimation</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
+<script type="text/javascript">
+const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+function processMathHTML() {
+    var l = document.getElementsByClassName('reqn');
+    for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
+    return;
+}</script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+    onload="processMathHTML();"></script>
 <link rel="stylesheet" type="text/css" href="R.css" />
-</head><body>
+</head><body><div class="container">
 
-<table width="100%" summary="page for emaxsimB"><tr><td>emaxsimB</td><td style="text-align: right;">R Documentation</td></tr></table>
+<table style="width: 100%;"><tr><td>emaxsimB</td><td style="text-align: right;">R Documentation</td></tr></table>
 
 <h2>
 Simulate Emax Bayesian estimation
@@ -20,8 +31,7 @@ model is fit on the logit scale, and then back-transformed</p>
 
 <h3>Usage</h3>
 
-<pre>
-emaxsimB(nsim, genObj, prior, modType = 4, 
+<pre><code class='language-R'>emaxsimB(nsim, genObj, prior, modType = 4, 
 	binary = FALSE, seed=12357,
 	check = FALSE, nproc=parallel::detectCores(), 
 	negEmax = FALSE, ed50contr = NULL, 
@@ -30,19 +40,19 @@ emaxsimB(nsim, genObj, prior, modType = 4,
 	mcmc = mcmc.control(), 
 	customCode=NULL, customParms=NULL,
 	description = "")
-</pre>
+</code></pre>
 
 
 <h3>Arguments</h3>
 
-<table summary="R argblock">
-<tr valign="top"><td><code>nsim</code></td>
+<table>
+<tr style="vertical-align: top;"><td><code>nsim</code></td>
 <td>
 
 <p>Number of simulation replications
 </p>
 </td></tr>
-<tr valign="top"><td><code>genObj</code></td>
+<tr style="vertical-align: top;"><td><code>genObj</code></td>
 <td>
 
 <p>Object containing inputs and function to create simulated  
@@ -50,7 +60,7 @@ data sets.  These objects are created by special constructor
 functions; the current choices are <code>FixedMean</code> and <code>RandEmax</code>.
 </p>
 </td></tr>
-<tr valign="top"><td><code>prior</code></td>
+<tr style="vertical-align: top;"><td><code>prior</code></td>
 <td>
 <p>Prior specification through an object of type 'emaxPrior' or 'prior'.  
 See <code>emaxPrior.control</code> and <code>prior.control</code> for details.  
@@ -60,24 +70,24 @@ anticipated dose and/or the dose in a POC study), while the 'prior' specifies th
 theoretical maximum effect (the emax parameter).  The 'prior' specification is 
 deprecated and will be removed.</p>
 </td></tr>
-<tr valign="top"><td><code>modType</code></td>
+<tr style="vertical-align: top;"><td><code>modType</code></td>
 <td>
 <p>When <code>modType=3</code>, a hyperbolic Emax model is fit.  
 When <code>modType=4</code>, a sigmoid Emax model is fit.</p>
 </td></tr>
-<tr valign="top"><td><code>binary</code></td>
+<tr style="vertical-align: top;"><td><code>binary</code></td>
 <td>
 
 <p>When specified, the Emax model is fit on the logit scale, and then
 the results are back-transformed to proportions.
 </p>
 </td></tr>
-<tr valign="top"><td><code>seed</code></td>
+<tr style="vertical-align: top;"><td><code>seed</code></td>
 <td>
 <p>Seed for random number generator used to create data.  A separate
 seed can be passed to <code>rstan</code> through the <code>MCMC</code> object.</p>
 </td></tr>
-<tr valign="top"><td><code>check</code></td>
+<tr style="vertical-align: top;"><td><code>check</code></td>
 <td>
 
 <p>When <code>TRUE</code>, a single simulated data set is created and the data
@@ -86,19 +96,19 @@ are in the form needed for developing <code>customCode</code>.  Note that
 <code>customCode</code> is not called when <code>check=TRUE</code>.
 </p>
 </td></tr>
-<tr valign="top"><td><code>nproc</code></td>
+<tr style="vertical-align: top;"><td><code>nproc</code></td>
 <td>
 <p>The number of processors to use in parallel computation of the
 simulations, which are divided into equal-sized computational blocks.  When <code>nproc=1</code>
 a single local processor.</p>
 </td></tr>
-<tr valign="top"><td><code>negEmax</code></td>
+<tr style="vertical-align: top;"><td><code>negEmax</code></td>
 <td>
 
 <p>When <code>TRUE</code>, the intended effect is assumed to be negative.
 </p>
 </td></tr>
-<tr valign="top"><td><code>ed50contr</code></td>
+<tr style="vertical-align: top;"><td><code>ed50contr</code></td>
 <td>
 <p>A vector of ED50 values for creating a global null test using the
 MCP-MOD package DoseFinding based on Emax model-based contrasts.
@@ -107,12 +117,12 @@ dose, the mid-point between the 2 highest doses, and the
 median of the dose levels.  When there are &lt;=4 doses including pbo,
 the median-based contrast is excluded.</p>
 </td></tr>
-<tr valign="top"><td><code>lambdacontr</code></td>
+<tr style="vertical-align: top;"><td><code>lambdacontr</code></td>
 <td>
 <p>Hill parameters matched to the ed50contr.  The default value is 1
 for each contrast model.</p>
 </td></tr>
-<tr valign="top"><td><code>testMods</code></td>
+<tr style="vertical-align: top;"><td><code>testMods</code></td>
 <td>
 <p>The model object for a MCP-MOD test
 created by <code>Mods</code> from package DoseFinding.  If 
@@ -121,19 +131,19 @@ call should
 use the unique sorted dose levels.  The direction of the trend should be specificed in the call to <code>Mods</code>.  The <code>negEmax</code> is stored for use by support functions, but it does not determine the direction of the effect when <code>testMods</code> is specified.  The validity of
 <code>testMods</code> is not checked.</p>
 </td></tr>
-<tr valign="top"><td><code>idmax</code></td>
+<tr style="vertical-align: top;"><td><code>idmax</code></td>
 <td>
 <p>Index of the default dose group for comparison to placebo.  
 Most analysis functions allow other dose groups to be
 specified.  The default is the index of the highest dose.</p>
 </td></tr>
-<tr valign="top"><td><code>mcmc</code></td>
+<tr style="vertical-align: top;"><td><code>mcmc</code></td>
 <td>
 
 <p>MCMC settings created using <code>mcmc.control</code>
 </p>
 </td></tr>
-<tr valign="top"><td><code>customCode</code></td>
+<tr style="vertical-align: top;"><td><code>customCode</code></td>
 <td>
 <p>An optional user supplied function that computes custom
 estimates/decision criteria from each simulated data set and its Bayesian
@@ -142,12 +152,12 @@ model fit.  The output are stored in a list, <code>customOut</code>, of length
 mandatory inputs to the <code>customCode</code> function.
 </p>
 </td></tr>
-<tr valign="top"><td><code>customParms</code></td>
+<tr style="vertical-align: top;"><td><code>customParms</code></td>
 <td>
 <p>Optional parameters that can be passed to 
 <code>customCode</code>.</p>
 </td></tr>
-<tr valign="top"><td><code>description</code></td>
+<tr style="vertical-align: top;"><td><code>description</code></td>
 <td>
 
 <p>Optional text describing the simulation setting that
@@ -195,145 +205,145 @@ inputs must be (parms,pVal,dose,y,customParms) or (parms,residSD,pVal,dose,y,cus
 
 <p>A list is returned with class(emaxsim) containing:
 </p>
-<table summary="R valueblock">
-<tr valign="top"><td><code>description</code></td>
+<table>
+<tr style="vertical-align: top;"><td><code>description</code></td>
 <td>
 <p>User description of simulation</p>
 </td></tr>
-<tr valign="top"><td><code>localParm</code></td>
+<tr style="vertical-align: top;"><td><code>localParm</code></td>
 <td>
 <p><code>localParm=TRUE</code> when the prior 
 prior distribution is input using <code>emaxPrior</code>.</p>
 </td></tr>
-<tr valign="top"><td><code>binary</code></td>
+<tr style="vertical-align: top;"><td><code>binary</code></td>
 <td>
 <p>Binary response data.</p>
 </td></tr>
-<tr valign="top"><td><code>modType</code></td>
+<tr style="vertical-align: top;"><td><code>modType</code></td>
 <td>
 <p>Type of Emax model fit (3 or 4 parameters)</p>
 </td></tr>
-<tr valign="top"><td><code>genObj</code></td>
+<tr style="vertical-align: top;"><td><code>genObj</code></td>
 <td>
 <p>List object with data and function used to generate study
 data</p>
 </td></tr>
-<tr valign="top"><td><code>pop</code></td>
+<tr style="vertical-align: top;"><td><code>pop</code></td>
 <td>
 <p>Matrix with rows containing population parameters
 for each simulation.  Type of parameter depends on
 constructor function generating study data.</p>
 </td></tr>
-<tr valign="top"><td><code>popSD</code></td>
+<tr style="vertical-align: top;"><td><code>popSD</code></td>
 <td>
 <p>Vector containing the population SD used to generate
 continuous data.  <code>NULL</code> for binary data.</p>
 </td></tr>
-<tr valign="top"><td><code>mcmc</code></td>
+<tr style="vertical-align: top;"><td><code>mcmc</code></td>
 <td>
 <p>mcmc input settings</p>
 </td></tr>
-<tr valign="top"><td><code>prior</code></td>
+<tr style="vertical-align: top;"><td><code>prior</code></td>
 <td>
 <p>Input prior distribution.</p>
 </td></tr>
-<tr valign="top"><td><code>est</code></td>
+<tr style="vertical-align: top;"><td><code>est</code></td>
 <td>
 <p>Matrix with posterior median parameter estimates for each simulation:
 (led50,lambda,emax,e0,difTarget) or (led50,emax,e0,difTarget).  The <code>difTarget</code> are
 omitted for the deprecated distribution.</p>
 </td></tr>
-<tr valign="top"><td><code>estlb,estub</code></td>
+<tr style="vertical-align: top;"><td><code>estlb,estub</code></td>
 <td>
 <p>Array with lower posterior (0.025,0.05,0.1) and upper posterior
 (0.975,0.95,0.9) percentiles of the model parameters.  The array ordering is model parameters, simulation, and percentile.</p>
 </td></tr>
-<tr valign="top"><td><code>residSD</code></td>
+<tr style="vertical-align: top;"><td><code>residSD</code></td>
 <td>
 <p>The posterior median of the residual SD for each simulation.</p>
 </td></tr>
-<tr valign="top"><td><code>pVal</code></td>
+<tr style="vertical-align: top;"><td><code>pVal</code></td>
 <td>
 <p>The <code>nsim</code> p-values from the global null test.  The p-values are 
 1-sided computed using MCP-Mod.</p>
 </td></tr>
-<tr valign="top"><td><code>selContrast</code></td>
+<tr style="vertical-align: top;"><td><code>selContrast</code></td>
 <td>
 <p>The index of the test contrast producing the smallest p-value.</p>
 </td></tr>
-<tr valign="top"><td><code>testMods</code></td>
+<tr style="vertical-align: top;"><td><code>testMods</code></td>
 <td>
 <p>Object of class Mods from R package <code>DoseFinding</code> that defines
 the contrasts used in MCP-MOD testing.  The functions can be plotted with
 <code>DoseFinding</code> loaded.</p>
 </td></tr>	
-<tr valign="top"><td><code>gofP</code></td>
+<tr style="vertical-align: top;"><td><code>gofP</code></td>
 <td>
 <p>Goodness of fit test computed by <code>checkMonoEmax</code>.</p>
 </td></tr>
-<tr valign="top"><td><code>negEmax</code></td>
+<tr style="vertical-align: top;"><td><code>negEmax</code></td>
 <td>
 <p>User input stored for subsequent reference.</p>
 </td></tr>
-<tr valign="top"><td><code>predpop</code></td>
+<tr style="vertical-align: top;"><td><code>predpop</code></td>
 <td>
 <p>Matrix with population means for each dose group</p>
 </td></tr>
-<tr valign="top"><td><code>mv</code></td>
+<tr style="vertical-align: top;"><td><code>mv</code></td>
 <td>
 <p>Matrix with rows containing dose group sample means</p>
 </td></tr>
-<tr valign="top"><td><code>sdv</code></td>
+<tr style="vertical-align: top;"><td><code>sdv</code></td>
 <td>
 <p>Matrix with rows containing dose group sample SD</p>
 </td></tr>
-<tr valign="top"><td><code>msSat</code></td>
+<tr style="vertical-align: top;"><td><code>msSat</code></td>
 <td>
 <p>Pooled within-dose group sample variance</p>
 </td></tr>
-<tr valign="top"><td><code>fitpredv</code></td>
+<tr style="vertical-align: top;"><td><code>fitpredv</code></td>
 <td>
 <p>Matrix with rows containing dose groups means
 estimated by the posterior medians of the MCMC generated values.</p>
 </td></tr>
-<tr valign="top"><td><code>sepredv</code></td>
+<tr style="vertical-align: top;"><td><code>sepredv</code></td>
 <td>
 <p>Matrix with rows containing SE (posterior SD) associated with fitpredv</p>
 </td></tr>
-<tr valign="top"><td><code>fitdifv</code></td>
+<tr style="vertical-align: top;"><td><code>fitdifv</code></td>
 <td>
 <p>Matrix with rows containing dose groups mean
 differences wih placebo
 estimated by the posterior medians of the differences of the MCMC generated values.</p>
 </td></tr>
-<tr valign="top"><td><code>sedifv</code></td>
+<tr style="vertical-align: top;"><td><code>sedifv</code></td>
 <td>
 <p>Matrix with rows containing SE (posterior SD) for the 
 differences with placebo</p>
 </td></tr>
-<tr valign="top"><td><code>lb,ub</code></td>
+<tr style="vertical-align: top;"><td><code>lb,ub</code></td>
 <td>
 <p>Array with lower posterior (0.025,0.05,0.1) and upper posterior
 (0.975,0.95,0.9) percentiles of differences between dose group means and 
 placebo.  The array ordering is dose group minus placebo, simulation, and percentile.</p>
 </td></tr>
-<tr valign="top"><td><code>divergence</code></td>
+<tr style="vertical-align: top;"><td><code>divergence</code></td>
 <td>
 <p>The proportion of divergent MCMC iterations from each simulated analysis.</p>
 </td></tr>
-<tr valign="top"><td><code>rseed</code></td>
+<tr style="vertical-align: top;"><td><code>rseed</code></td>
 <td>
 <p>Starting random
 number seed for each simulated data set set that can be assigned to <code>.Random.seed</code>.
 To reproduce the data, the random number generator must also be changed to
 <code>RNGkind("L'Ecuyer-CMRG")</code>.</p>
 </td></tr>
-<tr valign="top"><td><code>idmax</code></td>
+<tr style="vertical-align: top;"><td><code>idmax</code></td>
 <td>
 <p>Index of default dose group for comparison to placebo
 (e.g., for plotting Z-statistics).</p>
 </td></tr>
-<tr valign="top"><td><code>customOut</code></td>
+<tr style="vertical-align: top;"><td><code>customOut</code></td>
 <td>
 <p>List with customized output. It will be <code>NULL</code> if <code>customCOde</code> is not specified.</p>
 </td></tr>
@@ -371,8 +381,7 @@ To reproduce the data, the random number generator must also be changed to
 
 <h3>Examples</h3>
 
-<pre>
-## Not run: 
+<pre><code class='language-R'>## Not run: 
 
 ### emaxsimB changes the random number seed
 
@@ -421,7 +430,8 @@ D1 &lt;- emaxsimB(nsim,gen, prior, modType=4,seed=12357,mcmc=mcmc,check=FALSE,
 D1
 
 ## End(Not run)
-</pre>
+</code></pre>
 
 
+</div>
 </body></html>

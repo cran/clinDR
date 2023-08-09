@@ -1,0 +1,407 @@
+ #######################################
+> ######## contB
+> ########
+> library(tidyverse)
+-- Attaching core tidyverse packages ----------------------------------------------------- tidyverse 2.0.0 --
+? dplyr     1.1.2     ? readr     2.1.4
+? forcats   1.0.0     ? stringr   1.5.0
+? ggplot2   3.4.2     ? tibble    3.2.1
+? lubridate 1.9.2     ? tidyr     1.3.0
+? purrr     1.0.1     
+-- Conflicts ----------------------------------------------------------------------- tidyverse_conflicts() --
+? dplyr::filter() masks stats::filter()
+? dplyr::lag()    masks stats::lag()
+? Use the conflicted package to force all conflicts to become errors
+Warning message:
+package ‘ggplot2’ was built under R version 4.4.0 
+> library(clinDR)
+Loading required package: rstan
+Loading required package: StanHeaders
+
+rstan version 2.26.22 (Stan version 2.26.1)
+
+For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores()).
+To avoid recompilation of unchanged Stan programs, we recommend calling
+rstan_options(auto_write = TRUE)
+For within-chain threading using `reduce_sum()` or `map_rect()` Stan functions,
+change `threads_per_chain` option:
+rstan_options(threads_per_chain = 1)
+
+Do not specify '-march=native' in 'LOCAL_CPPFLAGS' or a Makevars file
+
+Attaching package: ‘rstan’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+Loading required package: shiny
+> 
+> 
+> # Design aspects
+> nsim <- 50
+> doselev <- c(0,5,25,50,150)
+> n <- c(100, 50, 50, 50, 100)
+> Ndose <- length(doselev)
+> 
+> # Parameters
+> led50 <- log(15)
+> lambda <- 1
+> e0 <- 10
+> target <- 6
+> targetDose <- 175
+> emax <- solveEmax(target = target, 
++                   dose = targetDose,
++                   led50 = led50,
++                   lambda = lambda,
++                   e0 = e0,
++                   pboadj = TRUE)
+> 
+> pop <- c(led50 = led50, lambda = lambda, emax = emax, e0 = e0)
+> resSD <- 8
+> 
+> meanlev <- emaxfun(doselev, pop)
+> gen <- FixedMean(n, doselev, meanlev, resSD, parm = pop)
+> 
+> # Priors
+> prior <- emaxPrior.control(epmu = 5,
++                            epsca = 80,
++                            difTargetmu = 0,
++                            difTargetsca = 80,
++                            dTarget = 175,
++                            p50 = 15,
++                            sigmalow = 0.8,
++                            sigmaup = 70,
++                            parmDF = 5)
+> # Stan and MCMC settings
+> rstan::rstan_options(auto_write = TRUE)
+> mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,
++                    propInit=0.15,adapt_delta = 0.95)
+> 
+> # Simulate outcomes
+> D1 <- emaxsimB(nsim, gen, prior,
++                modType=4,mcmc=mcmc,
++                check=FALSE, nproc=10,
++                binary = FALSE, seed=12357)
+> summary(D1)
+
+  
+
+Number of simulations: 50
+
+Power for 1-sided tests at level 0.05 :
+  Global null test based on MCP-mod:                           1
+  Pairwise comparison (simple, no model) of high dose vs pbo:  1
+
+
+Coverage probabilities for nominal 0.9 intervals [Dose-PBO]:
+Bayesian Dose response modeling posterior intervals:
+   5   25   50  150 
+0.98 0.94 0.92 0.92 
+
+Pairwise comparisons:
+   5   25   50  150 
+0.88 0.88 0.92 0.90 
+Most favorable pairwise comparison:
+0.86  Intervals too low( 0.04 ) Intervals too high( 0.1)
+
+
+Bias from Bayesian dose response modeling [DOSE-PBO, EST-POP, EST=posterior median]:
+    5    25    50   150 
+ 0.13 -0.14 -0.18  0.01 
+Bias in the most favorable pairwise comparison:
+0.63 
+
+
+Square Root Mean Squared Error [Dose-PBO]:
+Bayesian dose response modeling (EST=posterior median) : 
+    5    25    50   150 
+0.720 0.888 0.907 0.969 
+
+ Pairwise comparisons: 
+    5    25    50   150 
+1.501 1.382 1.295 1.066 
+
+Most favorable pairwise comparison: 
+1.271 
+
+The mean of the proportion of diverent MCMC iterations:  0 
+> plot(D1)
+Population-Z is (posterior mean - pop)/(posterior sd)
+> 
+> # Additional plots of simulation results
+> pairv<-select(mutate(as_tibble(D1$est),ED50 = exp(led50)),-led50)
+> pairv<-rename(pairv,E0 = e0, 
++               Emax = emax) 
+> pairv<-mutate(pairv,'Residual SD' = D1$residSD)
+> pairs(pairv)
+> 
+> #######################################
+> ######## cont
+> ########
+> library(tidyverse)
+> library(clinDR)
+> 
+> 
+> # Design aspects
+> nsim <- 30
+> doselev <- c(0,5,25,50,150)
+> n <- c(100, 50, 50, 50, 150)
+> Ndose <- length(doselev)
+> 
+> # mean values
+> meanlev <- c(2.0, 3.72, 5.31, 7.31, 8.0)
+> resSD <- 6
+> 
+> gen <- FixedMean(n, doselev, meanlev, resSD)
+> 
+> 
+> 
+> # Simulate outcomes
+> D1 <- emaxsim(nsim, gen, modType=4,
++               nproc=5, binary = FALSE,
++               seed=12357)
+> 
+> summary(D1, testalph=0.05)
+
+  
+
+Number of simulations:                     30
+Proportion failing to converge:            0.567
+Proportion converged but ED50>upper limit: 0
+Proportion converged but ED50<lower limit: 0
+Proportions with modType:
+   3    4 
+0.57 0.43 
+
+Power for 1-sided tests at level 0.05 :
+  Global null test based on MCP-mod:                           1
+  Pairwise comparison (simple, no model) of high dose vs pbo:  1
+
+
+Coverage probabilities for nominal 0.9 intervals [Dose-PBO]:
+Dose response modeling:
+    5    25    50   150 
+0.800 0.767 0.900 0.967 
+Pairwise comparisons:
+    5    25    50   150 
+0.933 0.867 0.967 0.933 
+Most favorable pairwise comparison:
+0.967  Intervals too low( 0 ) Intervals too low( 0.033)
+
+
+Bias from dose response modeling [DOSE-PBO, EST-POP]:
+    5    25    50   150 
+-0.16  0.40 -0.49 -0.09 
+Bias in the most favorable pairwise comparison:
+0.36 
+
+Square Root Mean Squared Error:
+Dose response modeling: 
+    5    25    50   150 
+0.864 1.083 0.814 0.632 
+
+ Pairwise comparisons: 
+    5    25    50   150 
+1.013 1.075 0.880 0.721 
+
+Most favorable pairwise comparison: 
+0.837> plot(D1)
+Results based on alternative model fits are displayed in red
+> 
+> # Additional plots of simulation results
+> pairv<-select(mutate(as_tibble(D1$est4),ED50 = exp(led50)),-led50)
+> pairv<-rename(pairv,E0 = e0, 
++               Emax = emax) 
+> pairv<-mutate(pairv,'Residual SD' = D1$residSD)
+> pairs(pairv)
+> 
+> 
+> #######################################
+> ######## binB
+> ########
+> library(tidyverse)
+> library(clinDR)
+> 
+> 
+> # Design aspects
+> nsim <- 50
+> doselev <- c(0,5,25,50,150,300)
+> n <- c(100, 50, 50, 50, 150,50)
+> Ndose <- length(doselev)
+> 
+> # Parameters
+> led50 <- log(15)
+> lambda <- 1
+> e0 <- -1
+> target <- 1.5
+> targetDose <- 200
+> emax <- solveEmax(target = target, 
++                   dose = targetDose,
++                   led50 = led50,
++                   lambda = lambda,
++                   e0 = e0,
++                   pboadj = TRUE)
+> 
+> pop <- c(led50 = led50, lambda = lambda, emax = emax, e0 = e0)
+> meanlev <- plogis(emaxfun(doselev, pop))
+> gen <- FixedMean(n, doselev, meanlev, parm = pop, binary = TRUE)
+> 
+> # Priors
+> prior <- emaxPrior.control(epmu = 0,
++                            epsca = 4,
++                            difTargetmu = 0,
++                            difTargetsca = 4,
++                            dTarget = 200,
++                            p50 = 25,
++                            parmDF = 5,
++                            binary = TRUE)
+> # Stan and MCMC settings
+> rstan::rstan_options(auto_write = TRUE)
+> mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,
++                    propInit=0.15,adapt_delta = 0.95)
+> 
+> # Simulate outcomes
+> D1 <- emaxsimB(nsim, gen, prior,
++                modType=4,mcmc=mcmc,
++                check=FALSE, nproc=10,
++                binary = TRUE, seed=12357)
+> summary(D1)
+
+  
+
+Number of simulations: 50
+
+Power for 1-sided tests at level 0.05 :
+  Global null test based on MCP-mod:                           1
+  Pairwise comparison (simple, no model) of high dose vs pbo:  1
+
+
+Coverage probabilities for nominal 0.9 intervals [Dose-PBO]:
+Bayesian Dose response modeling posterior intervals:
+   5   25   50  150  300 
+1.00 0.98 0.90 0.86 0.84 
+
+Pairwise comparisons:
+   5   25   50  150  300 
+0.94 1.00 0.86 0.90 0.88 
+Most favorable pairwise comparison:
+0.84  Intervals too low( 0 ) Intervals too high( 0.16)
+
+
+Bias from Bayesian dose response modeling [DOSE-PBO, EST-POP, EST=posterior median]:
+    5    25    50   150   300 
+ 0.00 -0.01 -0.01  0.00  0.01 
+Bias in the most favorable pairwise comparison:
+0.06 
+
+
+Square Root Mean Squared Error [Dose-PBO]:
+Bayesian dose response modeling (EST=posterior median) : 
+    5    25    50   150   300 
+0.032 0.050 0.052 0.054 0.058 
+
+ Pairwise comparisons: 
+    5    25    50   150   300 
+0.065 0.071 0.093 0.057 0.081 
+
+Most favorable pairwise comparison: 
+0.091 
+
+The mean of the proportion of diverent MCMC iterations:  0 
+> plot(D1)
+Population-Z is (posterior mean - pop)/(posterior sd)
+> 
+> # Additional plots of simulation results
+> pairv<-select(mutate(as_tibble(D1$est),ED50 = exp(led50)),-led50)
+> pairs(pairv)
+> 
+> 
+> #######################################
+> ######## bin
+> ########
+> library(tidyverse)
+> library(clinDR)
+> 
+> 
+> # Design aspects
+> nsim <- 50
+> doselev <- c(0,5,25,50,150,300)
+> n <- c(100, 50, 50, 50, 150,50)
+> Ndose <- length(doselev)
+> 
+> # Parameters
+> led50 <- log(15)
+> lambda <- 1.5
+> e0 <- -1
+> target <- 1.5
+> targetDose <- 200
+> emax <- solveEmax(target = target, 
++                   dose = targetDose,
++                   led50 = led50,
++                   lambda = lambda,
++                   e0 = e0,
++                   pboadj = TRUE)
+> 
+> pop <- c(led50 = led50, lambda = lambda, emax = emax, e0 = e0)
+> meanlev <- plogis(emaxfun(doselev, pop))
+> gen <- FixedMean(n, doselev, meanlev, parm = pop, binary = TRUE)
+> 
+> 
+> 
+> # Simulate outcomes
+> D1 <- emaxsim(nsim, gen, modType=4,
++               nproc=10, binary = TRUE,
++               seed=12357)
+> 
+> summary(D1, testalph=0.05)
+
+  
+
+Number of simulations:                     50
+Proportion failing to converge:            0.24
+Proportion converged but ED50>upper limit: 0
+Proportion converged but ED50<lower limit: 0
+Proportions with modType:
+   3    4 
+0.24 0.76 
+
+Power for 1-sided tests at level 0.05 :
+  Global null test based on MCP-mod:                           1
+  Pairwise comparison (simple, no model) of high dose vs pbo:  1
+
+
+Coverage probabilities for nominal 0.9 intervals [Dose-PBO]:
+Dose response modeling:
+   5   25   50  150  300 
+0.84 0.92 0.90 0.84 0.88 
+Pairwise comparisons:
+   5   25   50  150  300 
+0.96 0.94 0.90 0.92 0.88 
+Most favorable pairwise comparison:
+0.84  Intervals too low( 0 ) Intervals too low( 0.16)
+
+
+Bias from dose response modeling [DOSE-PBO, EST-POP]:
+   5   25   50  150  300 
+0.02 0.01 0.00 0.01 0.02 
+Bias in the most favorable pairwise comparison:
+0.06 
+
+Square Root Mean Squared Error:
+Dose response modeling: 
+    5    25    50   150   300 
+0.051 0.061 0.053 0.054 0.059 
+
+ Pairwise comparisons: 
+    5    25    50   150   300 
+0.066 0.073 0.091 0.057 0.080 
+
+Most favorable pairwise comparison: 
+0.091> plot(D1)
+Results based on alternative model fits are displayed in red
+> 
+> # Additional plots of simulation results
+> pairv<-select(mutate(as_tibble(D1$est4),ED50 = exp(led50)),-led50)
+> pairs(pairv)

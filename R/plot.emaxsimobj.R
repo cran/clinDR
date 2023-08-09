@@ -309,7 +309,7 @@
     
     
     ## remove the vertical grid lines
-    gp2 <- gp2+ theme(panel.grid.major.x=element_blank(),
+    gp2 <- gp2+ ggplot2::theme(panel.grid.major.x=element_blank(),
                       panel.grid.minor.x=element_blank(),
                       panel.grid.major.y=element_line(size=0.1))   
     
@@ -324,7 +324,7 @@
       }         
     }    
     
-    gp2<-gp2+ theme_bw()
+    gp2<-gp2+ ggplot2::theme_bw()
     if(plot){
       print(gp2)
       if(!plotResid) cat("Note:  Dashed curve is population, solid curve is estimated\n")

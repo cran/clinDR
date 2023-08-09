@@ -1,4 +1,4 @@
-#######################################################
+######################################################
 #' clinDR shiny application
 #'
 #' Scope of use: 
@@ -32,14 +32,13 @@
 #' v1.7 22 March 2021 - Minor changes to handling variable selection in
 #'                    fit.quantiles and associated glue code for reproducibility.
 #' v1.8 31 March 2021 - Revising prior to CRAN submission
+#' v2.1 30 July 2023  -  Major changes to make output updating match inputs
 #'
 #' Pre-requisites:
 #'  This code requires the following packages in addition to shiny
 #'    * clinDR
 #'      - Need to run the clinDR function compileStanModels() before execution.
-#'    * glue
-#'    * dplyr, tidyr, purrr, tibble, magrittr
-#'    * waiter
+#'    * dplyr, tidyr, purrr, tibble, glue, waiter
 #'
 #########################################################
 
@@ -54,9 +53,6 @@
 #                                           topic = emaxPrior.control)),
 #                 out = "emaxPrior_control.html")
 
-requireNamespace("clinDR", quietly=TRUE)
-requireNamespace("ggplot2", quietly=TRUE)
-requireNamespace("shiny", quietly=TRUE)
 
 waiting_screen <- tagList(
   waiter::spin_fading_circles(),
@@ -78,7 +74,7 @@ ui <- fluidPage(
         p(strong("Shiny App maintainer:"), 
           a(href="mailto:mike.k.smith@pfizer.com","Mike K Smith")),
         p(strong("clinDR package developer:"), 
-          a(href="mailto:neal.thomas@pfizer.com", "Neal Thomas")),
+          a(href="mailto:snthomas99@gmail.com", "Neal Thomas")),
         br()
     )
   }),
@@ -178,8 +174,7 @@ ui <- fluidPage(
                                column(width=4,
                                       numericInput("seed", 
                                                    label="Simulation seed", 
-                                                   value= floor(
-                                                     runif(1,0, 99999))
+                                                   value= 12357
                                                    )),
                                column(width=4,##NT change 
                                       uiOutput("nsimsIO")),
@@ -208,19 +203,18 @@ ui <- fluidPage(
                   tabPanel("Visual Summary",
                            ### Visual summary of simulation results. 
                            h2("Histograms and correlations between parameter estimates."),
-                           p("Based on estimates or posterior medians. One value 
-                           per simulation. For maximum likelihood methods i.e. 
-                           not Bayesian analysis this shows only estimates for 
-                           the nominated Emax model i.e. either 3 or 4 parameter
-                             Emax."),
-                           p(strong("This plot takes a moment to render. Please 
+                           p("Bayesian estimates are posterior medians. One value 
+                           per simulation. For maximum likelihood methods  
+                           only estimates from 
+                           converged Emax fits are displayed."),
+                           p(strong("This plot may take a moment to render. Please 
                                     be patient.")),
                            br(),
                            plotOutput("histplot", width = "100%"),
                            br(),
                            tableOutput("fitType"),
                            br(),
-                           h2("Q-Q plot of comparisons"),
+                           h2("QQ plot of comparisons"),
                            uiOutput("QQPlotText"),
                            plotOutput("QQplot", width = "95%")
                   ),
@@ -273,9 +267,9 @@ server <- function(input, output) {
   
   w <- waiter::Waiter$new()
   
-  ShinyPlotTheme <- theme_bw() +
-    theme(axis.text=element_text(size=14),
-          axis.title=element_text(size=14,face="bold"))
+  ShinyPlotTheme <- ggplot2::theme_bw() +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=14),
+          axis.title=ggplot2::element_text(size=14,face="bold"))
   
   ######################################################################
   ##
@@ -453,19 +447,12 @@ server <- function(input, output) {
   ## collect inputs for simulation
   
   gen <- reactive({
-    if(!input$binary){
-      clinDR::FixedMean(n = n(), 
-                doselev = doselev(), 
-                meanlev = meanlev(),
-                parm = pop(),
-                resSD = input$resSD) 
-    } else {
-      clinDR::FixedMean(n = n(), 
-                doselev = doselev(), 
-                meanlev = meanlev(),
-                parm = pop(),
-                binary = TRUE)
-    }
+    clinDR::FixedMean(n = n(), 
+              doselev = doselev(), 
+              meanlev = meanlev(),
+              parm = pop(),
+              resSD = input$resSD,
+    					binary = input$binary) 
   })
   
   ## For the inputs checking tab, we calculate model predictions across a 
@@ -491,9 +478,7 @@ server <- function(input, output) {
     if(!input$binary){
       meanlev() - 1.96*(input$resSD/sqrt(n()))
     } else {
-      sampleBinom <- purrr::map2(n(), meanlev(),
-                          .f = function(.x, .y){rbinom(n=10000, .x, .y)/.x}) %>%
-        purrr::map_dbl(quantile,probs=0.025)
+    	sampleBinom<-meanlev() - 1.96*sqrt(meanlev()*(1-meanlev())/n())
     }
   })
   
@@ -501,9 +486,7 @@ server <- function(input, output) {
     if(!input$binary){
       meanlev() + 1.96*(input$resSD/sqrt(n()))
     } else {
-      sampleBinom <- purrr::map2(n(), meanlev(),
-                          .f = function(.x, .y){rbinom(n=10000, .x, .y)/.x}) %>%
-        purrr::map_dbl(quantile,probs=0.975)
+    	sampleBinom<-meanlev() + 1.96*sqrt(meanlev()*(1-meanlev())/n())
     }
   })
   
@@ -518,14 +501,14 @@ server <- function(input, output) {
            many n values supplied.")
     )
     if(input$inputVals==1){
-      plot1 <- ggplot() +
-        geom_line(mapping = aes(x = doseSeq(), y = predictions())) + 
-        labs(x = "Dose", y = "Response")  +
+      plot1 <- ggplot2::ggplot() +
+       ggplot2::geom_line(mapping = ggplot2::aes(x = doseSeq(), y = predictions())) + 
+        ggplot2::labs(x = "Dose", y = "Response")  +
         ShinyPlotTheme
     } else {
-      plot1 <- ggplot() +
-        geom_line(mapping = aes(x = doselev(), y = meanlev())) + 
-        labs(x = "Dose", y = "Response") +
+      plot1 <- ggplot2::ggplot() +
+         ggplot2::geom_line(mapping = ggplot2::aes(x = doselev(), y = meanlev())) + 
+        ggplot2::labs(x = "Dose", y = "Response") +
         ShinyPlotTheme
     }
     
@@ -533,7 +516,7 @@ server <- function(input, output) {
       print(plot1)
     } else {
       plot1 +
-        geom_ribbon(mapping = aes(x = doselev(),
+        ggplot2::geom_ribbon(mapping = ggplot2::aes(x = doselev(),
                                   ymin = loCImean(),
                                   ymax = hiCImean()),
                     fill = "blue", alpha=0.2)
@@ -577,29 +560,47 @@ server <- function(input, output) {
     nzDoses <- doses[doses!=0]
     round(nzDoses[1] + (nzDoses[2] - nzDoses[1])/2, 1)
   })
-  
-  prior.difTargetmu <- reactive({
-    tDose <- doselev() == input$dTarget
-    difTargetmu <- ifelse(input$binary,
-                          round(qlogis(meanlev()[tDose],4)),
-                          meanlev()[tDose]
-    )
+  p50 <- reactive({
+  	if(is.null(input$p50))p50<-prior.p50() else p50<-input$p50
+  	return(p50)
+  })
+   
+   difTargetmu <- reactive({
+    difTargetmu <- 
+  	if(is.null(input$difTargetmu)){
+  		difTargetmu<-0
+  	}else difTargetmu<-input$difTargetmu
     return(difTargetmu)
   })
   
-  ## Neal Thomas suggests prior for scale parameters should be 5*resSD
+  ## Neal Thomas suggests prior for scale parameters should be 10*resSD
   prior.difTargetsca <- reactive({
     ifelse(input$binary, 4, round(10*input$resSD,1))
   })
-  
+ difTargetsca <- reactive({
+    difTargetsca <- 
+  	if(is.null(input$difTargetsca)){
+  		difTargetsca<-prior.difTargetsca()
+  	}else difTargetsca<-input$difTargetsca 	
+  	return(difTargetsca)
+  })
+   
   prior.epsca <- reactive({
     ifelse(input$binary, 4, round(10*input$resSD,1))
   })
-  
+  epsca <- reactive({
+	 	if(is.null(input$epsca))epsca<-prior.epsca() else epsca<-input$epsca
+	  	return(epsca) 	
+  })
+   
   prior.epmu <- reactive({
     ifelse(input$binary,round(qlogis(meanlev()[1]),4), meanlev()[1])
   })
-  
+  epmu <- reactive({
+	 	if(is.null(input$epmu))epmu<-prior.epmu() else epmu<-input$epmu
+	  	return(epmu) 	
+  })
+   
   prior.dTarget <- reactive({
     if(input$inputVals==1){
       input$targetDose
@@ -607,7 +608,40 @@ server <- function(input, output) {
       targetDose()
     }
   })
+  dTarget <- reactive({
+	 	if(is.null(input$dTarget))dTarget<-prior.dTarget() else dTarget<-input$dTarget
+	  	return(dTarget) 	
+  })
+   
+  prior.sigmalow<- reactive({
+    ifelse(input$binary, NULL, round(input$resSD/10,3))
+  })
+  sigmalow <- reactive({
+  	if(input$binary){
+  		sigmalow<-NULL
+  	}else{
+	 	if(is.null(input$sigmalow))sigmalow<-prior.sigmalow() else sigmalow<-input$sigmalow
+  	}
+	 	return(sigmalow) 	
+  })
   
+   prior.sigmaup<- reactive({
+    ifelse(input$binary, NULL, round(10*input$resSD,3))
+  })
+  sigmaup <- reactive({
+	 	if(is.null(input$sigmaup))sigmaup<-prior.sigmaup() else sigmaup<-input$sigmaup
+	 	return(sigmaup) 	
+  }) 
+  sigmaup <- reactive({
+  	if(input$binary){
+  		sigmaup<-NULL
+  	}else{
+	 	if(is.null(input$sigmaup))sigmaup<-prior.sigmaup() else sigmaup<-input$sigmaup
+  	}
+	 	return(sigmaup) 	
+  })
+   
+
   output$inputBayesPriors <- renderUI({
     conditionalPanel(condition = "input.bayes == 1",
                      if(!input$binary){
@@ -626,7 +660,7 @@ server <- function(input, output) {
                                       value= prior.dTarget()),
                          numericInput("difTargetmu", 
                                       label="Prior Mean for effect at dTarget dose", 
-                                      value=prior.difTargetmu()),
+                                      value=0.0),
                          numericInput("difTargetsca", 
                                       label="Scale parameter for effect at dTarget dose", 
                                       value=prior.difTargetsca()),
@@ -635,10 +669,10 @@ server <- function(input, output) {
                                       value = prior.p50()),
                          numericInput("sigmalow", 
                                       label="Lower bound for residual SD", 
-                                      value=input$resSD/10),
+                                      value=prior.sigmalow()),
                          numericInput("sigmaup", 
                                       label="Upper bound for residual SD", 
-                                      value=input$resSD*10)
+                                      value=prior.sigmaup())
                        )
                      } else {
                        verticalLayout(
@@ -653,10 +687,10 @@ server <- function(input, output) {
                                       value=prior.epsca()),
                          numericInput("dTarget", 
                                       label="Target dose for priors", 
-                                      value= input$targetDose),
+                                      value= prior.dTarget()),
                          numericInput("difTargetmu", 
                                       label="Prior Mean for effect at target dose", 
-                                      value=input$target),
+                                      value=0.0),
                          numericInput("difTargetsca", 
                                       label="Scale parameter for effect at target dose", 
                                       value=prior.difTargetsca()),
@@ -668,22 +702,22 @@ server <- function(input, output) {
   
   prior <- reactive({
     if(!input$binary){
-      prior <- clinDR::emaxPrior.control(epmu = input$epmu,
-                                 epsca = input$epsca,
-                                 difTargetmu = input$difTargetmu,
-                                 difTargetsca = input$difTargetsca,
-                                 dTarget = input$dTarget,
-                                 p50 = input$p50,
-                                 sigmalow = input$sigmalow,
-                                 sigmaup = input$sigmaup,
+      prior <- clinDR::emaxPrior.control(epmu = epmu(),
+                                 epsca = epsca(),
+                                 difTargetmu = difTargetmu(),
+                                 difTargetsca = difTargetsca(),
+                                 dTarget = dTarget(),
+                                 p50 = p50(),
+                                 sigmalow = sigmalow(),
+                                 sigmaup = sigmaup(),
                                  parmDF = 5)
     } else {
-      prior <- clinDR::emaxPrior.control(epmu = input$epmu,
-                                 epsca = input$epsca,
-                                 difTargetmu = input$difTargetmu,
-                                 difTargetsca = input$difTargetsca,
-                                 dTarget = input$dTarget,
-                                 p50 = input$p50,
+      prior <- clinDR::emaxPrior.control(epmu = epmu(),
+                                 epsca = epsca(),
+                                 difTargetmu = difTargetmu(),
+                                 difTargetsca = difTargetsca(),
+                                 dTarget = dTarget(),
+                                 p50 = p50(),
                                  parmDF = 5,
                                  binary=TRUE)
     }
@@ -705,6 +739,7 @@ server <- function(input, output) {
     np <- ifelse(.Platform$OS.type == 'windows', maxprocs, 1)
     
 
+   
   output$nprocIO <- renderUI({
     maxprocs <- parallel::detectCores()
     labtxt <- paste0("Number of processors [1-", maxprocs, "]")
@@ -714,11 +749,11 @@ server <- function(input, output) {
       value = np,
       min = 1,
       max = maxprocs,
-      step = ifelse(np<=8, 1, 2)
+      step = ifelse(np<=24, 1, 2)
     )
   })
 
-  nsims <- reactive({
+  nsimsDefault <- reactive({
      req(input$nprocs)
      if (input$nprocs<3) nsims <- 20
      else if (input$nprocs>2 & input$nprocs<5) nsims <- 24
@@ -730,25 +765,45 @@ server <- function(input, output) {
     numericInput(
       "nsims",
       label = "Number of simulations",
-      value = nsims(),
+      value = nsimsDefault(),
       min = 1,
       max = 1000
     )
   })
   
-  simulation <- eventReactive(input$Run,{
+  simulation<-reactiveValues(
+  	out=NULL
+  )
+  observe({
+  	doselev()
+  	n()
+  	pop()
+  	meanlev()
+  	prior()
+  	input$nsims	
+  	input$seed
+  	input$resSD
+  	input$binary
+  	input$modType
+  	input$bayes
+  	
+  	simulation$out<-NULL
+  })
+  
+  
+  
+  observeEvent(input$Run,{
     req(gen())
-    set.seed(input$seed)
     if(!input$bayes){
       waiter::waiter_show(html = waiting_screen, color = "grey")
       
       if(!input$binary){
-        results <- clinDR::emaxsim(nsim = input$nsims,
+        simulation$out <- clinDR::emaxsim(nsim = input$nsims,
                            genObj = gen(),
                            modType=as.numeric(input$modType),
                            nproc = input$nprocs)
       } else {
-        results <- clinDR::emaxsim(nsim = input$nsims,
+        simulation$out <- clinDR::emaxsim(nsim = input$nsims,
                            genObj = gen(),
                            modType=as.numeric(input$modType),
                            nproc = input$nprocs,
@@ -764,28 +819,22 @@ server <- function(input, output) {
       mcmc<-clinDR::mcmc.control(chains=1,warmup=500,iter=5000,
                          propInit=0.15,adapt_delta = 0.95)
       
-
-        showNotification("You MUST review Bayesian priors in the 'Analysis 
-        Settings' tab BEFORE running the simulation with estimation
-        using Bayesian analysis method",
-                         type = "error",
-                         duration = NULL)
-        
+       
         req(prior(), cancelOutput = TRUE)
 
         waiter::waiter_show(html = waiting_screen, color = "grey")
       
-      results <- clinDR::emaxsimB(nsim = input$nsims,
+      simulation$out <- clinDR::emaxsimB(nsim = input$nsims,
                           genObj = gen(),
                           prior = prior(),
                           modType=as.numeric(input$modType),
                           mcmc=mcmc,
                           check=FALSE,
                           nproc = input$nprocs,
-                          binary=(input$binary))
+                          binary=(input$binary),
+      										seed=input$seed)
     }
     waiter::waiter_hide()
-    return(results)
   })
   
   ######################################################################
@@ -797,36 +846,33 @@ server <- function(input, output) {
   ## estimates holds the parameter estimates from the model fits
   
   estimates <- reactive({
-    req(simulation())
+    req(simulation$out)
     
-    if(simulation()$modType==3 & class(simulation()) =="emaxsim"){
-      est <- simulation()$est3
+    if(simulation$out$modType==3 & class(simulation$out) =="emaxsim"){
+      est <- simulation$out$est3
     }
-    if(simulation()$modType==4 & class(simulation()) =="emaxsim"){
-      est <- simulation()$est4
+    if(simulation$out$modType==4 & class(simulation$out) =="emaxsim"){
+      est <- simulation$out$est4
     }
-    if(class(simulation())=="emaxsimB"){est <- simulation()$est}
+    if(class(simulation$out)=="emaxsimB"){est <- simulation$out$est}
     
-    est <- est %>%
-      tibble::as_tibble() %>%
-      dplyr::mutate(ED50 = exp(led50)) %>%
-      dplyr::select(-led50) %>%
-      dplyr::rename(E0 = e0,
-             Emax = emax)
+    est <- dplyr::mutate(tibble::as_tibble(est),ED50 = exp(led50)) 
+    est <- dplyr::select(est,-led50) 
+    est <-  dplyr::rename(est,E0 = e0,
+             Emax = emax)    
     
-    if(simulation()$binary){
+    if(simulation$out$binary){
       est 
     } else {
-      est %>%
-        dplyr::mutate('Residual_SD' = simulation()$residSD)
+      dplyr::mutate(est,'Residual_SD' = simulation$out$residSD)
     }
   })
   
   ## Standard clinDR print.emaxsim/emaxsimB output
   
   output$result <- renderPrint({
-    req(simulation())
-    summary(simulation())
+    req(simulation$out)
+    summary(simulation$out)
   })
   
   ## Standard clinDR plot.emaxsim/emaxsimB output
@@ -834,7 +880,7 @@ server <- function(input, output) {
   output$QQPlotText <- renderUI({
     if(input$bayes == FALSE){
       tagList(
-        p("A Q-Q plot of the dose response estimate of the 
+        p("A QQ plot of the dose response estimate of the 
                              mean at the highest dose minus its population value 
                              divided by the standard error of the estimator 
                              (computed using the delta method)"),
@@ -844,16 +890,17 @@ server <- function(input, output) {
       )
     } else {
       tagList(
-        p("A Q-Q plot of the posterior median at the highest dose minus its 
+        p("A QQ plot of the posterior median at the highest dose minus its 
         population value divided by the posterior standard deviation")
       )
     }
   })
   
   output$QQplot <- renderPlot({
-    # req(simulation())
-    if(input$bayes){ clinDR::plot.emaxsimB(simulation())
-    }else clinDR::plot.emaxsim(simulation())
+    if(!is.null(simulation$out)){
+	    if(input$bayes){ clinDR::plot.emaxsimB(simulation$out)
+	    }else clinDR::plot.emaxsim(simulation$out)
+		}
   })
   
   ## Table of fit types for ML. Does not apply to Bayesian analysis.
@@ -861,23 +908,24 @@ server <- function(input, output) {
   output$fitType <- renderTable({
     ## Only calculate for non-Bayesian estimation.
     ## Bayesian approach does not use alternative model estimation
-    if(class(simulation()) =="emaxsimB") return()
-    if(class(simulation()) =="emaxsim"){
-      nsims <- nrow(simulation()$results$predpop)
+    if(class(simulation$out) =="emaxsimB") return()
+    if(class(simulation$out) =="emaxsim"){
+      nsims <- nrow(simulation$out$results$predpop)
       
-      fitType <- factor(simulation()$fitType,
+      fitType <- factor(simulation$out$fitType,
                         levels = c("4","3","L","LL","E"))
-      dplyr::bind_rows(summary(fitType)) %>%
-        tidyr::pivot_longer(cols = tidyselect::everything(),
+       
+      hold<-tidyr::pivot_longer(dplyr::bind_rows(summary(fitType)),
+        										cols = tidyselect::everything(),
                      names_to = "Var1",
-                     values_to = "number") %>%
-        dplyr::mutate(Var1 = dplyr::recode(Var1,
+                     values_to = "number") 
+      hold<-dplyr::mutate(hold,Var1 = dplyr::recode(Var1,
                              "3" = "3-parameter Emax",
                              "4" = "4-parameter sigmoid Emax",
                              "L" = "Linear",
                              "LL" = "Log Linear",
-                             "E" = "Exponential")) %>%
-        dplyr::rename("Fit Type" = Var1)
+                             "E" = "Exponential")) 
+        dplyr::rename(hold,"Fit Type" = Var1)
     }
   })
   
@@ -920,8 +968,8 @@ server <- function(input, output) {
    return(pout)
   }
   output$plotIndiv <- renderPlot({
-    req(simulation())
-    plot.indivResult(simulation(), 
+    req(simulation$out)
+    plot.indivResult(simulation$out, 
                      input$plotDif)
   })
   
@@ -939,7 +987,7 @@ server <- function(input, output) {
     negC <- x$negC
     bigC <- x$bigC
     pval <- round(x$pVal, 3)
-    resid <- NA
+    residSD <- NA
     if(!input$bayes){
       est3 <- x$est3
       est4 <- x$est4
@@ -953,13 +1001,9 @@ server <- function(input, output) {
         est3 <- round(est3,3)
         names(est3) <- NULL
       }
-      if(!input$binary)resid <- round(x$residSD,3)
+      if(!input$binary)residSD <- round(x$residSD,3)
       noFit <- (x$fitType == "4" & any(is.na(est4)) | 
                   (x$fitType == "3" & any(is.na(est3))))
-      
-      
-      zval <- round((fitdifv[x$idmax] - fitdifP[x$idmax])/x$sedif[x$idmax], 3)
-      names(zval) <- NULL
       
       if (x$fitType== "4") {
         indivPars <- data.frame(fitType = x$fitType, 
@@ -970,8 +1014,7 @@ server <- function(input, output) {
                                 lambda = est4[2],
                                 Emax = est4[3],
                                 E0 = est4[4],
-                                resid = resid,
-                                zval = zval, 
+                                residSD = residSD,
                                 pval = pval)
       } else {
         indivPars <- data.frame(fitType = x$fitType, 
@@ -981,8 +1024,7 @@ server <- function(input, output) {
                                 ED50 = est3[1],
                                 Emax = est3[2],
                                 E0 = est3[3],
-                                resid = resid,
-                                zval = zval, 
+                                residSD = residSD,
                                 pval = pval)
       }
     }
@@ -1003,7 +1045,7 @@ server <- function(input, output) {
                       " (",round(est3[,1],3),", ",
                       round(est3[,3],3),")",sep="")   
       }
-      resid <- ifelse(input$binary, 
+      residSD <- ifelse(input$binary, 
                       NA, 
                       round(summary(x$bfit$estanfit)$summary["sigma[1]",6],3))
       
@@ -1013,13 +1055,15 @@ server <- function(input, output) {
                                 lambda = est4[2],
                                 Emax = est4[3],
                                 E0 = est4[4],
-                                resid = resid)
+                                residSD = residSD,
+        												pval = pval)
       } else {
         indivPars <- data.frame(fitType = x$modType, 
                                 ED50 = est3[1],
                                 Emax = est3[2],
                                 E0 = est3[3],
-                                resid = resid)
+                                residSD = residSD,
+        												pval=pval)
       }
     }
     
@@ -1027,8 +1071,8 @@ server <- function(input, output) {
   }
   
   output$printIndivPars <- renderTable({
-    req(simulation())
-    print.indivPars(simulation()[input$sim])
+    req(simulation$out)
+    print.indivPars(simulation$out[input$sim])
   })
   
   ## Calculate table of model predictions, differences and uncertainty
@@ -1040,12 +1084,10 @@ server <- function(input, output) {
                       diff = x$fitpred[sim,] - x$fitpred[sim,1],
                       sediff = x$sedif[sim,])
     if(!input$bayes){
-      results <- results %>%
-        dplyr::mutate('0.25' = diff - qnorm(0.975)*sediff,
+      results <- dplyr::mutate(results,'0.25' = diff - qnorm(0.975)*sediff,
                '0.75' = diff + qnorm(0.975)*sediff)
     } else {
-      results <- results %>%
-        dplyr::mutate(diff = x$fitdif[sim,])
+      results <- dplyr::mutate(results,diff = x$fitdif[sim,])
       lb <- x$lb[,sim,]
       lb <- rbind('0'=rep(0,ncol(lb)), lb)
       ub <- x$ub[,sim,]
@@ -1054,15 +1096,14 @@ server <- function(input, output) {
       results <- cbind(results, lb, ub)
     }
     # results <- tibble::rownames_to_column(results, var="dose")
-    results <- results %>%
-      dplyr::mutate(dose = doselev()) %>%
-      dplyr::select(dose, tidyselect::everything())
+    results <- dplyr::select(dplyr::mutate(results,dose = doselev()), 
+      dose, tidyselect::everything())
     return(results)
   }
   
   output$printIndivEst <- renderTable({
-    req(simulation())
-    indivEst(simulation(), input$sim)
+    req(simulation$out)
+    indivEst(simulation$out, input$sim)
   })
   
   ## UI output for individual results tables
@@ -1089,9 +1130,9 @@ server <- function(input, output) {
       plotOutput("plotIndiv"),
       p("Note:  Dashed curve is population, solid curve is estimated"),
       p("Red stars are observed means at each dose"),
-      p("Black intervals are dose-group mean Interval estimates"),
-      p("Grey intervals are predictive intervals"),
-      p(glue::glue("90% interval estimates shown")),
+      p("Black bars are dose-group population mean confidence intervals"),
+      p("Grey bars are predictive intervals for sample means"),
+      p(glue::glue("90% interval shown")),
       hr(),
       h3("Treatment estimates for each dose within the nominated study"),
       p("Table below presents fitted means, se's, differences from placebo and 
@@ -1105,11 +1146,11 @@ server <- function(input, output) {
           p("noFit  : No convergence"),
           p("negC   : Converged with ED50<lower limit"),
           p("bigC   : Converged with ED50>upper limit"),
-          p("StdBias: (estimate-population)/SE for highest dose vs PBO"),
-          p("P-val  : MCP-Mod P-value for test of no drug effect for highest 
+          p("pval  : MCPMod P-value for test of no drug effect for highest 
             dose vs placebo")
         )
-      }
+      }else  tagList(p("P-val  : MCPMod trend P-value for test of no drug 
+            effect"))
     )
   })
   
@@ -1128,10 +1169,9 @@ server <- function(input, output) {
   ###################################################################### 
   
   output$code <- renderText({
-    design <- glue::glue("library(clinDR)",
-                   "library(tidyverse)",
+    design <- glue::glue("library(tidyverse)",
+                   "library(clinDR)",
                    "",
-                   "set.seed({input$seed})",
                    "",
                    "# Design aspects",
                    "nsim <- {input$nsims}",
@@ -1188,7 +1228,9 @@ server <- function(input, output) {
     
     ## Simulate for Maximum Likelihood estimation
     emaxsim <- glue::glue("# Simulate outcomes",
-                    "D1 <- emaxsim(nsim, gen, modType={input$modType}, nproc={input$nprocs}, binary = {binary})",
+                    "D1 <- emaxsim(nsim, gen, modType={input$modType},", 
+    									"\tnproc={input$nprocs}, binary = {binary},",
+    									"\tseed={input$seed})",
                     "",
                     "summary(D1, testalph=0.05)",
                     "plot(D1)",
@@ -1196,24 +1238,24 @@ server <- function(input, output) {
     
     ## Simulate for Bayesian estimation
     prior.cont <-  glue::glue("# Priors",
-                        "prior <- emaxPrior.control(epmu = {input$epmu},",
-                        "\tepsca = {input$epsca},",
-                        "\tdifTargetmu = {input$difTargetmu},",
-                        "\tdifTargetsca = {input$difTargetsca},",
-                        "\tdTarget = {input$dTarget},",
-                        "\tp50 = {input$p50},",
-                        "\tsigmalow = {input$sigmalow},",
-                        "\tsigmaup = {input$sigmaup},",
+                        "prior <- emaxPrior.control(epmu = {epmu()},",
+                        "\tepsca = {epsca()},",
+                        "\tdifTargetmu = {difTargetmu()},",
+                        "\tdifTargetsca = {difTargetsca()},",
+                        "\tdTarget = {dTarget()},",
+                        "\tp50 = {p50()},",
+                        "\tsigmalow = {sigmalow()},",
+                        "\tsigmaup = {sigmaup()},",
                         "\tparmDF = 5)\n",
                         .sep="\n")
     
     prior.bin <- glue::glue("# Priors",
-                      "prior <- emaxPrior.control(epmu = {input$epmu},",
-                      "\tepsca = {input$epsca},",
-                      "\tdifTargetmu = {input$difTargetmu},",
-                      "\tdifTargetsca = {input$difTargetsca},",
-                      "\tdTarget = {input$dTarget},",
-                      "\tp50 = {input$p50},",
+                      "prior <- emaxPrior.control(epmu = {epmu()},",
+                      "\tepsca = {epsca()},",
+                      "\tdifTargetmu = {difTargetmu()},",
+                      "\tdifTargetsca = {difTargetsca()},",
+                      "\tdTarget = {dTarget()},",
+                      "\tp50 = {p50()},",
                       "\tparmDF = 5,",
                       "\tbinary = TRUE)\n",
                       .sep="\n")
@@ -1230,7 +1272,8 @@ server <- function(input, output) {
     emaxsimB <- glue::glue("# Simulate outcomes",
                      "D1 <- emaxsimB(nsim, gen, prior,",
                      "\tmodType={input$modType},mcmc=mcmc,",
-                     "\tcheck=FALSE, nproc={input$nprocs}, binary = {binary})",
+                     "\tcheck=FALSE, nproc={input$nprocs},", 
+    								 "\tbinary = {binary}, seed={input$seed})",
                      "summary(D1)",
                      "plot(D1)", .sep="\n")
     
@@ -1244,21 +1287,20 @@ server <- function(input, output) {
     emaxsim <- ifelse(input$bayes,
                       emaxsimB,
                       emaxsim)
-    plot1 <- glue::glue("# Additional plots of simulation results",
-                  "library(tidyverse,quietly = TRUE)",
-                  " ",
-                  "{est} %>%",
-                  "as_tibble() %>%",
-                  "mutate(ED50 = exp(led50)) %>%",
-                  "select(-led50) %>%",
+    
+    hold<- "pairv<-select(mutate(as_tibble({est}),ED50 = exp(led50)),-led50)" 
+   	
+   	plot1<-glue::glue("# Additional plots of simulation results",
+                  hold,
                   .sep="\n")
+
     plot1.bin <- glue::glue(
-                      "pairs(.)",                     
+                      "pairs(pairv)",                     
                       .sep="\n")
-    plot1.cont <- glue::glue("rename(E0 = e0, ",
-                       "\tEmax = emax) %>%",
-                       "mutate('Residual SD' = D1$residSD) %>%",
-                       "pairs(.)",
+    plot1.cont <- glue::glue("pairv<-rename(pairv,E0 = e0, ",
+                       "\tEmax = emax) ",
+                       "pairv<-mutate(pairv,'Residual SD' = D1$residSD)",
+                       "pairs(pairv)",
                        .sep="\n")
     plot1 <- ifelse(binary,
                     glue::glue(plot1, plot1.bin,  .sep="\n"),

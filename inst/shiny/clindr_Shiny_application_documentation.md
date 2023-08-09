@@ -7,14 +7,15 @@ the {clinDR} package Shiny application.
 {clinDR} Shiny application
 ==========================
 
-Code for the {clinDR} Shiny app has been written and is maintained by
-Mike K Smith, Pfizer (mike.k.smith@pfizer.com).
+Code for the {clinDR} Shiny app was originally written by
+Mike K Smith, Pfizer (mike.k.smith@pfizer.com), and currently
+maintained by Neal Thomas
 
 {clinDR} package
 ----------------
 
 The {clinDR} package used in the Shiny app was written by Neal Thomas,
-Pfizer (neal.thomas@pfizer.com).
+Pfizer (snthomas99@gmail.com)
 
 Description
 -----------
@@ -26,62 +27,51 @@ The package description for {clinDR} is as follows:
 
     packageDescription("clinDR")
 
-    ## Package: clinDR
-    ## Version: 2.3
-    ## Date: 2020-06-30
-    ## Title: Simulation and Analysis Tools for Clinical Dose Response
-    ##        Modeling
-    ## Authors@R: c(person("Neal","Thomas",role=c("aut","cre"),
-    ##        email="snthomas99@gmail.com",comment=c(ORCID =
-    ##        '0000-0002-1915-8487')), person("Jing","Wu",role="aut",
-    ##        email="Jing_Wu@uri.edu"))
-    ## Maintainer: Neal Thomas <snthomas99@gmail.com>
-    ## Description: Bayesian and ML Emax model fitting, graphics and
-    ##        simulation for clinical dose response.  The summary data
-    ##        from the dose response meta-analyses in Thomas, Sweeney,
-    ##        and Somayaji (2014) <doi:10.1080/19466315.2014.924876> and
-    ##        Thomas and Roy (2016) <doi:10.1080/19466315.2016.1256229>
-    ##        Wu, Banerjee, Jin, Menon, Martin, and Heatherington(2017)
-    ##        <doi:10.1177/0962280216684528> are included in the package.
-    ##        The prior distributions for the Bayesian analyses default
-    ##        to the posterior predictive distributions derived from
-    ##        these references.
-    ## Depends: R (>= 3.5.0), rstan (>= 2.17.3)
-    ## Imports:
-    ##        foreach,graphics,ggplot2,DoseFinding,stats,utils,parallel,doParallel
-    ## License: GPL (>= 2)
-    ## NeedsCompilation: no
-    ## Packaged: 2020-06-30 23:19:31 UTC; snthomas99
-    ## Author: Neal Thomas [aut, cre]
-    ##        (<https://orcid.org/0000-0002-1915-8487>), Jing Wu [aut]
-    ## Repository: RSPM
-    ## Date/Publication: 2020-07-01 05:00:02 UTC
-    ## Encoding: UTF-8
-    ## Built: R 3.6.3; ; 2020-07-02 11:36:23 UTC; windows
-    ## 
-    ## -- File: C:/Users/smith_mk/Documents/R/win-library/3.6/clinDR/Meta/package.rds
+Package: clinDR
+Version: 2.4.01
+Date: 2022-05-31
+Title: Simulation and Analysis Tools for Clinical Dose Response Modeling
+Authors@R: c(person("Neal","Thomas",role=c("aut","cre"),
+          email="snthomas99@gmail.com",comment=c(ORCID = '0000-0002-1915-8487')),
+          person("Jing","Wu",role="aut", email="Jing_Wu@uri.edu"), person("Mike
+          K.","Smith",role="aut", email="mike.k.smith@pfizer.com"))
+Maintainer: Neal Thomas <snthomas99@gmail.com>
+Description: Bayesian and ML Emax model fitting, graphics and simulation for clinical dose
+          response.  The summary data from the dose response meta-analyses in Thomas, Sweeney,
+          and Somayaji (2014) <doi:10.1080/19466315.2014.924876> and Thomas and Roy (2016)
+          <doi:10.1080/19466315.2016.1256229> Wu, Banerjee, Jin, Menon, Martin, and
+          Heatherington(2017) <doi:10.1177/0962280216684528> are included in the package.  The
+          prior distributions for the Bayesian analyses default to the posterior predictive
+          distributions derived from these references.
+Depends: R (>= 3.5.0), rstan (>= 2.17.3), shiny
+Imports: foreach,graphics,DoseFinding,stats,mvtnorm,utils, parallel,doParallel, ggplot2, tidyr,
+          purrr, tibble, dplyr, glue, waiter
+License: GPL (>= 2)
+NeedsCompilation: no
+Packaged: 2021-03-23 20:23:03 UTC; ThomasN
+Author: Neal Thomas [aut, cre] (<https://orcid.org/0000-0002-1915-8487>), Jing Wu [aut], Mike K.
+          Smith [aut]
 
 Intended scope of use
 ---------------------
 
 The {clinDR} Shiny app is intended for use in planning of dose-response
-studies.
+studies
 
 ### {clinDR} package overview (as it used in the {clinDR} Shiny app)
 
 The application uses the `emaxsim` and `emaxsimB` functions from the
-{clinDR} package to assess trial operating characteristics given a “step
-down” approach to model-fitting for the simulated data - data is
-simulated using a 3-parameter Emax model with parameters provided by the
-user in the app. This simulated data is then analysed using 3 (or 4
-parameter) Emax model. If this model does not adequately fit the data,
-then the model choice “steps down” to try MLE for 3 parameter Emax model
+{clinDR} package to assess trial operating characteristics - data is
+simulated using a 3- or 4- parameter Emax model with parameters requested by the
+user. This simulated data is then analysed using a 3 (or 4
+parameter) Emax model. For the maximum likelihood approach implemented in 
+emaxsim, if the Emax model fit does not converge,
+then the estimation “steps down” to try MLE for 3 parameter Emax model
 (if the user specifies trying a 4-parameter Emax), Exponential, Log,
 log-linear and linear models. More detail is found in the explanation of
 the `emaxsim` and `emaxalt` functions within the {clinDR} package. The
-`emaxsimB` function simulates data from a 3 or 4 parameter Emax model
-and then fits a Bayesian Emax model using Stan with priors specified by
-the user through the Shiny app.
+`emaxsimB` function fits a Bayesian Emax model using Stan with 
+priors specified by the user through the Shiny app.
 
 Binary data (response rates) can also be simulated and modelled in a
 similar fashion.
@@ -89,9 +79,9 @@ similar fashion.
 Further information can be found in {clinDR} documentation.
 
 In particular, users should read the documentation for `emaxsim`,
-`emaxsimB` and `prior.control` carefully to understand how to specify
+`emaxsimB` and `emaxPrior.control` carefully to understand how to specify
 parameters and priors for the Emax model parameters. These are provided
-in tabs within the application for convenience.
+in tabs within the shiny app for convenience.
 
 ### {clinDR} Shiny app
 
@@ -102,7 +92,7 @@ graphically summarise the simulation output and fitted results.
 The application also provides code used to produce results within the
 app so that the user can recreate results in a separate R session by
 copy-pasting this code into an R script. The user can then specify
-additional arguments to {clinDR} functions have finer control over the
+additional arguments to {clinDR} functions to have finer control over the
 simulation and analysis processes.
 
 The Shiny app is intended to providing a starting point for colleagues
@@ -122,9 +112,12 @@ This code requires the following packages in addition to {Shiny}:
     -   Need to run the clinDR function compileStanModels() before
         execution.  
 -   {glue}
--   {tidyverse}  
--   {GGally}  
+-   {tidyr}  
 -   {waiter}
+-   {dplyr}
+-   {purrr}
+-   {tibble}
+
 
 Version information
 -------------------
@@ -172,22 +165,36 @@ The version of the {clinDR} Shiny app is v1.4.
 <td>2020/09/02</td>
 <td style="text-align: left;">Incorporate input from reviewers</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">v1.6</td>
+<td>2020/11/17</td>
+<td style="text-align: left;">Handle user feedback if prior settings not reviewed</td>
+<tr class="even">
+<td style="text-align: left;">v1.7</td>
+<td>2021/03/22</td>
+<td style="text-align: left;">Minor changes to handling variable selection in
+     fit.quantiles and associated glue code for reproducibility</td>
+<tr class="odd">
+<td style="text-align: left;">v1.8</td>
+<td>2021/03/31</td>
+<td style="text-align: left;">Revising prior to CRAN submission</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">v2.1</td>
+<td>2023/07/30</td>
+<td style="text-align: left;">Major changes to make output updating match inputs</td>
+</tr>
 </tbody>
 </table>
+
 
 Source code
 -----------
 
-Source code for the application is held in TeamForge git repository:  
-<a href="https://pfizer.collab.net/ctf/code/projects.clinpharm_shiny/git/scm.clinDR_Shiny/tree?treeId=refs%2Fheads%2Fmaster" class="uri">https://pfizer.collab.net/ctf/code/projects.clinpharm_shiny/git/scm.clinDR_Shiny/tree?treeId=refs%2Fheads%2Fmaster</a>
+Source code for the application is held in a github repository as part of 
+the clinDR package.
 
-The `master` branch holds code which will be published to RStudio
-Connect.
 
-New branches will be created to hold new, unreleased functionality which
-will be released to RStudio Connect for testing and review. Once code
-has passed review and the application has been QCed the new branch will
-be merged with the master branch and pushed to RStudio Connect.
 
 Testing
 -------
@@ -208,13 +215,10 @@ examples external to the app.
 
 #### Presented code
 
-When the code presented within the Shiny app is run external to the
+When the code generated within the Shiny app is run external to the
 application, the results match those presented within the application.
+The inputs visibile in the shiny app are checked against the inputs in the
+generated code to ensure the inputs visible in the shiny interface
+are used in the calculations.
 
-### {shinytest}
 
-The {shinytest} package
-(<a href="https://rstudio.github.io/shinytest/" class="uri">https://rstudio.github.io/shinytest/</a>)
-has been used to run and snapshot results from the app for later
-reference and benchmarking. Test scripts have been written for
-{shinytest} to allow automated checks.

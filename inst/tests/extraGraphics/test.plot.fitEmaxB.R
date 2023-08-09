@@ -1,4 +1,6 @@
 library(clinDR)
+library(nlme)
+library(mvtnorm)
 
 
 if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
@@ -32,7 +34,7 @@ prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,
-								 mcmc=mcmc)
+								 mcmc=mcmc,nproc=3)
 
 ### basic test
 plot(testout)
@@ -100,10 +102,14 @@ symbolShape=c(8,10)
 prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
-testout2<-fitEmaxB(y,dose,prior=prior,modType=3,prot=prot,mcmc=mcmc)
+testout2<-fitEmaxB(y,dose,prior=prior,modType=3,prot=prot,mcmc=mcmc,nproc=3)
 
 plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
 	 symbolShape=symbolShape,symbolColor=symbolColor)
+
+# change plot layout
+plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
+	 symbolShape=symbolShape,symbolColor=symbolColor,ncol=1)
 
 plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
      symbolShape=symbolShape,symbolColor=symbolColor, log=TRUE)
@@ -114,7 +120,7 @@ plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
 plot(testout2,bwidth=10,symbol=symbol,symbolLabel=symbolLabel,
      symbolShape=symbolShape,symbolColor=symbolColor,plotDif=TRUE, log=TRUE)
 
-testout3<-fitEmaxB(y,dose,prior=prior,modType=3,mcmc=mcmc)
+testout3<-fitEmaxB(y,dose,prior=prior,modType=3,mcmc=mcmc,nproc=3)
 
 symbmod<-symbol
 symbmod[prot==1 & dose==350]<-1
@@ -158,13 +164,18 @@ protsub<-prots[dose!=0]
 prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
-testout<-fitEmaxB(ysub,dsub,prior=prior,modType=3,prot=protsub,pboAdj=TRUE,mcmc=mcmc)
+testout<-fitEmaxB(ysub,dsub,prior=prior,modType=3,prot=protsub,
+									pboAdj=TRUE,mcmc=mcmc,nproc=3)
 
 plot(testout)
+# change layout
+plot(testout,ncol=1)
+
 plot(testout, log=TRUE)
+plot(testout, ncol=1,log=TRUE)
 
 testout4<-fitEmaxB(ysub,dsub,prior=prior,
-				  modType=4,prot=protsub,pboAdj=TRUE,mcmc=mcmc)
+				  modType=4,prot=protsub,pboAdj=TRUE,mcmc=mcmc,nproc=3)
 
 plot(testout4)
 plot(testout4, log=TRUE)
@@ -202,7 +213,7 @@ testout<-fitEmaxB(y,dvec,modType=4,
 									prot=prots,
 									count=counts,binary=TRUE,
 									prior=prior,mcmc=mcmc,	
-									diagnostics=FALSE)
+									diagnostics=FALSE,nproc=3)
 
 
 plot(testout)
@@ -217,7 +228,7 @@ plot(testout,plotDif=TRUE, log=TRUE, xat=c(0.1, 0.2, 0.4, 0.6, 1.0))
 
 testout2<-fitEmaxB(y[prots=='fg'],dvec[prots=='fg'],prior=prior,modType=4,
           count=counts[prots=='fg'],binary=TRUE,diagnostics=FALSE,
-          mcmc=mcmc)
+          mcmc=mcmc,nproc=3)
 
 plot(testout2)
 plot(testout2, log=TRUE)
@@ -265,9 +276,10 @@ prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5,basemu=basemu,basevar=basevar)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
-									mcmc=mcmc,diagnostics=TRUE)
+									mcmc=mcmc,diagnostics=TRUE,nproc=3)
 
 plot(testout)
+plot(testout,ncol=1)
 
 plot(testout,int=2)
 
@@ -309,13 +321,116 @@ prior<-prior.control(0,30,0,30,50,edDF=5,basemu=basemu,basevar=basevar,binary=TR
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=3,xbase=x,
-										mcmc=mcmc,diagnostics=TRUE,binary=TRUE)
+										mcmc=mcmc,diagnostics=TRUE,binary=TRUE,nproc=3)
 
 plot(testout5b,ngrid=50)
+plot(testout5b,ngrid=50,ncol=1)
 
 plot(testout5b,plotDif=TRUE,int=1,ngrid=100)
 
 plot(testout5b,int=2,ngrid=50)
+
+
+#################
+### base case with missing values
+### fully saturated first-stage
+### vcest
+#############
+###
+set.seed(12357)
+nrep<-10
+nd<-6
+nv<-4
+sig<-sqrt(10/4)
+
+doselev<-c(0,1,2,4,8,16)
+dose<-sort(rep(doselev,nrep*nv))
+
+id<-sort(rep(1:(nrep*nd),nv))
+vis<-rep(1:nv,nd*nrep)
+
+led50<-log(3)
+emax<-5
+e0<-0
+popparm<-c(led50,emax,e0)
+misprop<-0.15  # mcar
+
+modmean<-emaxfun(dose,popparm)+vis
+poppred<-tapply(modmean,list(dose,vis),mean)[,nv]
+poppred<-tapply(modmean,list(dose,vis),mean)[,nv]
+popcov<-matrix(rep(0.25,nv^2),ncol=nv)
+popcov[1,2]<-0.75
+popcov[2,1]<-0.75
+diag(popcov)<-1
+popcov<-popcov*sig^2
+
+y<-modmean+as.vector(t(rmvnorm(nd*nrep,rep(0,nv),popcov)))
+dosefac<-factor(dose)
+visfac<-factor(vis)
+
+### impose missing data
+ntot<-nd*nrep*nv
+misid<-sample(1:ntot,round(ntot*misprop),replace = FALSE)
+y<-y[-misid]
+dosefac<-dosefac[-misid]
+visfac<-visfac[-misid]
+vis<-vis[-misid]
+id<-id[-misid]
+
+modfit<-gls(y ~ dosefac*visfac-1, 
+						correlation = corSymm(form = ~ vis | id),
+						weights = varIdent(form = ~ 1 | vis))
+
+preddat<-data.frame(dosefac=factor(doselev),
+										visfac=factor(rep(nv,nd),levels=c(1:4)))
+predvals<-predict(modfit,preddat)
+
+L<-model.matrix(~ dosefac*visfac-1,preddat)
+vcpred<-L%*%tcrossprod(vcov(modfit),L)
+
+###############################################
+## bayes model fit
+prior<-emaxPrior.control(epmu=5,epsca=20,
+							difTargetmu=0,difTargetsca = 20,
+							dTarget = 16,p50=4,
+							sigmalow=0.001,sigmaup = 1)
+mcmc=mcmc.control(chains=3)
+
+bfitout<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=3,
+									vcest=vcpred,mcmc=mcmc,nproc=3)
+plot(bfitout)
+plot(bfitout,logScale=TRUE)
+plot(bfitout,plotDif=TRUE)
+
+### repeat with 4-parm
+bfitout<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=4,
+									vcest=vcpred,mcmc=mcmc,nproc=3)
+plot(bfitout)
+plot(bfitout,plotDif=TRUE)
+##############################################
+### pbo adjusted
+LL<-model.matrix(~ dosefac*visfac-1,preddat)
+
+predpbo<-data.frame(dosefac=factor(rep(0,nd-1),levels=doselev),
+										visfac=factor(rep(nv,nd-1),levels=c(1:4)))
+predvalspbo<-predvals[2:nd]-predvals[1]
+Lpbo<-model.matrix(~ dosefac*visfac-1,predpbo)
+
+LL<-LL[-1,]
+
+vcpredpbo<-(LL-Lpbo)%*%tcrossprod(vcov(modfit),(LL-Lpbo))
+
+bfitoutpbo<-fitEmaxB(y=predvalspbo,dose=doselev[-1],prior=prior,modType=3,
+									pboAdj=TRUE,vcest=vcpredpbo,mcmc=mcmc,nproc=3)
+plot(bfitoutpbo)
+plot(bfitoutpbo,plotDif=TRUE)
+
+
+### repeat with 4 parm
+bfitoutpbo<-fitEmaxB(y=predvalspbo,dose=doselev[-1],prior=prior,modType=4,
+									pboAdj=TRUE,vcest=vcpredpbo,mcmc=mcmc,nproc=3)
+plot(bfitoutpbo)
+
 
 dev.off()
 

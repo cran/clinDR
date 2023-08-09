@@ -321,13 +321,13 @@ simrepB<-function(j,inlist)
 		#### binary data
 		####
 		if(binary){
-			phat<-tapply(y,dose,sum)
+			phat<-as.numeric(tapply(y,dose,sum))
 			phat<-(phat+nfrac2)/(n+nfrac)            ###shrink to .5 for stability 
 			yhat<-qlogis(phat)
 			V<-diag(1/(phat*(1-phat)*n))
 			contMat <-optContr(testMods,S=V)
 		}else{
-			yhat<-tapply(y,dose,mean)
+			yhat<-as.numeric(tapply(y,dose,mean))
 			ms<-summary(lm(y~factor(dose)))$sigma
 			msSat[i]<-ms^2
 			V<-diag(msSat[i]/n)
@@ -401,8 +401,7 @@ simrepB<-function(j,inlist)
     }
   	
     ### compute gof test
-    gofP[i]<-checkMonoEmax(yin,din,parms,sigsim^2,cin,
-    											 trend=trend,binary=binary)
+    gofP[i]<-bpchkMonoEmax(bfit,trend=trend)
     
     ### execute customized code
     if(!is.null(customCode)){

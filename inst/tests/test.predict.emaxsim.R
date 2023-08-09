@@ -20,7 +20,7 @@ meanlev<-emaxfun(doselev,parm=pop)
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)  
 
-D3 <- emaxsim(nsim,gen.parm,modType=4)
+D3 <- emaxsim(nsim,gen.parm,modType=4,nproc=nprocdef)
 
 
 test_that("check predict.emaxsim",{
@@ -116,7 +116,7 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-D5 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE)
+D5 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE,nproc=nprocdef)
 
 predD5<-predict(D5,dose=c(0.15,0.25,0.5))
 

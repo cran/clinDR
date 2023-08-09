@@ -4,6 +4,12 @@ function(n,doselev,parmEmax,parmE0,
 			resSD,dfSD=Inf,binary=FALSE)
 {
 
+		.Deprecated("RandEmax",package="clinDR",
+		msg=paste0('This function has been replaced by randomEmax ',
+							'that inputs a prior object created by function ',
+							'emaxPrior.control.  RandEmax will be removed in a  ',
+							'function version of package clinDR'))
+
 	if(length(parmE0)!=2)stop('parme0 input must be length 2')
 	if(length(parmEmax)!=2)stop('parmemax input must be length 2')
 	

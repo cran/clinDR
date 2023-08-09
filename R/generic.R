@@ -21,6 +21,7 @@ coef.fitEmaxB<-function(object, local=FALSE, ...){
 	matm<-as.matrix(object$estanfit)	
 	localParm<-object$localParm
 	modType<-object$modType
+	dimFit<-object$dimFit
 	if(is.null(localParm))localParm<-FALSE
 	if(local & !localParm)stop('local=TRUE but no local parameters fit')
 	
@@ -36,7 +37,7 @@ coef.fitEmaxB<-function(object, local=FALSE, ...){
 				offb<-3
 				offc<-4
 			}
-			if(binary)nc<-ncol(matm)-offb else nc<-ncol(matm)-offc
+			if(binary || dimFit)nc<-ncol(matm)-offb else nc<-ncol(matm)-offc
 		}else  if(binary)nc<-ncol(matm)-1 else nc<-ncol(matm)-2
 	}
 	
@@ -77,7 +78,10 @@ sigma.emaxsim<-function(object, ...){
 ####
 
 sigma.fitEmaxB<-function(object, ...){
-	if(object$binary){
+	if(object$dimFit){
+		warning("sigma returns NA when fitted model results are input to fitEmaxB")
+		return(NA)		
+	}else if(object$binary){
 		warning("sigma returns NA for binary endpoint")
 		return(NA)
 	}else{

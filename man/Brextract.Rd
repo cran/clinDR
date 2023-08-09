@@ -1,5 +1,4 @@
 \name{"Extract.emaxsim"}
-\alias{"Extract.emaxsim"}
 \alias{[.emaxsim}
 
 \title{Extract a simulation from the output of emaxsim }

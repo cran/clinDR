@@ -41,7 +41,7 @@ then the predicted value is the mean of the predictions for all patients in the
 specified protocol.   Note that the protocol must be specified, or the 
 prediction defaults to patients from the first protocol.  Note that for binary
 data, the distinction between the mean of the predicted values and the predicted
-value as the mean of the covariates can be important.
+value at the mean of the covariates can be important.
 }
 \value{
 A list with estimated mean/proportion \code{(pred, predMed)}, lower bound, upper

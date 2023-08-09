@@ -1,6 +1,11 @@
 library(clinDR)
 
 
+### note change in random number generator and set.seed
+### produced some changes with earlier versions of the
+### plots
+
+
 if(file.exists("./clinDR/inst/tests/extraGraphics/pdfoutput")){
 	pvar<-"./clinDR/inst/tests/extraGraphics/pdfoutput"
 } else pvar<-NULL

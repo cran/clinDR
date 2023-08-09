@@ -4,6 +4,7 @@
            xlab='Dose',
   				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
                  'Difference With Placebo','Response')),
+  				 ncol=NULL,
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
            bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, logScale=FALSE, ngrid=200,
            plot=TRUE, ...){
@@ -11,6 +12,7 @@
 	outplot<-combplot(x=x,bayes=FALSE,int=int,plotResid=plotResid,
 					clev=clev, predict=predict,plotci=plotci,plotDif=plotDif,
           xlab=xlab,ylab=ylab,
+					ncol=ncol,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
 					symbolColor=symbolColor,symbolSize=symbolSize,
           bwidth=bwidth, xlim=xlim, xat=xat, ylim=ylim, logScale=logScale, ngrid=ngrid,
@@ -25,6 +27,7 @@
            xlab='Dose',
    				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
                  'Difference With Placebo','Response')), 				 
+  				 ncol=NULL,
            symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',symbolSize=4,
            bwidth=NULL, xlim=NULL, xat=NULL, ylim=NULL, logScale=FALSE, ngrid=200,
            plot=TRUE, ...){
@@ -32,6 +35,7 @@
 	outplot<-combplot(x=x,bayes=TRUE,int=int,plotResid=plotResid,
 					clev=clev, predict=predict,plotci=plotci,plotDif=plotDif,
           xlab=xlab,ylab=ylab,
+					ncol=ncol,
           symbol=symbol,symbolLabel=symbolLabel,symbolShape=symbolShape,
 					symbolColor=symbolColor,symbolSize=symbolSize,
           bwidth=bwidth, 
@@ -48,6 +52,7 @@
 	       xlab='Dose',
  				 ylab=ifelse(plotResid,'Residuals',ifelse(plotDif,
 							'Difference With Placebo','Response')), 				  			 
+ 				 ncol=NULL,
 	       symbol=NULL,symbolLabel='Group',symbolShape=8,symbolColor='red',
  				 symbolSize=4,
 	       bwidth=NULL,
@@ -75,6 +80,13 @@
     protlab<-levels(x$prot)
     count<-x$count
     binary<-x$binary
+    
+    if(bayes){
+    	dimFit<-x$dimFit
+    	vcest<-x$vcest
+    	if(binary && dimFit)y<-plogis(y)
+    }
+    
     if(!bayes){
     	if(!binary){
     		residSD<-sigma(x)
@@ -191,13 +203,29 @@
 	      nsim<-nrow(pmean)
 	      pil<-numeric(ndose)
 	      pih<-numeric(ndose)
-	      for(i in 1:ndose){
-		      if(!binary){ ppred<-rnorm(nsim,pmean[,i],sigsim/sqrt(nsub[i]))
-		      }else ppred<-rbinom(nsim,nsub[i],pmean[,i])/nsub[i]
-		      if(i==1)pp0<-ppred
-		      if(plotDif)ppred<-ppred-pp0	
-		      pil[i]<-quantile(ppred,probs=clevlow)
-		      pih[i]<-quantile(ppred,probs=clevup)
+	      if(dimFit){
+	      	ppred<-matrix(numeric(nsim*ndose),ncol=ndose)
+	      	if(binary){
+	      		ppred<-plogis(qlogis(pmean)+rmvnorm(nsim,rep(0,dimFit),vcest))
+	      	}else ppred<-pmean+rmvnorm(nsim,rep(0,dimFit),vcest)
+	      	
+	      	for(i in 1:ndose){
+			      if(i==1)pp0<-ppred[,1]
+			      if(plotDif)phold<-ppred[,i]-pp0	else phold<-ppred[,i]
+			      pil[i]<-quantile(phold,probs=clevlow,na.rm=TRUE)
+			      pih[i]<-quantile(phold,probs=clevup,na.rm=TRUE)      			
+	      	}
+	      }else{
+		      for(i in 1:ndose){
+			      if(!binary){ ppred<-rnorm(nsim,pmean[,i],sigsim/sqrt(nsub[i]))
+			      }else{ 
+			      	ppred<-rbinom(nsim,nsub[i],pmean[,i])/nsub[i]
+			      }
+			      if(i==1)pp0<-ppred
+			      if(plotDif)ppred<-ppred-pp0	
+			      pil[i]<-quantile(ppred,probs=clevlow,na.rm=TRUE)
+			      pih[i]<-quantile(ppred,probs=clevup,na.rm=TRUE)
+		      }
 	      }
 	      
 	      ### predicted values on grid
@@ -305,8 +333,11 @@
       lplot<-lplot+scale_color_manual(name=symbolLabel,values=symbolColor)
       lplot<-lplot+scale_shape_manual(name=symbolLabel,values=symbolShape)
       lplot<-lplot + geom_hline(yintercept=0,linetype=2)
-      if(length(unique(prot))>1)lplot<-lplot+facet_wrap(~protDS,ncol=min(nprot,3)) 
-      lplot<-lplot+ylab(ylab) + xlab(xlab) + theme_bw()   
+      if(length(unique(prot))>1){
+      	if(is.null(ncol)) ncol<-min(nprot,3)
+      	lplot<-lplot+facet_wrap(~protDS,ncol=ncol) 
+      }
+      lplot<-lplot+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()   
       if(!is.null(ylim)){lplot<-lplot+coord_cartesian(xlim=xlim,ylim=ylim)
       }else lplot<-lplot+coord_cartesian(xlim=xlim)
     }
@@ -332,7 +363,10 @@
       lplot<-lplot + geom_hline(yintercept=0,linetype=2)
       if(is.null(xat))  lplot <- lplot + scale_x_continuous(breaks=log(sort(unique(dosevecDSlog))),
                                           labels=sort(unique(dosevecDS))) 
-      if(length(unique(prot))>1)lplot<-lplot+facet_wrap(~protDS,ncol=min(nprot,3)) 
+      if(length(unique(prot))>1){
+      	if(is.null(ncol))ncol<-min(nprot,3)
+      	lplot<-lplot+facet_wrap(~protDS,ncol=ncol) 
+      }
       if(!is.null(ylim)){lplot<-lplot+coord_cartesian(xlim=xlimlog,ylim=ylim)
       }else lplot<-lplot+coord_cartesian(xlim=xlimlog)
     } 
@@ -345,7 +379,10 @@
                                doseLevVec,protD=factor(protD,labels=protlab)))
       lplot<-lplot+scale_color_manual(name=symbolLabel,values=symbolColor)
       lplot<-lplot+scale_shape_manual(name=symbolLabel,values=symbolShape)
-      if(length(unique(prot))>1)lplot<-lplot+facet_wrap(~protD,ncol=min(nprot,5)) 
+      if(length(unique(prot))>1){
+      	if(is.null(ncol))ncol<-min(nprot,5)
+      	lplot<-lplot+facet_wrap(~protD,ncol=ncol) 
+      }
       if(predict)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=pihvec,ymin=pilvec),size=1.1,
                                             color='grey',width=werrbar)
       if(plotci)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=cihvec,ymin=cilvec),width=0,size=1.1,color='black')
@@ -355,7 +392,7 @@
       lplot<-lplot+geom_point(data=data.frame(ymvecDS,dosevecDS,symDS,protD=factor(protDS,labels=protlab)),
                               aes(x=dosevecDS,y=ymvecDS,shape=symDS,color=symDS),
                               size=symbolSize)
-      lplot<-lplot+ylab(ylab) + xlab(xlab) + theme_bw()   
+      lplot<-lplot+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()   
       if(!is.null(ylim)){lplot<-lplot+coord_cartesian(xlim=xlim,ylim=ylim)
       }else lplot<-lplot+coord_cartesian(xlim=xlim)
       
@@ -402,7 +439,10 @@
                                  doseLevVec, doseLevVeclog, protD=factor(protD,labels=protlab)))
         lplot<-lplot+scale_color_manual(name=symbolLabel,values=symbolColor)
         lplot<-lplot+scale_shape_manual(name=symbolLabel,values=symbolShape)
-        if(length(unique(prot))>1)lplot<-lplot+facet_wrap(~protD,ncol=min(nprot,5))
+        if(length(unique(prot))>1){
+      	if(is.null(ncol))ncol<-min(nprot,5)
+        	lplot<-lplot+facet_wrap(~protD,ncol=ncol)
+        }
         
         
         if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),size=1.1,
@@ -466,7 +506,10 @@
                                  doseLevVec,doseLevVeclog,protD=factor(protD,labels=protlab)))
         lplot<-lplot+scale_color_manual(name=symbolLabel,values=symbolColor)
         lplot<-lplot+scale_shape_manual(name=symbolLabel,values=symbolShape)
-        if(length(unique(prot))>1)lplot<-lplot+facet_wrap(~protD,ncol=min(nprot,5)) 
+        if(length(unique(prot))>1){
+      		if(is.null(ncol))ncol<-min(nprot,5)
+        	lplot<-lplot+facet_wrap(~protD,ncol=ncol) 
+        }
         if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),size=1.1,
                                               color='grey',width=werrbarlog)
         if(plotci)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=cihvec,ymin=cilvec),width=0,size=1.1,color='black')
@@ -489,13 +532,13 @@
       }
     }
     
-    lplot <- lplot +ylab(ylab) + xlab(xlab) + theme_bw()   
+    lplot <- lplot +ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()   
     ## remove the vertical grid lines
-    lplot <- lplot+ theme(panel.grid.major.x=element_blank(),
+    lplot <- lplot+ ggplot2::theme(panel.grid.major.x=element_blank(),
     											panel.grid.minor.x=element_blank(),
     											panel.grid.major.y=element_line(size=0.1))   
     
-    if(nolegend)lplot<-lplot + theme(legend.position = "none")
+    if(nolegend)lplot<-lplot + ggplot2::theme(legend.position = "none")
 
     
     if(!is.null(xat)){

@@ -269,9 +269,9 @@ simrep<-function(j,inlist)
 		#### binary data
 		####
 		if(binary){
-			phat<-tapply(y,dose,sum)
+			phat<-as.numeric(tapply(y,dose,sum))
 			phat<-(phat+nfrac2)/(n+nfrac)            ###shrink to .5 for stability 
-			lphat<-qlogis(phat)
+			lphat<-as.numeric(qlogis(phat))
 			V<-diag(1/(phat*(1-phat)*n))
 			contMat <-optContr(testMods,S=V)
 		}

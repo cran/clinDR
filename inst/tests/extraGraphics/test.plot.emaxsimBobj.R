@@ -12,6 +12,7 @@ pdf(file=paste(file.path(pvar,"output.emaxsimBobj_new.pdf")))
 
 set.seed(12357)
 nsim<-50
+nproc<-5
 idmax<-5
 doselev<-c(0,5,25,50,100)
 n<-c(78,81,81,81,77)
@@ -32,7 +33,7 @@ prior<-prior.control(0,30,0,30,50,0.1,30,edDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
-D1 <- emaxsimB(nsim,gen.parm,prior=prior,mcmc=mcmc,check=FALSE)
+D1 <- emaxsimB(nsim,gen.parm,prior=prior,mcmc=mcmc,check=FALSE,nproc=5)
 e49<-D1[49]
 
 #####################################################################
@@ -90,7 +91,7 @@ prior<-prior.control(0,4,0,4,.5,edDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 D5 <- emaxsimB(nsim,gen.parm,prior=prior,modType=4,binary=TRUE,
-							 mcmc=mcmc)
+							 mcmc=mcmc,nproc=5)
 
 plot(D5[1])
 #plot(D5[1], log=TRUE)
@@ -104,7 +105,8 @@ plot(D5[1],plotPop='4')
 
 ### repeat with 3 parm model
 set.seed(12357)
-D6 <- emaxsimB(nsim,gen.parm,prior=prior,modType=3,mcmc=mcmc,binary=TRUE)
+D6 <- emaxsimB(nsim,gen.parm,prior=prior,modType=3,mcmc=mcmc,binary=TRUE,
+							 nproc=5)
 
 plot(D6[1])
 #plot(D6[1], log=TRUE)

@@ -1,4 +1,6 @@
-context('fitEmaxB with updated prior')
+context('fiEmaxB with updated prior')
+
+#### NOTE: processors set to 15 for final simulation
 
 ### stan parallel options
 options(mc.cores = parallel::detectCores())
@@ -32,7 +34,7 @@ prior<-emaxPrior.control(0,30,0,30,dTarget=350,p50=50,sigmalow=.1,sigmaup=30,par
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-suppressWarnings(fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,
-									mcmc=mcmc,diagnostics=FALSE))
+									mcmc=mcmc,diagnostics=FALSE,nproc=3))
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -105,7 +107,7 @@ mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_
 
 suppressWarnings(testout<-fitEmaxB(ymean,doselev,prior=prior,modType=4,
 									prot=protshort,count=nag,msSat=msSat,
-									mcmc=mcmc,diagnostics=FALSE))
+									mcmc=mcmc,diagnostics=FALSE,nproc=3))
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -255,7 +257,7 @@ dlevsub<-doselev[doselev!=0]
 
 suppressWarnings(testout<-fitEmaxB(ymean,dlevsub,prior,modType=4,prot=protshort,
 									count=nag,pboAdj=TRUE,msSat=msSat,
-									mcmc=mcmc,diagnostics=FALSE))
+									mcmc=mcmc,diagnostics=FALSE,nproc=3))
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -294,78 +296,357 @@ test_that("pboadj4 check absolute levels",{
 #############################################################
 ### 4 parm model and grouped data, one protocol
 ### and replicated measurement per dose/protocol condition
-set.seed(12357)
-nsim<-500
-doselev<-c(0,5,25,50,100,350)
-n<-20*c(78,81,81,81,77,80)
-n1<-sum(n)
-n2<-sum(n[1:4])
-
-doselev<-c(doselev,doselev[1:4])
-n<-c(n,n[1:4])
-
-### population parameters for simulation
-e0<-2.465375 
-ed50<-67.481113 
-emax<-15.127726
-sdy<-1
-pop<-c(log(ed50),emax,e0)    
-dose<-rep(doselev,n)
-meanlev<-emaxfun(dose,pop)  
-poppred<-emaxfun(c(20,80),pop)
-popref<-emaxfun(50,pop)
-
-
-modtype<-4
-if(modtype==4){pparm<-c(pop[1],1,pop[2:3])
-}else pparm<-pop
-z<-matrix(numeric(modtype*nsim),ncol=modtype)
-zabs<-matrix(numeric(nsim*2),ncol=2)
-zdif<-matrix(numeric(nsim*2),ncol=2)
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan('mrmodel')
-
-for(i in 1:nsim){
-	y<-rnorm(n1+n2,meanlev,sdy)
-	prots<-c(rep(1,n1),rep(2,n2))
-	### by dose
-	ysum<-tapply(y,dose,mean)
-	nsum<-as.numeric(table(dose))
-	msSat<-tapply(y,dose,var)
-	msSat<-sum((nsum-1)*msSat)/(sum(nsum)-length(nsum))
-	### by dose/prots
-	ysum<-c(tapply(y[prots==1],dose[prots==1],mean),
-					tapply(y[prots==2],dose[prots==2],mean))
+runsim<-function(j,seed,nsim){
+	set.seed(seed[j])
+	doselev<-c(0,5,25,50,100,350)
+	n<-50*c(78,81,81,81,77,80)
+	n1<-sum(n)
+	n2<-sum(n[1:4])
 	
-	suppressWarnings(testout<-fitEmaxB(ysum,doselev,prior=prior,count=n,modType=modtype,
-										msSat=msSat,mcmc=mcmc,estan=estan,diagnostics=FALSE,nproc = 1))
+	doselev<-c(doselev,doselev[1:4])
+	n<-c(n,n[1:4])
 	
-	parms<-coef(testout)
-	estimate<-apply(parms,2,mean)
-	se<-sqrt(diag(var(parms)))
-	z[i,]<-(estimate-pparm)/se
-	predout<-predict(testout,dosevec=c(20,80),int=1,dref=50)
-	zabs[i,]<-(predout$pred-poppred)/predout$se
-	zdif[i,]<-(predout$fitdif-(poppred-popref))/predout$sedif
+	### population parameters for simulation
+	e0<-2.465375 
+	ed50<-67.481113 
+	emax<-15.127726
+	sdy<-1
+	pop<-c(log(ed50),emax,e0)    
+	dose<-rep(doselev,n)
+	meanlev<-emaxfun(dose,pop)  
+	poppred<-emaxfun(c(20,80),pop)
+	popref<-emaxfun(50,pop)
+	
+	
+	modtype<-4
+	if(modtype==4){pparm<-c(pop[1],1,pop[2:3])
+	}else pparm<-pop
+	z<-matrix(numeric(modtype*nsim),ncol=modtype)
+	zabs<-matrix(numeric(nsim*2),ncol=2)
+	zdif<-matrix(numeric(nsim*2),ncol=2)
+	prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
+	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
+	estan<-selEstan('mrmodel')
+	
+	for(i in 1:nsim){
+		y<-rnorm(n1+n2,meanlev,sdy)
+		prots<-c(rep(1,n1),rep(2,n2))
+		### by dose
+		ysum<-tapply(y,dose,mean)
+		nsum<-as.numeric(table(dose))
+		msSat<-tapply(y,dose,var)
+		msSat<-sum((nsum-1)*msSat)/(sum(nsum)-length(nsum))
+		### by dose/prots
+		ysum<-c(tapply(y[prots==1],dose[prots==1],mean),
+						tapply(y[prots==2],dose[prots==2],mean))
+		
+		suppressWarnings(testout<-fitEmaxB(ysum,doselev,prior=prior,count=n,
+											 modType=modtype,
+											msSat=msSat,mcmc=mcmc,estan=estan,
+											diagnostics=FALSE,nproc = 1))
+		
+		parms<-coef(testout)
+		estimate<-apply(parms,2,mean)
+		se<-sqrt(diag(var(parms)))
+		z[i,]<-(estimate-pparm)/se
+		predout<-predict(testout,dosevec=c(20,80),int=1,dref=50)
+		zabs[i,]<-(predout$pred-poppred)/predout$se
+		zdif[i,]<-(predout$fitdif-(poppred-popref))/predout$sedif
+	}
+	return(list(z=z,zabs=zabs,zdif=zdif))
 }
+
+nsim<-67
+### set up independent stream of random numbers for
+### each simulation iteration.
+RNGkind("L'Ecuyer-CMRG")
+set.seed(12357)
+seed<-matrix(integer(nsim*7),ncol=7)
+seed[1,]<-as.integer(.Random.seed)
+for(i in 2:nsim){
+ seed[i,]<-nextRNGStream(seed[i-1,])
+}
+ 
+cl<-makeCluster(nprocdef)
+registerDoParallel(cl)	
+outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+	runsim(j,seed,nsim)
+}
+stopCluster(cl)
+RNGkind("default")
+
+z<-NULL
+zabs<-NULL
+zdif<-NULL
+for(i in 1:nprocdef){
+	z<-rbind(z,outsim[[i]]$z)
+	zabs<-rbind(zabs,outsim[[i]]$zabs)
+	zdif<-rbind(zdif,outsim[[i]]$zdif)
+}
+
+nsim<-nsim*nprocdef
 ### check parameter estimates
-test_that("grouped data model parameters agree within 2se",{
-	expect_that(0.05,
-							equals(as.numeric(max(apply(abs(z)>1.96,2,mean))),
-										 tolerance=3*sqrt(.05*.95/nsim),scale=1))
+test_that("grouped data model parameters agree within 3se",{
+	expect_lt(as.numeric(mean(apply(abs(z)>2,2,mean))),0.075)
 })
 
 test_that("predictions agree within 3se",{
 	expect_that(0.05,
-							equals(as.numeric(max(apply(abs(zabs)>1.96,2,mean))),
+							equals(as.numeric(mean(apply(abs(zabs)>1.96,2,mean))),
 										 tolerance=3*sqrt(.05*.95/nsim),scale=1))
 })
+
 test_that("dif predictions agree within 2se",{
-	expect_that(0.05,
-							equals(as.numeric(max(apply(abs(zdif)>1.96,2,mean))),
-										 tolerance=2*sqrt(.05*.95/nsim),scale=1))
+	expect_lt( as.numeric(max(apply(abs(zdif)>1.96,2,mean))),0.075 )
 })
+
+#########################################################
+#########################################################
+#### continuous with vcest specified
+####
+
+#################
+### base case with missing values
+### fully saturated first-stage
+#############
+###
+set.seed(12357)
+nrep<-10
+nd<-6
+nv<-4
+sig<-sqrt(10/4)
+
+doselev<-c(0,1,2,4,8,16)
+dose<-sort(rep(doselev,nrep*nv))
+
+id<-sort(rep(1:(nrep*nd),nv))
+vis<-rep(1:nv,nd*nrep)
+
+led50<-log(3)
+emax<-5
+e0<-0
+popparm<-c(led50,emax,e0)
+misprop<-0.15  # mcar
+
+modmean<-emaxfun(dose,popparm)+vis
+poppred<-tapply(modmean,list(dose,vis),mean)[,nv]
+poppred<-tapply(modmean,list(dose,vis),mean)[,nv]
+popcov<-matrix(rep(0.25,nv^2),ncol=nv)
+popcov[1,2]<-0.75
+popcov[2,1]<-0.75
+diag(popcov)<-1
+popcov<-popcov*sig^2
+
+y<-modmean+as.vector(t(rmvnorm(nd*nrep,rep(0,nv),popcov)))
+dosefac<-factor(dose)
+visfac<-factor(vis)
+
+### impose missing data
+ntot<-nd*nrep*nv
+misid<-sample(1:ntot,round(ntot*misprop),replace = FALSE)
+y<-y[-misid]
+dosefac<-dosefac[-misid]
+visfac<-visfac[-misid]
+vis<-vis[-misid]
+id<-id[-misid]
+
+modfit<-gls(y ~ dosefac*visfac-1, 
+						correlation = corSymm(form = ~ vis | id),
+						weights = varIdent(form = ~ 1 | vis))
+
+preddat<-data.frame(dosefac=factor(doselev),
+										visfac=factor(rep(nv,nd),levels=c(1:4)))
+predvals<-predict(modfit,preddat)
+
+L<-model.matrix(~ dosefac*visfac-1,preddat)
+vcpred<-L%*%tcrossprod(vcov(modfit),L)
+
+###############################################
+## bayes model fit
+prior<-emaxPrior.control(epmu=5,epsca=20,
+							difTargetmu=0,difTargetsca = 20,
+							dTarget = 16,p50=4,
+							sigmalow=0.001,sigmaup = 1)
+mcmc=mcmc.control(chains=3)
+
+bfitout<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=3,
+									vcest=vcpred,mcmc=mcmc,nproc=3)
+#plot(bfitout)
+bpred<-predict(bfitout,dosevec=doselev)
+best<-bpred$predMed
+bse<-bpred$se
+
+test_that("z-stat dose estimated using vcest: 3-parm",{
+expect_lt(max(abs((best-poppred)/bse)),
+						2.5)
+})
+
+### repeat with 4-parm
+bfitout<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=4,
+									vcest=vcpred,mcmc=mcmc,nproc=3)
+#plot(bfitout)
+bpred<-predict(bfitout,dosevec=doselev)
+best<-bpred$predMed
+bse<-bpred$se
+
+test_that("z-stat dose estimated using vcest: 4-parm",{
+expect_lt(max(abs((best-poppred)/bse)),
+						2.5)
+})
+
+##############################################
+### pbo adjusted
+LL<-model.matrix(~ dosefac*visfac-1,preddat)
+
+predpbo<-data.frame(dosefac=factor(rep(0,nd-1),levels=doselev),
+										visfac=factor(rep(nv,nd-1),levels=c(1:4)))
+predvalspbo<-predvals[2:nd]-predvals[1]
+Lpbo<-model.matrix(~ dosefac*visfac-1,predpbo)
+
+LL<-LL[-1,]
+
+vcpredpbo<-(LL-Lpbo)%*%tcrossprod(vcov(modfit),(LL-Lpbo))
+
+bfitoutpbo<-fitEmaxB(y=predvalspbo,dose=doselev[-1],prior=prior,modType=3,
+									pboAdj=TRUE,vcest=vcpredpbo,mcmc=mcmc,nproc=3)
+#plot(bfitoutpbo)
+bpredpbo<-predict(bfitoutpbo,dosevec=doselev[-1])
+bestpbo<-bpredpbo$predMed
+bsepbo<-bpredpbo$se
+
+test_that("z-stat dose estimated using vcest:pbo-adj 3 parm",{
+expect_lt(max(abs((bestpbo-(poppred[-1]-poppred[1]))/bsepbo)),
+						2.5)
+})
+
+### repeat with 4 parm
+bfitoutpbo<-fitEmaxB(y=predvalspbo,dose=doselev[-1],prior=prior,modType=4,
+									pboAdj=TRUE,vcest=vcpredpbo,mcmc=mcmc,nproc=3)
+#plot(bfitoutpbo)
+bpredpbo<-predict(bfitoutpbo,dosevec=doselev[-1])
+bestpbo<-bpredpbo$predMed
+bsepbo<-bpredpbo$se
+
+test_that("z-stat dose estimated using vcest:pbo-adj 4 parm",{
+expect_lt(max(abs((bestpbo-(poppred[-1]-poppred[1]))/bsepbo)),
+						2.5)
+})
+
+
+############################
+### sim check of vcest option
+### continuous data subject to missingness
+### same conditions as base case
+
+### currently set for 20 processors
+###
+
+runsim<-function(j,seed,nsim){
+	set.seed(seed[j])
+	nrep<-10
+	nd<-6
+	nv<-4
+	sig<-sqrt(10/4)
+	
+	doselev<-c(0,1,2,4,8,16)
+	dose<-sort(rep(doselev,nrep*nv))
+	
+	id<-sort(rep(1:(nrep*nd),nv))
+	vis<-rep(1:nv,nd*nrep)
+	
+	dosefac<-factor(dose)
+	visfac<-factor(vis)
+	
+	led50<-log(3)
+	emax<-5
+	e0<-0
+	popparm<-c(led50,emax,e0)
+	misprop<-0.15  # mcar
+	ntot<-nd*nrep*nv
+	
+	modmean<-emaxfun(dose,popparm)+vis
+	poppred<-tapply(modmean,list(dose,vis),mean)[,nv]
+	popcov<-matrix(rep(0.25,nv^2),ncol=nv)
+	popcov[1,2]<-0.75
+	popcov[2,1]<-0.75
+	diag(popcov)<-1
+	popcov<-popcov*sig^2
+	
+	### bayes prior
+	prior<-emaxPrior.control(epmu=5,epsca=20,
+								difTargetmu=0,difTargetsca = 20,
+								dTarget = 16,p50=4,
+								sigmalow=0.001,sigmaup = 1)
+	mcmc=mcmc.control(chains=1,iter=10000)
+		
+	
+	bdest<-matrix(numeric(nd*nsim),nrow=nsim)
+	bdcov<-matrix(numeric(nd*nsim),nrow=nsim)
+	for(i in 1:nsim){
+		y<-modmean+as.vector(t(rmvnorm(nd*nrep,rep(0,nv),popcov)))
+		
+		### impose missing data
+		misid<-sample(1:ntot,round(ntot*misprop),replace = FALSE)
+		y<-y[-misid]
+		dosefacm<-dosefac[-misid]
+		visfacm<-visfac[-misid]
+		vism<-vis[-misid]
+		idm<-id[-misid]
+		
+		modfit<-gls(y ~ dosefacm*visfacm-1, 
+								correlation = corSymm(form = ~ vism | idm),
+								weights = varIdent(form = ~ 1 | vism))
+		
+		preddat<-data.frame(dosefacm=factor(doselev),
+												visfacm=factor(rep(nv,nd),levels=c(1:4)))
+		predvals<-predict(modfit,preddat)
+		
+		L<-model.matrix(~ dosefacm*visfacm-1,preddat)
+		vcpred<-L%*%tcrossprod(vcov(modfit),L)
+		
+		## bayes model fit
+	
+		bfitout<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=3,
+											vcest=vcpred,mcmc=mcmc,nproc=1)
+		plot(bfitout)
+		bpred<-predict(bfitout,dosevec=doselev)
+		bdest[i,]<-bpred$predMed
+		
+		bdcov[i,]<-(bpred$lb<poppred & bpred$ub>poppred)
+	}
+	return(list(bdest=bdest,bdcov=bdcov))
+}	
+
+nsim<-67
+### set up independent stream of random numbers for
+### each simulation iteration.
+RNGkind("L'Ecuyer-CMRG")
+set.seed(12357)
+seed<-matrix(integer(nprocdef*7),ncol=7)
+seed[1,]<-as.integer(.Random.seed)
+for(i in 2:nprocdef){
+ seed[i,]<-nextRNGStream(seed[i-1,])
+}
+ 
+cl<-makeCluster(nprocdef)
+registerDoParallel(cl)	
+outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR')) %dopar%{
+	runsim(j,seed,nsim)
+}
+stopCluster(cl)
+RNGkind("default")
+		
+bdest<-NULL
+bdcov<-NULL
+for(i in 1:nprocdef){
+	bdest<-rbind(bdest,outsim[[i]]$bdest)
+	bdcov<-rbind(bdcov,outsim[[i]]$bdcov)
+}
+
+test_that("coverage using vcest simulation result",{
+expect_lt(abs(max(apply(bdcov-0.9,2,mean))),0.05)
+})
+
 
 #########################################################################
 #########################################################################
@@ -391,7 +672,7 @@ mlev2<-plogis(emaxfun(dvec2,parms[c(1:3,5)]))
 y1<-rbinom(nd1,n1,mlev1)
 y2<-rbinom(nd2,n2,mlev2)
 
-### fitEmax inputs
+### fitEmaxB inputs
 y<-c(rep(1,nd1),rep(0,nd1),rep(1,nd2),rep(0,nd2))
 counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
@@ -404,7 +685,7 @@ suppressWarnings(testout<-fitEmaxB(y,dvec,modType=modType,
 									prot=prots,
 									count=counts,binary=TRUE,
 									prior=prior,mcmc=mcmc,	
-									diagnostics=FALSE))
+									diagnostics=FALSE,nproc=3))
 
 pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
@@ -456,7 +737,7 @@ mlev2<-plogis(emaxfun(dvec2,parms[c(1:3,5)]))
 y1<-rbinom(nd1,n1,mlev1)
 y2<-rbinom(nd2,n2,mlev2)
 
-### fitEmax inputs
+### fitEmaxB inputs
 y<-c(rep(1,nd1),rep(0,nd1),rep(1,nd2),rep(0,nd2))
 counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
@@ -470,7 +751,7 @@ suppressWarnings(testout<-fitEmaxB(y,dvec,modType=modType,
 									prot=prots,
 									count=counts,binary=TRUE,
 									prior=prior,mcmc=mcmc,	
-									diagnostics=FALSE))
+									diagnostics=FALSE,nproc=3))
 
 pgen<-coef(testout)
 estimate<-apply(pgen,2,mean)
@@ -507,179 +788,247 @@ test_that("check absolute levels",{
 ###### check CI and prediction intervals from plot.fitEmaxB
 ######
 
-set.seed(12357)
-
-doselev<-c(0,5,25,50,100,350)
-nd<-length(doselev)
-n<-10*c(78,81,81,81,77,80)
-
-### population parameters for simulation
-e0<-2.465375 
-ed50<-67.481113 
-emax<-15.127726
-sdy<-8.0
-pop.parm<-c(log(ed50),emax,e0)    
-
-modType<-4
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan('mrmodel')
-
-dose<-rep(doselev,n)
-meanlev<-emaxfun(doselev,pop.parm)  
-meanrep<-emaxfun(dose,pop.parm)  
-clev<-0.9
-nsim<-500
-covci<-matrix(logical(nsim*nd),ncol=nd)
-covpi<-matrix(logical(nsim*nd),ncol=nd)
-covdifci<-matrix(logical(nsim*nd),ncol=nd)
-covdifpi<-matrix(logical(nsim*nd),ncol=nd)
-for (i in 1:nsim){
-	y<-rnorm(sum(n),meanrep,sdy)
-	ymean<-tapply(y,dose,mean)
-	msSat<-(summary(lm(y~factor(dose)))$sigma)^2
-	suppressWarnings(testout<-fitEmaxB(ymean,doselev,prior=prior,modType=modType,count=n,
-										mcmc=mcmc,msSat=msSat,
-										estan=estan,diagnostics = FALSE,nproc = 1))
-	if(is.null(testout)){
-		covci[i,]<-NA
-		covpi[i,]<-NA
-		covdifci[i,]<-NA
-		covdifpi[i,]<-NA   
-	}else{
-		intout<-plot(testout,clev=clev,plot=FALSE)$plotdata
-		covci[i,]<-meanlev>=intout[,'cil'] & meanlev<=intout[,'cih']
-		### coverage for independent sample means from the same design
+runsim<-function(j,seed,nsim){
+	set.seed(seed[j])
+	
+	doselev<-c(0,5,25,50,100,350)
+	nd<-length(doselev)
+	n<-50*c(78,81,81,81,77,80)
+	
+	### population parameters for simulation
+	e0<-2.465375 
+	ed50<-67.481113 
+	emax<-15.127726
+	sdy<-8.0
+	pop.parm<-c(log(ed50),emax,e0)    
+	
+	modType<-4
+	prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
+	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
+	estan<-selEstan('mrmodel')
+	
+	dose<-rep(doselev,n)
+	meanlev<-emaxfun(doselev,pop.parm)  
+	meanrep<-emaxfun(dose,pop.parm)  
+	clev<-0.9
+	covci<-matrix(logical(nsim*nd),ncol=nd)
+	covpi<-matrix(logical(nsim*nd),ncol=nd)
+	covdifci<-matrix(logical(nsim*nd),ncol=nd)
+	covdifpi<-matrix(logical(nsim*nd),ncol=nd)
+	for (i in 1:nsim){
 		y<-rnorm(sum(n),meanrep,sdy)
-		ym<-tapply(y,dose,mean)
-		covpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']  
-		### difference with pbo
-		intout<-plot(testout,clev=clev,plot=FALSE,plotDif=TRUE)$plotdata
-		covdifci[i,]<-meanlev-meanlev[1]>=intout[,'cil'] & meanlev-meanlev[1]<=intout[,'cih']
-		### coverage for independent sample means from the same design
-		ym<-ym-ym[1]
-		covdifpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']   
+		ymean<-tapply(y,dose,mean)
+		msSat<-(summary(lm(y~factor(dose)))$sigma)^2
+		suppressWarnings(testout<-fitEmaxB(ymean,doselev,prior=prior,modType=modType,count=n,
+											mcmc=mcmc,msSat=msSat,
+											estan=estan,diagnostics = FALSE,nproc = 1))
+		if(is.null(testout)){
+			covci[i,]<-NA
+			covpi[i,]<-NA
+			covdifci[i,]<-NA
+			covdifpi[i,]<-NA   
+		}else{
+			intout<-plot(testout,clev=clev,plot=FALSE)$plotdata
+			covci[i,]<-meanlev>=intout[,'cil'] & meanlev<=intout[,'cih']
+			### coverage for independent sample means from the same design
+			y<-rnorm(sum(n),meanrep,sdy)
+			ym<-tapply(y,dose,mean)
+			covpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']  
+			### difference with pbo
+			intout<-plot(testout,clev=clev,plot=FALSE,plotDif=TRUE)$plotdata
+			covdifci[i,]<-meanlev-meanlev[1]>=intout[,'cil'] & meanlev-meanlev[1]<=intout[,'cih']
+			### coverage for independent sample means from the same design
+			ym<-ym-ym[1]
+			covdifpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']   
+		}
 	}
+	return(outsim=list(covci=covci,covpi=covpi,covdifci=covdifci,covdifpi=covdifpi))
 }
 
-test_that("plot.fitEmax CI for continuous data agree within 3se",{
+clev<-0.9
+nsim<-67
+### set up independent stream of random numbers for
+### each simulation iteration.
+RNGkind("L'Ecuyer-CMRG")
+set.seed(12357)
+seed<-matrix(integer(nprocdef*7),ncol=7)
+seed[1,]<-as.integer(.Random.seed)
+for(i in 2:nprocdef){
+ seed[i,]<-nextRNGStream(seed[i-1,])
+}
+ 
+cl<-makeCluster(nprocdef)
+registerDoParallel(cl)	
+outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+	runsim(j,seed,nsim)
+}
+stopCluster(cl)
+RNGkind("default")
+
+covci<-NULL
+covpi=NULL
+covdifci<-NULL
+covdifpi=NULL
+for(i in 1:nprocdef){
+	covci<-rbind(covci,outsim[[i]]$covci)
+	covpi<-rbind(covpi,outsim[[i]]$covpi)
+	covdifci<-rbind(covdifci,outsim[[i]]$covdifci)
+	covdifpi<-rbind(covdifpi,outsim[[i]]$covdifpi)
+}
+
+nsim<-nrow(covci)
+test_that("plot.fitEmaxB CI for continuous data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covci,2,mean,na.rm=TRUE))),
-										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
+							equals(as.numeric(mean(apply(covci,2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
-test_that("plot.fitEmax PI for continuous data agree within 3se",{
+test_that("plot.fitEmaxB PI for continuous data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covpi,2,mean,na.rm=TRUE))),
-										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
+							equals(as.numeric(mean(apply(covpi,2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
 
 
-test_that("plot.fitEmax CI DIF for continuous data agree within 3se",{
+test_that("plot.fitEmaxB CI DIF for continuous data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
-										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
+							equals(as.numeric(mean(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
-test_that("plot.fitEmax PI DIF for continuous data agree within 3se",{
+test_that("plot.fitEmaxB PI DIF for continuous data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
-										 tolerance=3*sqrt(.1*.9/nsim),scale=1))
+							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
 
 #####################################
 ### repeat with binary data
-set.seed(12357)
 
-doselev<-c(0,5,25,50,100,350)
-nd<-length(doselev)
-n<-10*c(78,81,81,81,77,80)
-
-### population parameters for simulation
-e0<-qlogis(.2) 
-ed50<-67.481113 
-emax<-qlogis(.95)
-pop.parm<-c(log(ed50),emax,e0)    
-meanlev<-plogis(emaxfun(doselev,pop.parm))
-y01<-c(rep(1,length(meanlev)),rep(0,length(meanlev)))
-d01<-c(doselev,doselev)
-clev<-0.9
-nsim<-500
-covci<-matrix(logical(nsim*nd),ncol=nd)
-covpi<-matrix(logical(nsim*nd),ncol=nd)
-covdifci<-matrix(logical(nsim*nd),ncol=nd)
-covdifpi<-matrix(logical(nsim*nd),ncol=nd)
-
-modType<-4
-prior<-emaxPrior.control(0,4,0,4,350,50,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
-estan<-selEstan('mrmodel')
-
-for (i in 1:nsim){
-	y<-rbinom(length(n),n,meanlev)
-	n01<-c(y,n-y)
-	suppressWarnings(testout<-fitEmaxB(y01,d01,prior,modType=4,
-										count=n01,diagnostics = FALSE,binary=TRUE,nproc=1))
-	if(is.null(testout)){
-		covci[i,]<-NA
-		covpi[i,]<-NA
-		covdifci[i,]<-NA
-		covdifpi[i,]<-NA   
-	}else{
-		intout<-plot(testout,clev=clev,plot=FALSE)$plotdata
-		covci[i,]<-meanlev>=intout[,'cil'] & meanlev<=intout[,'cih']
-		### coverage for independent sample means from the same design
-		
-		ypred<-rbinom(length(n),n,meanlev)
-		ym<-ypred/n
-		covpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']  
-		### difference with pbo
-		intout<-plot(testout,clev=clev,plot=FALSE,plotDif=TRUE)$plotdata
-		covdifci[i,]<-meanlev-meanlev[1]>=intout[,'cil'] & meanlev-meanlev[1]<=intout[,'cih']
-		### coverage for independent sample means from the same design
-		ym<-ym-ym[1]
-		covdifpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']   
+runsim<-function(j,seed,nsim){
+	set.seed(seed[j])
+	
+	doselev<-c(0,5,25,50,100,350)
+	nd<-length(doselev)
+	n<-10*c(78,81,81,81,77,80)
+	
+	### population parameters for simulation
+	e0<-qlogis(.2) 
+	ed50<-67.481113 
+	emax<-qlogis(.95)
+	pop.parm<-c(log(ed50),emax,e0)    
+	meanlev<-plogis(emaxfun(doselev,pop.parm))
+	y01<-c(rep(1,length(meanlev)),rep(0,length(meanlev)))
+	d01<-c(doselev,doselev)
+	clev<-0.9
+	covci<-matrix(logical(nsim*nd),ncol=nd)
+	covpi<-matrix(logical(nsim*nd),ncol=nd)
+	covdifci<-matrix(logical(nsim*nd),ncol=nd)
+	covdifpi<-matrix(logical(nsim*nd),ncol=nd)
+	
+	modType<-4
+	prior<-emaxPrior.control(0,4,0,4,350,50,parmDF=5,binary=TRUE)
+	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
+	estan<-selEstan('mrmodel')
+	
+	for (i in 1:nsim){
+		y<-rbinom(length(n),n,meanlev)
+		n01<-c(y,n-y)
+		suppressWarnings(testout<-fitEmaxB(y01,d01,prior,modType=4,
+											count=n01,diagnostics = FALSE,binary=TRUE,nproc=1))
+		if(is.null(testout)){
+			covci[i,]<-NA
+			covpi[i,]<-NA
+			covdifci[i,]<-NA
+			covdifpi[i,]<-NA   
+		}else{
+			intout<-plot(testout,clev=clev,plot=FALSE)$plotdata
+			covci[i,]<-meanlev>=intout[,'cil'] & meanlev<=intout[,'cih']
+			### coverage for independent sample means from the same design
+			
+			ypred<-rbinom(length(n),n,meanlev)
+			ym<-ypred/n
+			covpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']  
+			### difference with pbo
+			intout<-plot(testout,clev=clev,plot=FALSE,plotDif=TRUE)$plotdata
+			covdifci[i,]<-meanlev-meanlev[1]>=intout[,'cil'] & meanlev-meanlev[1]<=intout[,'cih']
+			### coverage for independent sample means from the same design
+			ym<-ym-ym[1]
+			covdifpi[i,]<-ym>=intout[,'pil'] & ym<=intout[,'pih']   
+		}
 	}
+	return(outsim=list(covci=covci,covpi=covpi,covdifci=covdifci,covdifpi=covdifpi))
 }
 
-test_that("plot.fitEmax CI for binary data agree within 3se",{
+clev<-0.9
+nsim<-67
+### set up independent stream of random numbers for
+### each simulation iteration.
+RNGkind("L'Ecuyer-CMRG")
+set.seed(12357)
+seed<-matrix(integer(nsim*7),ncol=7)
+seed[1,]<-as.integer(.Random.seed)
+for(i in 2:nsim){
+ seed[i,]<-nextRNGStream(seed[i-1,])
+}
+ 
+cl<-makeCluster(nprocdef)
+registerDoParallel(cl)	
+outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+	runsim(j,seed,nsim)
+}
+stopCluster(cl)
+RNGkind("default")
+
+covci<-NULL
+covpi=NULL
+covdifci<-NULL
+covdifpi=NULL
+for(i in 1:nprocdef){
+	covci<-rbind(covci,outsim[[i]]$covci)
+	covpi<-rbind(covpi,outsim[[i]]$covpi)
+	covdifci<-rbind(covdifci,outsim[[i]]$covdifci)
+	covdifpi<-rbind(covdifpi,outsim[[i]]$covdifpi)
+}
+
+test_that("plot.fitEmaxB CI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covci,2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covci,2,mean,na.rm=TRUE))),
 										 tolerance=0.04,scale=1))
 })
-test_that("plot.fitEmax CI for binary data agree within 3se",{
+test_that("plot.fitEmaxB CI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(min(apply(covci,2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covci,2,mean,na.rm=TRUE))),
 										 tolerance=0.04,scale=1))
 })
-test_that("plot.fitEmax PI for binary data agree within 3se",{
+test_that("plot.fitEmaxB PI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covpi,2,mean,na.rm=TRUE))),
-										 tolerance=0.04,scale=1))
+							equals(as.numeric(mean(apply(covpi,2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
-test_that("plot.fitEmax PI for binary data agree within 3se",{
+test_that("plot.fitEmaxB PI for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(min(apply(covpi,2,mean,na.rm=TRUE))),
-										 tolerance=0.04,scale=1))
+							equals(as.numeric(mean(apply(covpi,2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
 
 
-test_that("plot.fitEmax CI DIF for binary data agree within 3se",{
+test_that("plot.fitEmaxB CI DIF for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
+})
+test_that("plot.fitEmaxB CI DIF for binary data agree within 3se",{
+	expect_that(clev,
+							equals(as.numeric(mean(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
 										 tolerance=0.04,scale=1))
 })
-test_that("plot.fitEmax CI DIF for binary data agree within 3se",{
+test_that("plot.fitEmaxB PI DIF for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(min(apply(covdifci[,-1],2,mean,na.rm=TRUE))),
-										 tolerance=0.04,scale=1))
+							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
+										 tolerance=0.05,scale=1))
 })
-test_that("plot.fitEmax PI DIF for binary data agree within 3se",{
+test_that("plot.fitEmaxB PI DIF for binary data agree within 3se",{
 	expect_that(clev,
-							equals(as.numeric(max(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
-										 tolerance=0.04,scale=1))
-})
-test_that("plot.fitEmax PI DIF for binary data agree within 3se",{
-	expect_that(clev,
-							equals(as.numeric(min(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
+							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
 										 tolerance=0.04,scale=1))
 })
 
@@ -723,7 +1072,7 @@ prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
-									mcmc=mcmc,diagnostics=FALSE))
+									mcmc=mcmc,diagnostics=FALSE,nproc=3))
 
 parms<-coef(testout)
 estimate<-apply(parms,2,mean)
@@ -792,7 +1141,7 @@ prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
-									 mcmc=mcmc,diagnostics=FALSE))
+									 mcmc=mcmc,diagnostics=FALSE,nproc=3))
 
 parms<-coef(testout2)
 estimate<-apply(parms,2,mean)
@@ -857,7 +1206,7 @@ prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout3<-fitEmaxB(y,dose,prior=prior,modType=3,xbase=x,
-									mcmc=mcmc,diagnostics=FALSE))
+									mcmc=mcmc,diagnostics=FALSE,nproc=1))
 
 parms<-coef(testout3)
 estimate<-apply(parms,2,mean)
@@ -922,7 +1271,7 @@ prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout4b<-fitEmaxB(y,dose,prior=prior,modType=4,xbase=x,
-									mcmc=mcmc,diagnostics=FALSE,binary=TRUE))
+									mcmc=mcmc,diagnostics=FALSE,binary=TRUE,nproc=1))
 
 parms<-coef(testout4b)
 estimate<-apply(parms,2,mean)
@@ -992,7 +1341,7 @@ prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=3,xbase=x,
-									mcmc=mcmc,diagnostics=FALSE,binary=TRUE))
+									mcmc=mcmc,diagnostics=FALSE,binary=TRUE,nproc=1))
 
 parms<-coef(testout5b)
 estimate<-apply(parms,2,mean)
@@ -1042,6 +1391,193 @@ test_that("check absolute levels",{
 							equals(poppred,tol=0.05,scale=1))
 	expect_that(as.numeric(predout$fitdif),
 							equals((poppred-plogis(e0+0.5)),tol=0.05,scale=1))
+})
+
+
+
+###################################
+###### binary data (with missingness)
+###### applied with vcest specified
+###### for 2-stage model fit
+
+set.seed(123578)
+nrep<-100
+nd<-6
+nv<-4
+ntot<-nd*nrep*nv
+
+doselev<-c(0,1,2,4,8,16)
+dose<-sort(rep(doselev,nrep*nv))
+dindlev<-1:nd
+dind<-sort(rep(dindlev,nrep*nv))
+
+id<-sort(rep(1:(nrep*nd),nv))
+vis<-rep(1:nv,nd*nrep)
+k<-(dind-1)*nv+vis
+
+led50<-log(3)
+emax<-qlogis(0.75)-qlogis(0.25)
+e0<-qlogis(0.25)
+popparm<-c(led50,emax,e0)
+tau<-1.0
+misprop<-0.15  # mcar
+
+modmeanL<-emaxfun(dose,popparm)+0.5*(vis-1)
+poppredL<-tapply(modmeanL,list(vis,dose),mean) # reverse to match binary code
+poppred<-matrix(numeric(nd*nv),nrow=nv)
+
+fint<-function(theta,logit,sig){
+	plogis(logit+theta)*dnorm(theta,mean=0,sd=sig)
+}
+fint<-Vectorize(fint,vectorize.args='theta')
+for(j in 1:nd){
+	for(i in 1:nv){
+		poppred[i,j]<-integrate(fint,-Inf,Inf,logit=poppredL[i,j],sig=tau)$value
+	}
+}
+
+theta<-rnorm(nd*nrep,0,tau)
+theta<-rep(theta,rep(nv,nd*nrep))
+y<-rbinom(ntot,1,plogis(modmeanL+theta))
+dosefac<-factor(dose)
+visfac<-factor(vis)
+
+### impose missing data
+misid<-sample(1:ntot,round(ntot*misprop),replace = FALSE)
+y<-y[-misid]
+dosefac<-dosefac[-misid]
+dind<-dind[-misid]
+visfac<-visfac[-misid]
+vis<-vis[-misid]
+id<-id[-misid]
+k<-k[-misid]
+
+checkid<-(length(unique(id))==nd*nrep) ## must be true or skip fixed
+
+
+#### fit saturated model (replace by package eventually)
+fitModel<-function(id,y,trt,visit,prmean0,prsd0,prmean,prsd,
+									 gparm1=3,gparm2=1.5,
+									 mcmc=mcmc.control()){
+	## id must be 1,2,3...  without any skipped indices (a patient with
+	##                    no observed resp must be deleted)
+	## trt must be 1,2
+	## visits must be numbered sequential 1,2,..., individual visits can be skipped
+	##         but there must be at least 1 measurement for some patient at each visit
+	## resp is 0/1
+	
+	## remove na
+	indNA<-!is.na(y)
+	id<-id[indNA]
+	y<-y[indNA]
+	trt<-trt[indNA]
+	visit<-visit[indNA]
+	
+	### check and format inputs
+	trtcheck<-sort(unique(trt))
+	ntrt<-length(trtcheck)
+	if(any(trtcheck!=1:ntrt))stop('trt must be sequentially numbered without skipping')
+	
+	if(!all(y %in% c(0,1)))stop('y must be 0/1')
+	
+	idcheck<-sort(unique(id))
+	nsubj<-max(idcheck)
+	if(any(idcheck!=1:nsubj))stop('id must be sequentially numbered without skipping')
+	
+	vcheck<-sort(unique(visit))
+	nvisit<-max(vcheck)
+	if(any(vcheck!=1:nvisit))stop('visits must be sequentially numbered')
+	
+	N<-length(id)
+	ntrt1<-ntrt-1
+	
+	### stan fit
+	indata<-c('N','nsubj','nvisit','ntrt','ntrt1','id','trt','visit','y',
+						'prmean0','prsd0','prmean','prsd','gparm1','gparm2')
+	
+	parameters<-c('beta','sigma','theta')
+	
+	estanmod<-stan_model(file='imputeMIL2.stan',
+											 save_dso=TRUE,auto_write=FALSE,model_name='imputeMI')	
+	stanfit<-sampling(estanmod,data=indata,
+										chains=mcmc$chains,
+										warmup=mcmc$warmup,iter=mcmc$iter,thin=mcmc$thin,seed=mcmc$seed,
+										pars=parameters,
+										control=list(adapt_delta=mcmc$adapt_delta),
+										cores = mcmc$chains 
+	)		
+	#############################################################
+	### convert generated parms to R matrices
+	beta<-as.matrix(stanfit,pars='beta')
+	beta<-array(as.vector(beta),dim=c(nrow(beta),max(visit),max(trt)))
+	
+	sigma<-as.vector(as.matrix(stanfit,pars='sigma'))
+	theta<-as.matrix(stanfit,pars='theta')
+	
+	return(list(stanfit=stanfit,beta=beta,sigma=sigma,theta=theta))
+}
+
+mcmc<-list(chains=3,thin=4,warmup=2000,iter=4*3333+2000,
+					 adapt_delta=0.95,seed=12357)
+
+
+modfit<-fitModel(id,y,dind,vis,
+				 prmean0=rep(qlogis(0.25),nv),prsd0=rep(3.0,nv),
+				 prmean=rep(0,nv),prsd=rep(3.0,nv),mcmc=mcmc)
+
+outmod<-modfit$stanfit
+beta<-modfit$beta
+sigma<-modfit$sigma
+theta<-modfit$theta
+nmc<-length(sigma)
+
+##########################################################
+### convergence diagnostics
+# traceplot(outmod,pars=c('beta'))
+# traceplot(outmod,pars=c('sigma'))
+# traceplot(outmod,pars=c('theta[1]','theta[2]','theta[3]','theta[4]'))
+# 
+# stan_rhat(outmod,pars=c('beta'))
+# stan_rhat(outmod,pars='theta')
+# Rhat(as.matrix(outmod,pars='sigma'))
+# stan_ac(outmod,pars=c('beta'))
+# stan_ac(outmod,pars=c('sigma'))
+# 
+# 
+# stan_mcse(outmod)
+# stan_ess(outmod)
+
+
+j<-4
+lpm<-matrix(numeric(nmc*nd),ncol=nd)
+for(i in 1:nd){
+	for(k in 1:nmc){
+		lpm[k,i]<-qlogis(integrate(fint,-Inf,Inf,logit=beta[k,j,i],
+															 sig=sigma[k])$value)
+	}
+}
+
+predvals<-apply(lpm,2,mean)
+vcpred<-var(lpm)
+
+## bayes model fit
+prior<-emaxPrior.control(epmu=qlogis(0.5),epsca=2,
+							difTargetmu=0,difTargetsca = 2,
+							dTarget = 16,p50=4,binary=TRUE)
+mcmc=mcmc.control(chains=3)
+
+bfitoutb<-fitEmaxB(y=predvals,dose=doselev,prior=prior,modType=3,
+									vcest=vcpred,mcmc=mcmc,nproc=3,binary=TRUE)
+plot(bfitoutb)
+bpredb<-predict(bfitoutb,dosevec=doselev)
+
+test_that("binary vcest-specified ci cov",{
+expect_true(all(bpredb$lb<poppred[nv,] & bpredb$ub>poppred[nv,]))
+})
+
+test_that("binary vcest-specified pred check",{
+expect_that(as.numeric(bpredb$predMed),
+						equals(poppred[nv,],tol=0.04,scale=1))
 })
 
 

@@ -16,10 +16,11 @@ sdy<-7.967897
 pop<-c(led50=led50,lambda=lambda,emax=emax,e0=e0)    
 meanresp<-emaxfun(dose,pop)  
 y<-rnorm(sum(n),meanresp,sdy)
+capture.output(
 nls.fit<-nls(y ~ e0 + (emax * dose^lambda)/(dose^lambda + exp(led50*lambda)), 
                          start = pop, control = nls.control(
                          maxiter = 100),trace=TRUE,na.action=na.omit)
-
+		,file=NULL)
 
 out1<-SeEmax(nls.fit,doselev=c(60,120),modType=4)
 out2<-SeEmax(list(coef(nls.fit),vcov(nls.fit)),c(60,120),modType=4)
@@ -52,8 +53,8 @@ pop<-c(log(ed50),lambda,emax,e0)
 meanlev<-emaxfun(doselev,parm=pop)
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)  
 
-D3 <- emaxsim(nsim,gen.parm,modType=3,negEmax=TRUE)
-D4 <- emaxsim(nsim,gen.parm,modType=4,negEmax=TRUE)
+D3 <- emaxsim(nsim,gen.parm,modType=3,negEmax=TRUE,nproc=nprocdef)
+D4 <- emaxsim(nsim,gen.parm,modType=4,negEmax=TRUE,nproc=nprocdef)
 
 ### summaries
 

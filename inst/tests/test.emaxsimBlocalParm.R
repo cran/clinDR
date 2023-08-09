@@ -48,7 +48,7 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,testMods=emaxMods3,check=FALSE)
+							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,nproc=nprocdef)
 
 
 test_that("check mcp power calculation",{
@@ -92,7 +92,7 @@ prior<-emaxPrior.control(0,3,0,3,1.0,0.5,0.001,0.1,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							mcmc=mcmc,testMods=emaxMods1)
+							mcmc=mcmc,testMods=emaxMods1,nproc=nprocdef)
 
 parmmed<-apply(coef(D1),2,mean)
 
@@ -177,7 +177,8 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,binary=TRUE,seed=12357)
+							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,binary=TRUE,
+							 seed=12357,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
 	expect_that(mean(D3$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -191,7 +192,8 @@ test_that("emaxsim internal predicted values match population for binary",{
 ###
 ### 3 parameter fit, different format for testing contrasts
 D3m <- emaxsimB(nsim,gen.parm,prior,modType=3,ed50contr=parm.mat[,1],
-							lambdacontr=parm.mat[,2],mcmc=mcmc,binary=TRUE,seed=12357)
+							lambdacontr=parm.mat[,2],mcmc=mcmc,binary=TRUE,
+							seed=12357,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
 	expect_that(mean(D3m$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -245,7 +247,8 @@ customCode<-function(parms,residSD,pVal,dose,y,customParms){
 
 D4 <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							 mcmc=mcmc,binary=TRUE,seed=12357,
-							 customCode=customCode,customParms = c(0.2,.05,.95))
+							 customCode=customCode,
+							 customParms = c(0.2,.05,.95),nproc=nprocdef)
 
 ###
 test_that("check DR for coverage",{
@@ -295,7 +298,8 @@ prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=1
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
-D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,
+							 mcmc=mcmc,check=FALSE,nproc=nprocdef)
 
 test_that("gofP is very high",{
 	expect(all(D1$gofP>0.40),'gofP not large as expected')
@@ -325,7 +329,8 @@ prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=1
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
-D1low <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+D1low <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,
+									mcmc=mcmc,check=FALSE,nproc=nprocdef)
 
 test_that("gofP is very low",{
 	expect(all(D1low$gofP<0.05),'gofP not low as expected')
@@ -354,7 +359,7 @@ prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1b <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
 
 test_that("gofP is very high: binary",{
 	expect(all(D1b$gofP>0.50),'gofP not large as expected')
@@ -383,7 +388,7 @@ prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1blow <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
 
 test_that("gofP is very high: binary",{
 	expect(all(D1blow$gofP<0.05),'gofP not small as expected')
@@ -411,14 +416,108 @@ prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=1)
 
 out8<-D2[8]
 
 fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE, diagnostics = FALSE)
 parms<-coef(fit8)
-gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,binary=TRUE)
+gofP<-bpchkMonoEmax(fit8)
 
-test_that("emaxsimB gofP equals checkMonoEmax return value ",{
+test_that("emaxsimB gofP equals bpchkMonoEmax return value ",{
 	expect_equal(gofP,D2$gofP[8],tol=0.025,scale=1)
+})
+
+################################
+##### test with bayesian random parameters
+#####
+
+set.seed(12357)
+
+n<-c(99,95,98,94,98,98)
+doselev<-c(0,5,10,25,50,150)
+
+dose<-rep(doselev,n)
+
+
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+
+priorbay<-emaxPrior.control(epmu=0,epsca=1,difTargetmu=1,difTargetsca=0.5,
+												dTarget=150,p50=25,effDF=100,parmDF=100,
+												 sigmalow=1.2,sigmaup=1.8)
+
+genparmbay<-randomEmax(priorbay,n,doselev, modType='4' )
+
+
+
+prior<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,
+												 dTarget=150,p50=7.5,
+												 sigmalow=0.01,sigmaup=3)
+
+Dbay <- emaxsimB(nsim=1000,genparmbay,prior,modType=4,
+							 mcmc=mcmc,binary=FALSE,seed=12357,nproc=nprocdef)
+
+sink("NUL")
+sout<-summary(Dbay)
+sink()
+test_that("emaxsimB random generated parms cov ",{
+	expect_equal(as.numeric(sout$covMod),rep(0.9,length(doselev)-1),
+							 tol=0.02,scale=1)
+})
+test_that("emaxsimB random generated parms mse",{
+	expect_true(all(sout$mseMod<sout$mseMean))	
+})
+
+#### repeat with effective emax parameterization
+priorE<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,
+												 dTarget=2000,p50=7.5,
+												 sigmalow=0.01,sigmaup=3)
+
+DbayE <- emaxsimB(nsim=1000,genparmbay,priorE,modType=4,
+							 mcmc=mcmc,binary=FALSE,seed=12357,nproc=nprocdef)
+sink("NUL")
+soutE<-summary(DbayE)
+sink()
+test_that("emaxsimB random generated parms cov 2 ",{
+	expect_equal(as.numeric(soutE$covMod),rep(0.9,length(doselev)-1),
+							 tol=0.02,scale=1)
+})
+test_that("emaxsimB random generated parms mse",{
+	expect_true(all(soutE$mseMod<soutE$mseMean))	
+})
+
+################################
+##### test with bayesian random parameters
+##### binary data
+
+set.seed(12357)
+
+n<-c(99,95,98,94,98,98)
+doselev<-c(0,5,10,25,50,150)
+
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+
+priorbay<-emaxPrior.control(epmu=qlogis(.25),epsca=1,
+												difTargetmu=qlogis(.75)-qlogis(.25),difTargetsca=1,
+												dTarget=150,p50=50,effDF=100,parmDF=100,binary=TRUE)
+
+genparmbayb<-randomEmax(priorbay,n,doselev, modType='4' )
+
+priorb<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,
+												 dTarget=150,p50=7.5,binary=TRUE)
+
+Dbayb <- emaxsimB(nsim=1000,genparmbayb,priorb,modType=4,
+							 mcmc=mcmc,seed=12357,binary=TRUE,nproc=nprocdef)
+
+sink("NUL")
+soutb<-summary(Dbayb)
+sink()
+test_that("emaxsimB random generated parms cov 2 ",{
+	expect_equal(as.numeric(soutb$covMod),rep(0.9,length(doselev)-1),
+							 tol=0.02,scale=1)
+})
+test_that("emaxsimB random generated parms mse",{
+	expect_true(all(soutb$mseMod<soutb$mseMean))	
 })

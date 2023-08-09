@@ -1,5 +1,31 @@
 Changes to clinDR:
 ======================
+Update 2.4.1
+- The prior distribution for fitEmaxB and emaxsimB by default now 
+truncate the ED50/P50 distribution to (0.001,1000), and truncate 
+the lambda distribution to (0.3,4.0).  Along with adjustments to 
+the MCMC default control parameters, divergences reported by STAN 
+have been largely eliminated.  These changes, along with some changes 
+to the iternal parameterization of the STAN model, produce
+small numerical changes from past versions of clinDR
+Update 2.3.7
+- Function fitEmaxB can now be applied to first-stage fitted
+output with correlation between the initial dose group estimates.  
+The function checkMonoEmax is now deprecated and replaced by the
+function bpchkMonoEmax with input now the output object of
+function fitEmaxB.
+- The shiny app has been renamed runSimulations.  It has been
+extensively updated
+Update 2.3.6
+- Added print function for prior objects created by 
+emaxPrior.control().  The output is a text file that
+describes the prior distribution.  There is an option ('sap')
+for a more detailed version appropriate for an SAP, and a
+shorter version for protocols.  The RandEmax function is 
+now deprecated and replaced by randomEmax, which generates
+data with Emax model parameters now generated from a 
+distribution described by the object output of 
+emaxPrior.control().
 Update 2.3.5
 - Added shiny interface for emaxsim(B) initiated with runShiny()
 - Changed the default prior scale parameter for loglambda from 

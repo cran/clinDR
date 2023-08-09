@@ -4,7 +4,8 @@
 \title{Bayes posterior predictive test for Emax (monotone) model fit}
 \description{Bayes posterior predictive test for an Emax (monotone) model  
 fit comparing the best response from lower doses to
-the response from the highest dose.}
+the response from the highest dose.  \code{checkMonoEmax} is deprecated.  
+See \code{bpchkMonoEmax}.}
   
 \usage{
 checkMonoEmax(y, 

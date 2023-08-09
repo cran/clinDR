@@ -48,7 +48,7 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,testMods=emaxMods3,check=FALSE)
+							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,nproc=nprocdef)
 
 
 test_that("check mcp power calculation",{
@@ -92,7 +92,7 @@ prior<-suppressWarnings(prior.control(0,3,0,3,0.5,0.001,0.1,edDF=5))
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							mcmc=mcmc,testMods=emaxMods1)
+							mcmc=mcmc,testMods=emaxMods1,nproc=nprocdef)
 
 parmmed<-apply(coef(D1),2,mean)
 
@@ -177,7 +177,8 @@ mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,binary=TRUE,seed=12357)
+							 mcmc=mcmc,testMods=emaxMods3,check=FALSE,binary=TRUE,
+							 seed=12357,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
 	expect_that(mean(D3$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -191,7 +192,8 @@ test_that("emaxsim internal predicted values match population for binary",{
 ###
 ### 3 parameter fit, different format for testing contrasts
 D3m <- emaxsimB(nsim,gen.parm,prior,modType=3,ed50contr=parm.mat[,1],
-							lambdacontr=parm.mat[,2],mcmc=mcmc,binary=TRUE,seed=12357)
+							lambdacontr=parm.mat[,2],mcmc=mcmc,binary=TRUE,
+							seed=12357,nproc=nprocdef)
 
 test_that("check mcp power calculation",{
 	expect_that(mean(D3m$pVal<0.05),equals(pow3,tol=0.02,scale=1))
@@ -244,7 +246,7 @@ customCode<-function(parms,residSD,pVal,dose,y,customParms){
 
 
 D4 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357,
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef,
 							 customCode=customCode,customParms = c(0.2,.05,.95))
 
 ###
@@ -295,7 +297,7 @@ prior<-suppressWarnings(prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,s
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
-D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+D1 <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE,nproc=nprocdef)
 
 test_that("gofP is very high",{
 	expect(all(D1$gofP>0.50),'gofP not large as expected')
@@ -325,7 +327,8 @@ prior<-suppressWarnings(prior.control(epmu=0,epsd=30,emaxmu=0,emaxsd=30,p50=50,s
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
-D1low <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,check=FALSE)
+D1low <- emaxsimB(nsim,gen, prior, modType=3,seed=12357,mcmc=mcmc,
+									check=FALSE,nproc=nprocdef)
 
 test_that("gofP is very low",{
 	expect(all(D1low$gofP<0.05),'gofP not low as expected')
@@ -354,7 +357,7 @@ prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1b <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
 
 test_that("gofP is very high: binary",{
 	expect(all(D1b$gofP>0.50),'gofP not large as expected')
@@ -383,7 +386,7 @@ prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D1blow <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
 
 test_that("gofP is very high: binary",{
 	expect(all(D1blow$gofP<0.05),'gofP not small as expected')
@@ -411,14 +414,15 @@ prior<-suppressWarnings(prior.control(qlogis(0.2),4,0,4,0.05,edDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
 
 D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
-							 mcmc=mcmc,binary=TRUE,seed=12357)
+							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=1)
 
 out8<-D2[8]
 
-fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE, diagnostics = FALSE)
+fit8<-fitEmaxB(out8$y,out8$dose,prior=prior, modType = 4, binary=TRUE, 
+							 diagnostics = FALSE, nproc=1)
 parms<-coef(fit8)
-gofP<-checkMonoEmax(out8$y,out8$dose,parms,sigma2=1,binary=TRUE)
+gofP<-bpchkMonoEmax(fit8)
 
-test_that("emaxsimB gofP equals checkMonoEmax return value ",{
-	expect_equal(gofP,D2$gofP[8],tol=0.01,scale=1)
+test_that("emaxsimB gofP equals bpchkMonoEmax return value ",{
+	expect_equal(gofP,D2$gofP[8],tol=3*sqrt(gofP*(1-gofP)/nrow(parms)),scale=1)
 })

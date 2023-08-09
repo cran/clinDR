@@ -17,7 +17,7 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,sdy)  
 
-D1 <- emaxsim(nsim,gen.parm,nproc=3)
+D1 <- emaxsim(nsim,gen.parm,nproc=1)
 e3<-D1[3]
 
 #### re-try estimation starting at the population value
@@ -55,7 +55,7 @@ meanlev<-plogis(emaxfun(doselev,pop))
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,binary=TRUE)  
 
-D1 <- emaxsim(nsim,gen.parm,binary=TRUE,nproc=3)
+D1 <- emaxsim(nsim,gen.parm,binary=TRUE,nproc=1)
 e3<-D1[3]
 
 #### re-try estimation starting at the population value

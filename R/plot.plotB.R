@@ -74,10 +74,10 @@
     gp2<-gp2+geom_point(aes(shape=symbol,color=symbol),size=symbolSize)
     gp2<-gp2+scale_color_manual(name=symbolLabel,values=symbolColor)
     gp2<-gp2+scale_shape_manual(name=symbolLabel,values=symbolShape)   
-    gp2<-gp2+ylab(ylab)+xlab(xlab)+theme_bw()
+    gp2<-gp2+ylab(ylab)+xlab(xlab)+ggplot2::theme_bw()
     gp2<-gp2+coord_cartesian(xlim=xlim,ylim=ylim)
     
-    if(nolegend)gp2<-gp2 + theme(legend.position = "none")
+    if(nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "none")
   
   }else if(plotResid & logScale){
     ym<-x$pairwise[,'ym']
@@ -108,11 +108,11 @@
     gp2<-gp2+geom_point(aes(shape=symbol,color=symbol),size=symbolSize)
     gp2<-gp2+scale_color_manual(name=symbolLabel,values=symbolColor)
     gp2<-gp2+scale_shape_manual(name=symbolLabel,values=symbolShape)   
-    gp2<-gp2+ylab(ylab)+xlab(xlab)+theme_bw()
+    gp2<-gp2+ylab(ylab)+xlab(xlab)+ggplot2::theme_bw()
     gp2<-gp2+coord_cartesian(xlim=xlimlog,ylim=ylim)
     if(is.null(xat))   gp2<-gp2 + scale_x_continuous(breaks=log(sort(unique(doselog))),
                                   labels=sort(unique(dose)))     
-    if(nolegend)gp2<-gp2 + theme(legend.position = "none")
+    if(nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "none")
 
     
   }
@@ -183,7 +183,7 @@
     gp2<-gp2+geom_errorbar(aes(x=doselev,ymin=plotlow,ymax=plotup),width=0,size=1.1,color='black')
     gp2<-gp2+geom_line(data=data.frame(dgrid,plotmg),
                        aes(x=dgrid,y=plotmg),col='black',size=1.1)
-    gp2<-gp2+ylab(ylab) + xlab(xlab) + theme_bw()
+    gp2<-gp2+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()
     gp2<-gp2+geom_point(data=data.frame(dose,ploty,symbol),aes(x=dose,y=ploty,shape=symbol,
                                                                color=symbol),size=symbolSize)
     
@@ -191,7 +191,7 @@
     if(activeControl & !plotDif)xlim[2] <- xlim[2]+max(diff(doselev))
     gp2<-gp2+coord_cartesian(xlim=xlim,ylim=ylim)
     
-    if(nolegend)gp2<-gp2 + theme(legend.position = "none")
+    if(nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "none")
     
     if(activeControl & !plotDif){
       
@@ -208,8 +208,8 @@
                                       labels=c(doselev, labac)) 
       
       ### move legend in DR plot and eliminate plot border
-      if(!nolegend)gp2<-gp2 + theme(legend.position = "left")
-      gp2<-gp2+theme(axis.line = element_line(color = 'black'))
+      if(!nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "left")
+      gp2<-gp2+ggplot2::theme(axis.line = element_line(color = 'black'))
     }
     gp2<-gp2+scale_color_manual(name=symbolLabel,values=symbolColor,drop=FALSE)
     gp2<-gp2+scale_shape_manual(name=symbolLabel,values=symbolShape,drop=FALSE)
@@ -264,14 +264,14 @@
     gp2<-gp2+geom_line(data=data2,
                        aes(x=log(dgridlog),y=plotmg),col='black',size=1.1, linetype="solid")    
     
-    gp2<-gp2+ylab(ylab) + xlab(xlab) + theme_bw()
+    gp2<-gp2+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()
     gp2<-gp2+geom_point(data=data.frame(doselog,ploty,symbol),aes(x=log(doselog),y=ploty,shape=symbol,
                                                                   color=symbol),size=symbolSize)
     
     if(activeControl & !plotDif)xlimlog[2] <- xlimlog[2]+max(diff(log(doselevlog)))
      gp2<-gp2+coord_cartesian(xlim=xlimlog,ylim=ylim)
     
-    if(nolegend)gp2<-gp2 + theme(legend.position = "none")
+    if(nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "none")
     if(!activeControl & is.null(xat)) gp2 <- gp2 + scale_x_continuous(breaks=log(doselevlog),
                                                          labels=doselev)    
     if(activeControl & !plotDif){
@@ -287,15 +287,15 @@
                               size=symbolSize,color=colac,shape=shapeac)      
       
       ### move legend in DR plot and eliminate plot border
-      if(!nolegend)gp2<-gp2 + theme(legend.position = "left")
-      gp2<-gp2+theme(axis.line = element_line(color = 'black'))
+      if(!nolegend)gp2<-gp2 + ggplot2::theme(legend.position = "left")
+      gp2<-gp2+ggplot2::theme(axis.line = element_line(color = 'black'))
     }    
     gp2<-gp2+scale_color_manual(name=symbolLabel,values=symbolColor,drop=FALSE)
     gp2<-gp2+scale_shape_manual(name=symbolLabel,values=symbolShape,drop=FALSE)    
   }
   
   ## remove the vertical grid lines
-  gp2 <- gp2+ theme(panel.grid.major.x=element_blank(),
+  gp2 <- gp2+ ggplot2::theme(panel.grid.major.x=element_blank(),
                     panel.grid.minor.x=element_blank(),
                     panel.grid.major.y=element_line(size=0.1))  
   

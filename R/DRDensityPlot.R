@@ -41,7 +41,7 @@ DRDensityPlot<-function(x,qL,qH,qlevL=c(0.025,0.05,0.10,0.25),
 
 	ggp<-ggplot(data=dfplot,aes(x=x,ymin=ql,ymax=qh,fill=clev))+geom_ribbon()
 	ggp<-ggp+coord_cartesian(xlim=xlim,ylim=ylim) + xlab(xlab) + ylab(ylab)
-	ggp<-ggp+theme_bw()+scale_fill_grey(start = .9, end = 0.5)
+	ggp<-ggp+ggplot2::theme_bw()+scale_fill_grey(start = .9, end = 0.5)
 	ggp<-ggp+labs(fill='Level')
 
 	print(ggp)

@@ -14,6 +14,8 @@ emaxPrior.control(epmu=NULL,epsca=NULL,
 	effDF=parmDF,parmDF=5,
 	loged50mu=0.0,loged50sca=1.73,
 	loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
+	lowled50=log(0.001),highled50=log(1000),
+	lowllam=log(0.3),highllam=log(4.0),
 	basemu=NULL,basevar=NULL,binary=FALSE)
 }
 \arguments{
@@ -42,18 +44,18 @@ Lower bound for a uniform prior distribution for the residual SD (continuous dat
   \item{sigmaup}{
 Upper bound for a uniform prior distribution for the residual SD (continuous data).  
 }
-	\item{effDF}{The degrees of freedom for the log-t prior distributions for the \code{placebo}
+	\item{effDF}{The degrees of freedom for the prior distributions for the \code{placebo}
 	and \code{difTarget} parameters.  If a vector of length 2 is specified, the first value is the
 	degrees of freedom for \code{placebo} and the second for \code{difTarget}.}
   \item{parmDF}{
 The degrees of freedom of the bivariate log-t prior distribution for the \code{ED50} and \code{lambda} parameters.  
 }
   \item{loged50mu}{
-Mean of prior t-distribution for the \code{log(ED50)}.  See references for 
+Mean of prior t-distribution for the \code{log(ED50/P50)}.  See references for 
 its default value and interpretation.
 }
   \item{loged50sca}{
-Scale (analogous to SD) of the prior t-distribution for the \code{log(ED50)}.  
+Scale (analogous to SD) of the prior t-distribution for the \code{log(ED50/P50)}.  
 }
   \item{loglammu}{
 Mean of prior t-distribution for the Hill parameter lambda.  See 
@@ -65,22 +67,33 @@ parameter lambda.
 }
 
 	\item{parmCor}{Correlation for the bivariate log-t prior distribution for the \code{ED50} and \code{lambda} parameters.}
+	
+	\item{lowled50,
+	highled50,
+	lowllam,
+	highllam}{Bounds applied to the prior distributions for the
+	log(ED50/P50) and log(lambda).  The original (unbounded) priors are modified
+	to be conditional on being within the bounds.  This is done for numerical
+	stability and plausibility of the parameter values}
 
 	\item{basemu}{
 	A vector of prior means for the covariate regression parameters.
 	}
 	\item{basevar}{
 	The prior variance-covariance matrix for the covariate regression parameters.
-	The covariate regression parameters are apriori independent of the other dose 
+	The covariate regression parameters are a priori independent of the other dose 
 	response model parameters.
 	}
   \item{binary}{
-Set to \code{TRUE} for binary data applications.  Used to check for consistency in usage.
-}
+Set to \code{TRUE} for binary data applications.  Used to check for consistency in usage.  The default is \code{FALSE}}  
+
 }
 
 \value{
-List of class \code{emaxPrior} of prior parameter values for use in \code{fitEmaxB}.
+List of class \code{emaxPrior} of prior parameter values for use in
+\code{fitEmaxB}.	\code{default} is a derived variable set to
+\code{TRUE} when the default values are used for \code{loged50} 
+and \code{loglambda}.
 }
 
 \details{

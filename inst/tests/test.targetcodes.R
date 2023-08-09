@@ -15,7 +15,7 @@ emax<-15.127726
 pop<-c(led50=log(ed50),emax=emax,e0=e0)  
 sdy<-0.001
 gen.parm<-FixedMean(n,doselev,emaxfun(doselev,pop),sdy)  
-D3 <- emaxsim(nsim,gen.parm,modType=3)
+D3 <- emaxsim(nsim,gen.parm,modType=3,nproc=nprocdef)
 
 tarE<-4
 tarD<-ed50*tarE/(emax-tarE)
@@ -52,7 +52,7 @@ emax<-15.127726
 pop<-c(led50=log(ed50),emax=emax,e0=e0)  
 sdy<-0.0005
 gen.parm<-FixedMean(n,doselev,emaxfun(doselev,pop),sdy)  
-D4 <- emaxsim(nsim,gen.parm,modType=4)
+D4 <- emaxsim(nsim,gen.parm,modType=4,nproc=nprocdef)
 
 tarE<-4
 tarD<-ed50*tarE/(emax-tarE)
@@ -90,7 +90,7 @@ emax<-15.127726
 sdy<-24
 pop<-c(led50=log(ed50),emax=emax,e0=e0)  
 gen.parm<-FixedMean(n,doselev,emaxfun(doselev,pop),sdy)  
-D4 <- emaxsim(nsim,gen.parm,modType=4)
+D4 <- emaxsim(nsim,gen.parm,modType=4,nproc=nprocdef)
 
 tarE<-4
 tarD<-ed50*tarE/(emax-tarE)
@@ -133,7 +133,7 @@ ed50<-15.0               #67.481113
 emax<-qlogis(.6)-e0
 pop<-c(led50=log(ed50),emax=emax,e0=e0)  
 gen.parm<-FixedMean(n,doselev,plogis(emaxfun(doselev,pop)),binary=TRUE)  
-D4 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE)
+D4 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE,nproc=nprocdef)
 
 tarE<-0.15
 Q<-qlogis(tarE+plogis(e0))-e0
@@ -172,7 +172,7 @@ ed50<-15.0               #67.481113
 emax<-qlogis(.6)-e0
 pop<-c(led50=log(ed50),emax=emax,e0=e0)  
 gen.parm<-FixedMean(n,doselev,plogis(emaxfun(doselev,pop)),binary=TRUE)  
-D3 <- emaxsim(nsim,gen.parm,modType=3,binary=TRUE)
+D3 <- emaxsim(nsim,gen.parm,modType=3,binary=TRUE,nproc=nprocdef)
 
 tarE<-0.15
 Q<-qlogis(tarE+plogis(e0))-e0
@@ -194,8 +194,8 @@ minse<-min(out[-indno,2],na.rm=T)
 test_that("check SE from linear fits",{
     expect_lt(max(out[indL,2],na.rm=T),maxse)
     expect_gt(min(out[indL,2],na.rm=T),minse)
-    expect_lt(max(out[indLL,2],na.rm=T),maxse)
-    expect_gt(min(out[indLL,2],na.rm=T),minse)
+    expect_lt(suppressWarnings(max(out[indLL,2],na.rm=T)),maxse)
+    expect_gt(suppressWarnings(min(out[indLL,2],na.rm=T)),minse)
     expect_lt(max(out[indE,2],na.rm=T),maxse)
     expect_gt(min(out[indE,2],na.rm=T),minse)
 })
@@ -224,7 +224,7 @@ meanlev<-emaxfun(doselev,pop)
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop)  
 
-D1 <- emaxsim(nsim,gen.parm,modType=3)
+D1 <- emaxsim(nsim,gen.parm,modType=3,nproc=nprocdef)
 
 target<-6
 tD<- ( (target*ed50)/(emax-target) )
@@ -254,7 +254,7 @@ meanlev<-plogis(emaxfun(doselev,pop))
 ###FixedMean is specialized constructor function for emaxsim
 gen.parm<-FixedMean(n,doselev,meanlev,parm=pop,binary=TRUE)  
 
-D1 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE)
+D1 <- emaxsim(nsim,gen.parm,modType=4,binary=TRUE,nproc=nprocdef)
 
 target<-0.2
 tD<- (qlogis(target+plogis(e0))-e0)*ed50/(emax-(qlogis(target+plogis(e0))-e0)) 

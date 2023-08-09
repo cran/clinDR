@@ -1,11 +1,11 @@
-\name{runShiny}
-\alias{runShiny}
+\name{runSimulations}
+\alias{runSimulations}
 \title{
 Shiny app for function \code{emaxsim(B)} 
 }
 \description{Shiny app for function \code{emaxsim(B)}}
 \usage{
-runShiny()
+runSimulations()
 }
 \author{
 Neal Thomas, Mike K. Smith
@@ -24,7 +24,7 @@ utilizing Bayes methods.
 }
 \examples{
 	if (interactive()) {
-	  runShiny ()
+	  runSimulations ()
 	}
 }
 \seealso{
