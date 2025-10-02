@@ -44,7 +44,8 @@ data, the distinction between the mean of the predicted values and the predicted
 value at the mean of the covariates can be important.
 }
 \value{
-A list with estimated mean/proportion \code{(pred, predMed)}, lower bound, upper
+A list with estimated mean/proportion \code{(pred, predMed)} (posterior mean,
+posterior median), lower bound, upper
 bound, posterior SD, and corresponding values for differences
 with the reference dose.  One value for each dose in dosevec.
 The MCMC response means (proportions for binary data) are in

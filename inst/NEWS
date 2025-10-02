@@ -1,5 +1,9 @@
 Changes to clinDR:
 ======================
+
+Update 2.5.2
+-  Updated code for compatability with newer versions of R and rstan.  
+Several bug fixes included.
 Update 2.4.1
 - The prior distribution for fitEmaxB and emaxsimB by default now 
 truncate the ED50/P50 distribution to (0.001,1000), and truncate 

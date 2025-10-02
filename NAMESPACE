@@ -16,7 +16,7 @@ export(emaxsim,emaxsimB,plot.emaxsim,plot.emaxsimB,plot.emaxsimobj,
 			 bpchkMonoEmax,checkMonoEmax,targetBeta,solveDose,solveEmax,runSimulations)
 import(foreach,shiny)
 importFrom("rstan","stan_model","sampling","get_sampler_params", 
-					 "rstan_options")
+					 "rstan_options","stan_version")
 importFrom("waiter","spin_fading_circles","use_waiter",
 					 "Waiter","waiter_show","waiter_hide")
 importFrom("graphics", "abline", "plot", "points","mtext")

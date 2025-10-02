@@ -37,6 +37,7 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	if(binary){
 		if(nbase>0){
 			predref<-apply(plogis(predref+bcont),1,mean)	
+			if(nbase==1)predout<-matrix(predout,ncol=1)
 			for(i in 1:length(dosevec)){
 				predout[,i]<-apply(plogis(predout[,i]+bcont),1,mean)	
 			}

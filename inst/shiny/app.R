@@ -1,4 +1,4 @@
-######################################################
+######################################################/
 #' clinDR shiny application
 #'
 #' Scope of use: 
@@ -249,9 +249,12 @@ ui <- fluidPage(
                            fluidPage( 
                              style = "overflow-y:scroll; max-height: 800px; position:relative;",
                              tabsetPanel(
-                               tabPanel("emaxsim", includeHTML("emaxsim.html")),
-                               tabPanel("emaxsimB", includeHTML("emaxsimB.html")),
-                               tabPanel("emaxPrior.control", includeHTML("emaxPrior_control.html"))
+                               tabPanel("emaxsim", 
+                               	htmlOutput("emaxsim")),
+                               tabPanel("emaxsimB",
+                               	 htmlOutput( "emaxsimB")),
+                               tabPanel("emaxPrior.control",
+                               				 htmlOutput("emPrior"))
                              ))
                   ),
                   tabPanel("About",
@@ -271,6 +274,23 @@ server <- function(input, output) {
     ggplot2::theme(axis.text=ggplot2::element_text(size=14),
           axis.title=ggplot2::element_text(size=14,face="bold"))
   
+  addResourcePath("tmpuser", file.path( system.file(package="clinDR","shiny")))
+  								
+	output$emaxsim<-renderUI({
+		tags$iframe(seamless="seamless",
+								src="tmpuser/emaxsim.html",
+								width=600, height=600)
+	})
+	output$emaxsimB<-renderUI({
+		tags$iframe(seamless="seamless",
+								src="tmpuser/emaxsimB.html",
+								width=600, height=600)
+	})
+	output$emPrior<-renderUI({
+		tags$iframe(seamless="seamless",
+								src="tmpuser/emaxPrior_control.html",
+								width=600, height=600)
+	})
   ######################################################################
   ##
   ## DESIGN INPUTS

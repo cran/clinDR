@@ -58,7 +58,7 @@ are in the form needed for developing \code{customCode}.  Note that
 When \code{TRUE}, the intended effect is assumed to be negative.
 }
 	\item{ed50contr}{A vector of ED50 values for creating a global null test using the
-			  MCP-MOD package DoseFinding based on Emax model-based contrasts.
+			  MCP-MOD package \code{DoseFinding} based on Emax model-based contrasts.
 			  The default is 3 contrasts: the mid-point between pbo and the lowest
 			  dose, the mid-point between the 2 highest doses, and the 
 			  median of the dose levels.  When there are <=4 doses including pbo,
@@ -66,10 +66,12 @@ When \code{TRUE}, the intended effect is assumed to be negative.
 	\item{lambdacontr}{Hill parameters matched to the ed50contr.  The default value is 1
 for each contrast model.}
 	\item{testMods}{The model object for a MCP-MOD test
-	created by \code{\link{Mods}} from package DoseFinding.  If 
-specified, the other contrast inputs are ignored.  The  \code{\link{Mods}} 
+	created by \code{\link[DoseFinding]{Mods}}.  If 
+specified, the other contrast inputs are ignored.  The  
+\code{\link[DoseFinding]{Mods}} 
 call should
-use the unique sorted dose levels.  The direction of the trend should be specificed in the call to \code{\link{Mods}}.  The \code{negEmax} is stored for use by support functions, but it does not determine the direction of the effect when \code{testMods} is specified.  The validity of
+use the unique sorted dose levels.  The direction of the trend should be 
+specified in the call to \code{\link[DoseFinding]{Mods}}.  The \code{negEmax} is stored for use by support functions, but it does not determine the direction of the effect when \code{testMods} is specified.  The validity of
 \code{testMods} is not checked.}
 	\item{idmax}{Index of the default dose group for comparison to placebo.  
 Most analysis functions allow other dose groups to be
@@ -107,7 +109,7 @@ selected based on the corresponding likelihood deviance.
 MCP-MOD tests are created from contrasts based on the Emax function using
 the \code{DoseFinding} package.  Different
 ED50 and lambda (Hill) parameters can be specified to form the contrasts. A contrast
-matrix output from the DoseFinding package can be specified instead, allowing for
+matrix output from the \code{DoseFinding} package can be specified instead, allowing for
 other contrast choices.  
 
 Customized code:

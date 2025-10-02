@@ -1,7 +1,7 @@
 data {
     int<lower=0> N; // number of patients/groups 
     int<lower=0> nprot; // number of protocols-strata
-		int<lower=0> protv[N];
+		array[N] int<lower=0> protv;
 		int<lower=0,upper=1> cont;  //indicator of data type
 		int<lower=0,upper=1> sigmoid;  //indicator of model type
 		int<lower=0,upper=1> gp;
@@ -9,13 +9,13 @@ data {
 		int<lower=0> nbase;
 		
 		//continuous data
-    real yv[N]; //  outcome variable
-		real<lower=0> nv[N]; // number patients per group; real for arithmetic
+    array[N] real yv; //  outcome variable
+		array[N] real<lower=0> nv; // number patients per group; real for arithmetic
 		//binary data
-    int yvb[N]; //  outcome variable
-		int<lower=0> nvb[N]; // number patients per group
+    array[N] int yvb; //  outcome variable
+		array[N] int<lower=0> nvb; // number patients per group
 		
-    real<lower=0> dv[N];  
+    array[N] real<lower=0> dv;  
     matrix[nbase ? N : 0,nbase ? nbase : 0] xbase;
     
 		real<lower=0> df2;   // saturated df divided by 2
@@ -52,7 +52,7 @@ transformed parameters{
     real<lower=0,upper=lamsca> lambda;
     real<lower=0> ed50;
 		real led50;
-		real<lower=0> tau2[cont ? 1 : 0];
+		array[cont ? 1 : 0] real<lower=0> tau2;
 		
     if(sigmoid){
     	lambda=lamsca*lamt[1];

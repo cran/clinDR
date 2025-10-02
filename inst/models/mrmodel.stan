@@ -1,7 +1,7 @@
 data {
     int<lower=0> N; // number of patients/groups 
     int<lower=0> nprot; // number of protocols-strata
-		int<lower=0> protv[N];
+		array[N] int<lower=0> protv;
 		int<lower=0,upper=1> cont;  //indicator of data type
 		int<lower=0,upper=1> sigmoid;  //indicator of model type
 		int<lower=0,upper=1> gp;
@@ -13,8 +13,8 @@ data {
     vector[N] yv; //  outcome variable
 		vector<lower=0>[N] nv; // number patients per group; real for arithmetic
 		//binary data
-    int yvb[N]; //  outcome variable
-		int<lower=0> nvb[N]; // number patients per group
+    array[N] int yvb; //  outcome variable
+		array[N] int<lower=0> nvb; // number patients per group
 		
     vector<lower=0>[N] dv;  
     matrix[nbase ? N : 0,nbase ? nbase : 0] xbase;

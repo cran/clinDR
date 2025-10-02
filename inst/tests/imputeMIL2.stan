@@ -9,17 +9,17 @@ data{
 	int<lower=1>		ntrt;			//Num of trt groups
 	int<lower=1>		ntrt1;			// num treatments minus 1
 
-	int<lower=1,upper=nsubj>		id[N];			// patient index (sequential 1,2,3...,nsubj)
-	int<lower=0,upper=ntrt>			trt[N];		// trt(0=cntl, 1=trt)
-	int<lower=1,upper=nvisit>		visit[N];	// visit num (sequential, 1,2,3...,nvisit)
+	array[N] int<lower=1,upper=nsubj>	id; // patient index (sequential 1,2,3...,nsubj)
+	array[N] int<lower=0,upper=ntrt>	trt;		// trt(0=cntl, 1=trt)
+	array[N] int<lower=1,upper=nvisit> visit;	// visit num (sequential, 1,2,3...,nvisit)
 
-	int<lower=0,upper=1>				y[N];		//1=resp,  0=no resp
+	array[N] int<lower=0,upper=1>				y;		//1=resp,  0=no resp
 
 														// priors on logit scale
-	real						prmean0[nvisit];		// prior mean for cntl at each visit 
-	real						prsd0[nvisit];			// prior sd for cntl at each visit 
-	real						prmean[nvisit];		// prior mean for trt effect at each visit 
-	real						prsd[nvisit];			// prior sd for trt effect at each visit 
+	array[nvisit] real						prmean0;		// prior mean for cntl at each visit 
+	array[nvisit] real						prsd0;			// prior sd for cntl at each visit 
+	array[nvisit] real			prmean;		// prior mean for trt effect at each visit 
+	array[nvisit] real			prsd;			// prior sd for trt effect at each visit 
 	real						gparm1;           // sigma gamma prior shape parameter
 	real						gparm2;           // sigma gamma prior rate parameter
 
@@ -32,7 +32,7 @@ parameters{
 
 	real						sigmasq;
 
-	real						theta[nsubj];  // random patient level
+	array[nsubj] real						theta;  // random patient level
 }
 
 transformed parameters{

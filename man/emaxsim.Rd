@@ -37,7 +37,8 @@ emaxsim(
 	\item{nsim}{Number of simulation replications}
 	\item{genObj}{ Object containing inputs and function to create simulated  
 data sets.  These objects are created by special constructor
-functions; the current choices are \code{\link{FixedMean}} and \code{\link{RandEmax}}.
+functions; the current choices are \code{\link{FixedMean}} and 
+\code{\link{RandEmax}}.
 }
 	\item{modType}{When modType=4, the fitting begins with the 4
 parameter model.  If estimation fails or modType=3, the 3-parameter estimation
@@ -51,7 +52,7 @@ selected.}
 	a single local processor.}
 	\item{negEmax}{When \code{TRUE}, the intended effect is assumed to be negative.}
 	\item{ed50contr}{A vector of ED50 values for creating a global null test using the
-			  MCP-MOD package DoseFinding based on Emax model-based contrasts.
+			  MCP-MOD package \code{DoseFinding} based on Emax model-based contrasts.
 			  The default is 3 contrasts: the mid-point between pbo and the lowest
 			  dose, the mid-point between the 2 highest doses, and the 
 			  median of the dose levels.  When there are <=4 doses including pbo,
@@ -59,10 +60,15 @@ selected.}
 	\item{lambdacontr}{Hill parameters matched to the ed50contr.  The default value is 1
 for each contrast model.}
 	\item{testMods}{The model object for a MCP-MOD test
-	created by \code{\link{Mods}} from package \code{DoseFinding}.  If 
-specified, the other contrast inputs are ignored.  The  \code{\link{Mods}} 
+	created by \code{\link[DoseFinding]{Mods}}.  If 
+specified, the other contrast inputs are ignored.  The  
+\code{\link[DoseFinding]{Mods}} 
 call should
-use the unique sorted dose levels.  The direction of the trend should be specificed in the call to \code{\link{Mods}}.  The \code{negEmax} is stored for use by support functions, but it does not determine the direction of the effect when \code{testMods} is specified.  The validity of
+use the unique sorted dose levels.  The direction of the trend should be 
+specificed in the call to \code{\link[DoseFinding]{Mods}}.  
+The \code{negEmax} is stored for use by support functions, but it does not 
+determine the direction of the effect when \code{testMods} is specified.  
+The validity of
 \code{testMods} is not checked.}
 	\item{idmax}{Index of the default dose group for comparison to placebo.  
 Most analysis functions allow other dose groups to be
@@ -143,7 +149,8 @@ log-linear, or exponential when an alternative model is selected.}
 	\item{pVal}{The \code{nsim} p-values from the global null test.  The p-values are 
 	1-sided computed using MCP-Mod.}
 	\item{selContrast}{The index of the test contrast producing the smallest p-value.}
-	\item{testMods}{Object of class Mods from R package \code{DoseFinding} that defines
+	\item{testMods}{Object of class \code{Mods} from R package 
+	\code{DoseFinding} that defines
 	the contrasts used in MCP-MOD testing.  The functions can be plotted with
 	\code{DoseFinding} loaded.}
 	\item{negEmax}{User input stored for subsequent reference.}

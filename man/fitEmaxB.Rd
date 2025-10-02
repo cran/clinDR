@@ -5,7 +5,7 @@ Bayesian fit of hyperbolic or sigmoidal Emax models to continuous/binary dose
 response data.
 }
 \description{
-Uses Rpackage \code{\link{rstan}} to fit a Bayesian hyperbolic or sigmoidal 
+Uses Rpackage \code{rstan} to fit a Bayesian hyperbolic or sigmoidal 
 Emax model.  Different intercepts for multiple protocol-data are supported.  For binary
 data, the Emax model is on the logit scale.
 }
@@ -79,7 +79,8 @@ data, \code{y} must be 0/1 and counts must be supplied for each 0/1 value.}
   automatically.  It can be load to an object using the function
   \code{selEstan} and passed to \code{fitEmaxB} for repeated executions to
   improve efficiency and stability.}
-  \item{diagnostics}{Printed output from rstan.  See \code{Details} for more information.}
+  \item{diagnostics}{Printed output from \code{rstan}.  
+  See \code{Details} for more information.}
   \item{nproc}{The number of processor requested for \code{STAN} MCMC
   computations.  Defaults to the value set by the 
   \code{rstan} installation.   When set explicitly, \code{nproc} 
@@ -137,7 +138,8 @@ Neal Thomas
 
 
 \seealso{
-\code{\link{fitEmax}}, \code{\link{predict.fitEmaxB}}, \code{\link{plot.fitEmaxB}}, \code{\link{coef.fitEmaxB}}
+\code{\link{fitEmax}}, \code{\link{predict.fitEmaxB}}, 
+\code{\link{plot.fitEmaxB}}, \code{\link{coef.fitEmaxB}}
 }
 \examples{
 \dontrun{

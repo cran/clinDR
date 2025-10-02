@@ -1,3 +1,4 @@
+library(clinDR)
 ### execute graphics test
 
 RNGkind("default")

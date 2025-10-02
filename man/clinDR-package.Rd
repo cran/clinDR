@@ -40,5 +40,5 @@ Neal Thomas [aut, cre], Jing Wu[aut]
 \keyword{ package }
 
 \seealso{
-\code{\link{DoseFinding}}} 
+\code{DoseFinding}} 
 
