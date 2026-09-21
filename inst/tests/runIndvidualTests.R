@@ -4,6 +4,7 @@ library(DoseFinding)
 library(nlme)
 library(parallel)
 library(doParallel)
+library(mvtnorm)
 
 
 if(file.exists("./clinDR/inst/tests")) setwd("./clinDR/inst/tests")

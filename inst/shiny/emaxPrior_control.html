@@ -1,9 +1,9 @@
 <!DOCTYPE html><html><head><title>R: Set the parameters of the prior distribution for the Emax...</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
-<script type="text/javascript">
-const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+<script>
+const macros = { "\\R": "\\textsf{R}", "\\mbox": "\\text", "\\code": "\\texttt"};
 function processMathHTML() {
     var l = document.getElementsByClassName('reqn');
     for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
@@ -11,159 +11,218 @@ function processMathHTML() {
 }</script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
     onload="processMathHTML();"></script>
-<link rel="stylesheet" type="text/css" href="R.css" />
-</head><body><div class="container">
+<link rel="stylesheet" type="text/css" href="R.css">
+</head><body><div class="container"><main>
 
 <table style="width: 100%;"><tr><td>emaxPrior.control</td><td style="text-align: right;">R Documentation</td></tr></table>
 
 <h2>
-Set the parameters of the prior distribution for the Emax model implemented in <code>fitEmaxB</code>.
+Set the parameters of the prior distribution for the Emax model 
+implemented in <code>fitEmaxB</code>.
 </h2>
 
 <h3>Description</h3>
 
-<p>Set the parameters of the prior distribution for the Emax model implemented in <code>fitEmaxB.</code>.
+<p>Set the parameters of the prior distribution for the Emax model 
+parameters implemented in <code>fitEmaxB.</code>.
 </p>
 
 
 <h3>Usage</h3>
 
-<pre><code class='language-R'>emaxPrior.control(epmu=NULL,epsca=NULL,
-	difTargetmu=NULL,difTargetsca=NULL,
-	dTarget=NULL,p50=NULL,
-	sigmalow=NULL,sigmaup=NULL,
-	effDF=parmDF,parmDF=5,
-	loged50mu=0.0,loged50sca=1.73,
-	loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
-	lowled50=log(0.001),highled50=log(1000),
-	lowllam=log(0.3),highllam=log(4.0),
-	basemu=NULL,basevar=NULL,binary=FALSE)
+<pre><code class='language-R'>  emaxPrior.control(mixP=0,epmu=NULL,epsca=NULL,
+                    mu_ep=NULL, sd_ep = NULL, w_ep=NULL,
+                    difTargetmu=NULL,difTargetsca=NULL,
+                    dTarget=NULL,p50=NULL,
+                    sigmalow=NULL,sigmaup=NULL,
+                    effDF=parmDF,parmDF=5,
+                    loged50mu=0.0,loged50sca=1.73,
+                    loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
+                    lowled50=log(0.001),highled50=log(1000),
+                    lowllam=log(0.3),highllam=log(4.0),
+                    basemu=NULL,basevar=NULL,binary=FALSE)
 </code></pre>
 
 
 <h3>Arguments</h3>
 
-<table>
-<tr style="vertical-align: top;"><td><code>epmu</code></td>
+<table role = "presentation">
+<tr><td><code id="mixP">mixP</code></td>
 <td>
 
-<p>Mean for <code>E0</code> in a t-prior distribution.  Logistic scale for binary data.
+<p>The number of mixture components included in the prior distribution
+of the placebo response (<code>E0</code>). 
+Each component represents a normal distribution.  Set <code>mixP</code>
+to <code>0</code> (default) to specify a multivariate $t$ prior 
+distribution.  <code>mixP=1</code> is not supported.  Use a t-prior
+distribution with high df to specify a normal prior distribution.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>epsca</code></td>
+<tr><td><code id="mu_ep">mu_ep</code></td>
 <td>
 
-<p>The scale parameter for <code>E0</code> in a t-prior distribution.  Logistic scale for binary data.
+<p>For the mixture prior prior, a numeric vector of component means. 
+Each entry gives the mean of 
+the normal distribution associated with that component.
+Logistic scale for binary data.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>difTargetmu</code></td>
+<tr><td><code id="sd_ep">sd_ep</code></td>
 <td>
 
-<p>Mean for the prior distribution of the effect at dose <code>dTarget</code> versus placebo.
+<p>For the mixture prior prior, a numeric vector of 
+component standard deviations. Each entry gives the
+standard deviation of the normal distribution associated 
+with that component.
+Logistic scale for binary data.
+</p>
+</td></tr>
+<tr><td><code id="w_ep">w_ep</code></td>
+<td>
+
+<p>For the mixture prior prior, a numeric vector of mixture weights. 
+Each weight specifies the relative 
+contribution of the corresponding component to the overall distribution.
+</p>
+</td></tr>
+<tr><td><code id="epmu">epmu</code></td>
+<td>
+
+<p>Mean for <code>E0</code> in a t-prior distribution.  Logistic scale for 
+binary data.
+</p>
+</td></tr>
+<tr><td><code id="epsca">epsca</code></td>
+<td>
+
+<p>The scale parameter for <code>E0</code> in a t-prior distribution.  Logistic 
+scale for binary data.
+</p>
+</td></tr>
+<tr><td><code id="difTargetmu">difTargetmu</code></td>
+<td>
+
+<p>Mean for the prior distribution of the effect at dose <code>dTarget</code> 
+versus placebo.
 Logistic scale for binary data. 
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>difTargetsca</code></td>
+<tr><td><code id="difTargetsca">difTargetsca</code></td>
 <td>
 
-<p>The scale parameter for the prior distribution of the effect at dose <code>dTarget</code> versus placebo.
+<p>The scale parameter for the prior distribution of the effect 
+at dose <code>dTarget</code> versus placebo.
 Logistic scale for binary data.  
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>dTarget</code></td>
+<tr><td><code id="dTarget">dTarget</code></td>
 <td>
-<p>Target dose for prior effect.  Typically the highest dose planned
+<p>Target dose for the prior effect.  Typically the highest 
+dose planned
 and/or the proof-of-concept dose.</p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>p50</code></td>
+<tr><td><code id="p50">p50</code></td>
 <td>
 
-<p>Projected <code>ED50</code>.  See references for its use in creating the prior distribution for the <code>ED50</code>.
+<p>Projected <code>ED50</code>.  See references for its use in creating the 
+prior distribution for the <code>ED50</code>.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>sigmalow</code></td>
+<tr><td><code id="sigmalow">sigmalow</code></td>
 <td>
 
-<p>Lower bound for a uniform prior distribution for the residual SD (continuous data).
+<p>Lower bound for a uniform prior distribution for the residual 
+SD (continuous data).
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>sigmaup</code></td>
+<tr><td><code id="sigmaup">sigmaup</code></td>
 <td>
 
-<p>Upper bound for a uniform prior distribution for the residual SD (continuous data).  
+<p>Upper bound for a uniform prior distribution for 
+the residual SD (continuous data).  
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>effDF</code></td>
+<tr><td><code id="effDF">effDF</code></td>
 <td>
-<p>The degrees of freedom for the prior distributions for the <code>placebo</code>
-and <code>difTarget</code> parameters.  If a vector of length 2 is specified, the first value is the
+<p>The degrees of freedom for the prior distributions 
+for the <code>placebo</code>
+and <code>difTarget</code> parameters.  If a vector of length 2 is 
+specified, the first value is the
 degrees of freedom for <code>placebo</code> and the second for <code>difTarget</code>.</p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>parmDF</code></td>
+<tr><td><code id="parmDF">parmDF</code></td>
 <td>
 
-<p>The degrees of freedom of the bivariate log-t prior distribution for the <code>ED50</code> and <code>lambda</code> parameters.  
+<p>The degrees of freedom of the bivariate log-t prior distribution for the 
+<code>ED50</code> and <code>lambda</code> parameters.  
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>loged50mu</code></td>
+<tr><td><code id="loged50mu">loged50mu</code></td>
 <td>
 
-<p>Mean of prior t-distribution for the <code>log(ED50/P50)</code>.  See references for 
-its default value and interpretation.
+<p>Mean of prior t-distribution for the <code>log(ED50/P50)</code>.  
+See references for its default value and interpretation.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>loged50sca</code></td>
+<tr><td><code id="loged50sca">loged50sca</code></td>
 <td>
 
-<p>Scale (analogous to SD) of the prior t-distribution for the <code>log(ED50/P50)</code>.  
+<p>Scale (analogous to SD) of the prior t-distribution 
+for the <code>log(ED50/P50)</code>.  
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>loglammu</code></td>
+<tr><td><code id="loglammu">loglammu</code></td>
 <td>
 
 <p>Mean of prior t-distribution for the Hill parameter lambda.  See 
 references for its default value and interpretation.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>loglamsca</code></td>
+<tr><td><code id="loglamsca">loglamsca</code></td>
 <td>
 
 <p>Scale (analogous to SD) of the prior t-distribution for the Hill 
 parameter lambda.  
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>parmCor</code></td>
+<tr><td><code id="parmCor">parmCor</code></td>
 <td>
-<p>Correlation for the bivariate log-t prior distribution for the <code>ED50</code> and <code>lambda</code> parameters.</p>
+<p>Correlation for the bivariate log-t prior 
+distribution for the <code>ED50</code> and <code>lambda</code> parameters.</p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>lowled50,
-highled50,
-lowllam,
-highllam</code></td>
+<tr><td><code id="lowled50">lowled50</code>, <code id="highled50">highled50</code>, <code id="lowllam">lowllam</code>, <code id="highllam">highllam</code></td>
 <td>
 <p>Bounds applied to the prior distributions for the
-log(ED50/P50) and log(lambda).  The original (unbounded) priors are modified
-to be conditional on being within the bounds.  This is done for numerical
+log(ED50/P50) and log(lambda).  The original (unbounded) 
+priors are modified
+to be conditional on being within the bounds.  This is 
+done for numerical
 stability and plausibility of the parameter values</p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>basemu</code></td>
+<tr><td><code id="basemu">basemu</code></td>
 <td>
 
 <p>A vector of prior means for the covariate regression parameters.
+Covariate adjustment with a mixture PBO prior (<code>mixP&gt;0</code>) is
+not implemented.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>basevar</code></td>
+<tr><td><code id="basevar">basevar</code></td>
 <td>
 
-<p>The prior variance-covariance matrix for the covariate regression parameters.
-The covariate regression parameters are a priori independent of the other dose 
-response model parameters.
+<p>The prior variance-covariance matrix for the covariate 
+regression parameters.
+The covariate regression parameters are a priori independent of 
+the other dose response model parameters.
+Covariate adjustment with a mixture PBO prior (<code>mixP&gt;0</code>) is
+not implemented.
 </p>
 </td></tr>
-<tr style="vertical-align: top;"><td><code>binary</code></td>
+<tr><td><code id="binary">binary</code></td>
 <td>
 
-<p>Set to <code>TRUE</code> for binary data applications.  Used to check for consistency in usage.  The default is <code>FALSE</code></p>
+<p>Set to <code>TRUE</code> for binary data applications.  Used to check for 
+consistency in usage.  The default is <code>FALSE</code></p>
 </td></tr>  
 </table>
 
@@ -176,19 +235,23 @@ The E0 and difTarget parameters have independent t-distribution prior
 distributions.  For binary data, these
 parameters are computed on the logistic scale.  The prior means and scales
 of these parameters must be assigned compound-specific values.  
-The predicted ED50 at the study design stage must must also be
-specified as 'P50'.   For
-continuous data, the prior distribution for the residual SD is uniform on a 
-user-specifed scale.
+The predicted ED50 at the study design stage must must also be specified as 
+'P50'.   For continuous data, the prior distribution for the residual SD 
+is uniform on a user-specifed scale.
 </p>
-<p>The prior distribution of the log(ED50) has a t-distribution
-centered at log(P50), with scale, degrees of freedom (parmDF), 
-and offset to the P50, 
+<p>The prior distribution of the log(ED50) has a t-distribution centered
+at log(P50), with scale, degrees of freedom (parmDF), and offset to the P50,
 defaulting to values given in the references (these can be changed, but they
-are difficult to interpret outside the context of the meta-analyses).  
-If <code>modType=4</code>, the prior distribution for the Hill parameter
+are difficult to interpret outside the context of the meta-analyses). 
+</p>
+<p>If <code>modType=4</code>, the prior distribution for the Hill parameter
 is also t-distribution with parmDF degrees of freedom and corParm
-correlation with the log(ED50). 
+correlation with the log(ED50).
+</p>
+<p>If <code>mixP&gt;0</code>, any non null value specified under <code>epmu</code>
+and <code>epsca</code> will be ignored. 
+The model will consider mixture normal distribution alone for E0 prior. 
+The t-distribution will be ignored.
 </p>
 
 
@@ -209,10 +272,14 @@ and <code>loglambda</code>.
 
 <h3>References</h3>
 
-<p>Thomas, N., Sweeney, K., and Somayaji, V. (2014).  Meta-analysis of clinical dose response in a large drug development portfolio, Statistics in Biopharmaceutical Research, Vol. 6, No.4, 302-317.
+<p>Thomas, N., Sweeney, K., and Somayaji, V. (2014).  Meta-analysis of clinical 
+dose response in a large drug development portfolio, 
+Statistics in Biopharmaceutical Research, Vol. 6, No.4, 302-317.
 &lt;doi:10.1080/19466315.2014.924876&gt;
 </p>
-<p>Thomas, N., and Roy, D. (2016).  Analysis of clinical dose-response in small-molecule drug development:  2009-2014. Statistics in Biopharmaceutical Research, Vol. 6, No.4, 302-317
+<p>Thomas, N., and Roy, D. (2016).  Analysis of clinical dose-response in 
+small-molecule drug development:  2009-2014. Statistics in 
+Biopharmaceutical Research, Vol. 6, No.4, 302-317
 &lt;doi:10.1080/19466315.2016.1256229&gt;
 </p>
 <p>Wu, J., Banerjee, A., Jin, B., Menon, S., Martin, S., and 
@@ -227,6 +294,7 @@ biological products: A model-based meta-analysis. Vol. 9, 2694-2721.
 <p><code>fitEmaxB</code>
 </p>
 
+</main>
 
 </div>
 </body></html>

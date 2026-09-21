@@ -43,8 +43,10 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,n=n,
 												sigma=sdy,placAdj=FALSE,
 												alternative="one.sided",critV=TRUE))
 
-prior<-emaxPrior.control(0,3,0,3,0.5,1.0,0.1,5,parmDF=5)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=0,epsca=3,difTargetmu=0,difTargetsca=3,
+                         dTarget=0.5,p50=1.0,sigmalow=0.1,sigmaup=5,parmDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -88,8 +90,10 @@ emaxMods1<-Mods(sigEmax=cbind(parm.mat[1,1],parm.mat[1,2]),
 								doses=doselev,placEff=e0,maxEff=-1)
 emaxMat1<-optContr(emaxMods1,w=n)
 
-prior<-emaxPrior.control(0,3,0,3,1.0,0.5,0.001,0.1,parmDF=5)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=0,epsca=3,difTargetmu=0,difTargetsca=3,
+                         dTarget=1.0,p50=0.5,sigmalow=0.001,sigmaup=5,parmDF=5)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 D1 <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							mcmc=mcmc,testMods=emaxMods1,nproc=nprocdef)
@@ -172,8 +176,11 @@ pow3<-as.numeric(powMCT(emaxMat3,alpha=0.05,altModels=altmod,
 												S=V,df=Inf,placAdj=FALSE,
 												alternative="one.sided",critV=TRUE))
 
-prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=qlogis(0.2),epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=16*0.033,
+                         p50=0.05,parmDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 
 D3 <- emaxsimB(nsim,gen.parm,prior,modType=4,
@@ -225,8 +232,11 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=qlogis(0.2),epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=16*0.033,
+                         p50=0.05,parmDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 ### ci for a dose not in design
 customCode<-function(parms,residSD,pVal,dose,y,customParms){
@@ -293,8 +303,9 @@ meanlev[5]<-meanlev[5]+1.0
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
-										 sigmaup=30,parmDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=100,p50=50,sigmalow=0.1,
+										     sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
 
@@ -324,7 +335,8 @@ meanlev[5]<-meanlev[1]   ### back to pbo
 ###FixedMean is specialized constructor function for emaxsim
 gen<-FixedMean(n,doselev,meanlev,sdy)  
 
-prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,dTarget=100,p50=50,sigmalow=0.1,
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                     dTarget=100,p50=50,sigmalow=0.1,
 										 sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
 									 propInit=0.15,adapt_delta = 0.95)
@@ -355,8 +367,11 @@ meanlev[6]<-0.55    ## higher than expected
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=qlogis(0.2),epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=16*0.033,
+                         p50=0.05,parmDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,
+                   adapt_delta = .95)
 
 D1b <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
@@ -384,8 +399,11 @@ meanlev[6]<-meanlev[1]    ## descend to pbo
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+prior<-emaxPrior.control(epmu=qlogis(0.2),epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=16*0.033,
+                         p50=0.05,parmDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,
+                   adapt_delta = .95)
 
 D1blow <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=nprocdef)
@@ -412,8 +430,12 @@ meanlev<-plogis(emaxfun(doselev,parm=pop))
 
 gen.parm<-FixedMean(n,doselev,meanlev,sdy,parm=pop,binary=TRUE)  
 
-prior<-emaxPrior.control(qlogis(0.2),4,0,4,16*0.033,0.05,parmDF=5,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+
+prior<-emaxPrior.control(epmu=qlogis(0.2),epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=16*0.033,
+                         p50=0.05,parmDF=5,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,
+                   adapt_delta = .95)
 
 D2 <- emaxsimB(nsim,gen.parm,prior,modType=4,
 							 mcmc=mcmc,binary=TRUE,seed=12357,nproc=1)
@@ -440,7 +462,8 @@ doselev<-c(0,5,10,25,50,150)
 dose<-rep(doselev,n)
 
 
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 
 priorbay<-emaxPrior.control(epmu=0,epsca=1,difTargetmu=1,difTargetsca=0.5,
@@ -496,7 +519,8 @@ set.seed(12357)
 n<-c(99,95,98,94,98,98)
 doselev<-c(0,5,10,25,50,150)
 
-mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .95)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+                   propInit=0.15,adapt_delta = .95)
 
 
 priorbay<-emaxPrior.control(epmu=qlogis(.25),epsca=1,

@@ -75,8 +75,19 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 	p50<-prior$p50
 	
 	if(localParm){
+	  mixP<-prior$mixP
 		epmu<-prior$epmu
 		epsca<-prior$epsca
+		mu_ep<-prior$mu_ep
+		sd_ep<-prior$sd_ep
+		w_ep<-prior$w_ep
+		## assign unused values for stan data compatibility
+  	if(mixP){
+  	  mu_ep<-array(mu_ep,dim=mixP); sd_ep<-array(sd_ep,dim=mixP)
+  	  w_ep<-array(w_ep,dim=mixP) 
+  	  epmu<-sum(w_ep*mu_ep); epsca<-sum(w_ep*sd_ep)
+  	}else{mu_ep<-array(0,dim=0);sd_ep<-array(0,dim=0);w_ep<-array(0,dim=0)}
+	
 		difTargetmu<-prior$difTargetmu
 		difTargetsca<-prior$difTargetsca
 		dTarget<-prior$dTarget
@@ -381,7 +392,8 @@ function(y,dose,prior,modType=4,prot=rep(1,length(y)),count=rep(1,length(y)),
 		indata<-c('N','nprot','protv','cont','sigmoid','gp',
 							'intercept','nbase',
 							'yv','nv','yvb','nvb','dv','xbase','df2','ssy',
-							'epmu','epsca','difTargetmu','difTargetsca','dTarget','sigmalow','sigmaup','p50',
+							'mixP','epmu','epsca','mu_ep','sd_ep','w_ep',
+							'difTargetmu','difTargetsca','dTarget','sigmalow','sigmaup','p50',
 							'loged50mu','loged50sca','e0DF','diftDF','parmDF','loglammu','loglamsca',
 							'parmCor','basemu','basevar','lowled50','highled50','lowllam','highllam',
 							'dimFit','vcest')		
@@ -686,7 +698,8 @@ prior.control<-function(epmu=NULL,epsd=NULL,emaxmu=NULL,emaxsd=NULL,p50=NULL,
 			 binary=binary)
 }
 
-emaxPrior.control<-function(epmu=NULL,epsca=NULL,
+emaxPrior.control<-function(mixP=0,epmu=NULL,epsca=NULL,
+                            mu_ep=NULL,sd_ep=NULL,w_ep=NULL,
 														difTargetmu=NULL,difTargetsca=NULL,dTarget=NULL,
 														p50=NULL,sigmalow=NULL,sigmaup=NULL,
 														effDF=parmDF,parmDF=5,
@@ -698,18 +711,30 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 														binary=FALSE)
 {
 	### defaults based on meta-analyses of dose response
+  
+  if(mixP==1)stop(paste0('Specify a t-distribution with many df for a normal ',
+                  'prior distribution rather than a 1-component mixture'))
 	
+  if( !mixP & any(is.null(epmu),is.null(epsca))){
+    stop('epmu and epsca must be specified for a t-distribution for pbo')  
+  }
+  if( mixP & any(is.null(mu_ep),is.null(sd_ep),is.null(w_ep))){
+    stop('mu_ep,sd_ep,w_ep must be specified for a mixture prior for pbo')  
+  } 
+      
 	if(!binary){
-		if( any( is.null(epmu),is.null(epsca),is.null(difTargetmu),is.null(difTargetsca),
+		if( any( 
+		         is.null(difTargetmu),is.null(difTargetsca),
 						 is.null(p50),is.null(sigmalow),is.null(sigmaup) ) 
 		)stop('All parameters without default values must be specified')
 	}else{ 
-		if( any( is.null(epmu),is.null(epsca),is.null(difTargetmu),is.null(difTargetsca),
+		if( any( is.null(difTargetmu),is.null(difTargetsca),
 						 is.null(p50) )
 		)stop('All parameters without default values must be specified')
 	}
 	
 	if(!is.null(basemu) | !is.null(basevar)){
+	  if(mixP>0)stop('Covariate adjustment and mixture PBO prior not implemented')
 		nbase<-length(basemu)
 		if(!is.matrix(basevar))stop('basevar must be an nbbasexnbase variance-covariance matrix')
 		if(any(dim(basevar)!=nbase))stop('basevar must be an nbbase x nbase variance-covariance matrix')
@@ -723,8 +748,13 @@ emaxPrior.control<-function(epmu=NULL,epsca=NULL,
 	if(missing(loged50mu) && missing(loged50sca) &&
 		 missing(loglammu) && missing(loglamsca))default<-TRUE 
 	
-	prior<-list(epmu=epmu,
+
+	prior<-list(mixP=mixP,
+	            epmu=epmu,
 							epsca=epsca,
+							mu_ep=mu_ep,
+							sd_ep=sd_ep,
+							w_ep=w_ep,
 							difTargetmu=difTargetmu,
 							difTargetsca=difTargetsca,
 							dTarget=dTarget,

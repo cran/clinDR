@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Getting started with clinDR</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting started with clinDR</h1>
+
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>This introductory document includes</p>
+<ul>
+<li>Installation instructions highlighting the one-time use of
+<strong>compileStanModels()</strong></li>
+<li>A brief summary of the primary <strong>clinDR</strong>
+functions</li>
+<li>Instructions to access the dose response meta-data used to support
+the Emax model and construct prior distributions for its parameters</li>
+<li>A brief example</li>
+</ul>
+<p>A detailed example using <strong>clinDR</strong> is in the vignette
+“Example of Bayesian Emax dose response modeling”.</p>
+</div>
+<div id="installation" class="section level1">
+<h1>Installation</h1>
+<p>The <strong>clinDR</strong> package can be installed from the CRAN
+package library. It does not include any compiled code so there are
+seldom problems with installing it and checking the installation using
+<strong>library(clinDR)</strong> code.</p>
+<p>The Bayesian computing in <strong>clinDR</strong> is performed using
+<strong>STAN</strong> thru the <strong>rstan</strong> R package, which
+must be installed before using most of the functions in
+<strong>clinDR</strong>. Most <strong>clinDR</strong> installation
+problems occur when <strong>rstan</strong> has not been successfully
+installed. To confirm that <strong>rstan</strong> is executing
+correctly, we recommend executing the simple example included in the
+documentation for the <strong>rstan</strong> function
+<strong>sampling</strong>.</p>
+<p>Once <strong>rstan</strong> execution has been confirmed, one
+additional step is required before the Bayesian calculations in
+<strong>clinDR</strong> can be used. Before the first use of
+<strong>clinDR</strong>, the <strong>clinDR</strong> function
+<strong>compileStanModels()</strong> must be executed to compile the
+Emax model code. This preliminary step only needs to be executed one
+time. It typically requires 1-3 minutes to execute. It greatly
+accelerates the execution of the model fiting codes.</p>
+<p>If a new version of <strong>rstan</strong> is installed, it is
+strongly recommended to re-execute the
+<strong>compileStanModels()</strong> command. If <strong>clinDR</strong>
+is re-installed or a new version is installed, the
+<strong>compileStanModels()</strong> function must be executed again
+before using <strong>clinDR</strong>.</p>
+</div>
+<div id="primary-clindr-functions" class="section level1">
+<h1>Primary <strong>clinDR</strong> functions</h1>
+<p>The primary clinDR function is <strong>fitEmaxB</strong>, which fits
+the Bayesian Emax model. The prior distribution input to it is
+constructed by the function <strong>emaxPrior.control</strong>, and the
+MCMC specifications are constructed by <strong>mcmc.control</strong>.
+Many of the input settings have default values specified. There are
+numerous generic functions specialized to handle the
+<strong>fitEmaxB</strong> output such as <strong>print</strong>,
+<strong>plot</strong>, <strong>coef</strong>, <strong>predict</strong>,
+etc. The <strong>fitEmaxB</strong> function can be applied to
+continuous(normal) or binary data, and individual patient-level data or
+data aggregated to the dose group level. A corresponding
+<strong>fitEmax</strong> function computes maximum likelihood estimates
+with a step down sequence to the best fitting simpler dose response
+functions like linear, log-linear, and the exponential functions when
+the Emax model fits do not converge.</p>
+<p>Simulation studies can be simulated without any programming using the
+corresponding <strong>emaxsimB</strong> and <strong>emaxsim</strong>
+functions. These functions also include many supporting functions to
+summarize their output. The documentation of these functions includes
+methods that allow specialized output to be created with minimal
+additional coding.</p>
+</div>
+<div id="dose-response-meta-data" class="section level1">
+<h1>Dose response meta-data</h1>
+<p>Clinical dose response data from more than 200 compounds were
+evaluated using graphical methods and hierarchical modeling to support
+the use of the Emax function for dose response modeling. Combined with
+compound-specific information for a future dose response study, it is
+also used to create a moderately informative prior distribution for some
+of the model parameters. The data includes all available dose response
+studies displaying a non-null trend from one large sponsor since 1990
+for both approved and subsequentially terminated compounds. The data
+includes publicly available data for all FDA approved compounds between
+2009-2019. It also includes some older data from biological compounds.
+All of the data are aggregated to the dose level.</p>
+<p>The data can be accessed from the <strong>clinDR</strong> package
+using <strong>data(metaData)</strong>.<br />
+Details of the data format are available using the usual help functions.
+Some references for the different data sources are</p>
+<p>Thomas, Sweeney, and Somayaji (2014) <a href="doi:10.1080/19466315.2014.924876" class="uri">doi:10.1080/19466315.2014.924876</a></p>
+<p>Thomas and Roy (2016) <a href="doi:10.1080/19466315.2016.1256229" class="uri">doi:10.1080/19466315.2016.1256229</a></p>
+<p>Wu, Banerjee, Jin, Menon, Martin, and Heatherington(2017) <a href="doi:10.1177/0962280216684528" class="uri">doi:10.1177/0962280216684528</a></p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(clinDR)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;metaData&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>exdat<span class="ot">&lt;-</span>metaData[metaData<span class="sc">$</span>taid<span class="sc">==</span><span class="dv">1</span>,]</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>prior<span class="ot">&lt;-</span><span class="fu">emaxPrior.control</span>(<span class="at">epmu=</span><span class="dv">0</span>,<span class="at">epsca=</span><span class="dv">4</span>,<span class="at">difTargetmu=</span><span class="dv">0</span>,<span class="at">difTargetsca=</span><span class="dv">4</span>,<span class="at">dTarget=</span><span class="dv">20</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                <span class="at">p50=</span>(<span class="dv">2</span><span class="sc">+</span><span class="dv">5</span>)<span class="sc">/</span><span class="dv">2</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>                <span class="at">sigmalow=</span><span class="fl">0.01</span>,<span class="at">sigmaup=</span><span class="dv">3</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>                                        </span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>mcmc<span class="ot">&lt;-</span><span class="fu">mcmc.control</span>(<span class="at">chains=</span><span class="dv">3</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="do">### estimate of within dose group SD</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>msSat<span class="ot">&lt;-</span><span class="fu">sum</span>((exdat<span class="sc">$</span>sampsize<span class="dv">-1</span>)<span class="sc">*</span>(exdat<span class="sc">$</span>sd)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>(<span class="fu">sum</span>(exdat<span class="sc">$</span>sampsize)<span class="sc">-</span><span class="fu">length</span>(exdat<span class="sc">$</span>sampsize))</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>fitout<span class="ot">&lt;-</span><span class="fu">fitEmaxB</span>(exdat<span class="sc">$</span>rslt,exdat<span class="sc">$</span>dose,prior,<span class="at">modType=</span><span class="dv">4</span>,<span class="at">prot=</span>exdat<span class="sc">$</span>protid,</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>                <span class="at">count=</span>exdat<span class="sc">$</span>sampsize,<span class="at">msSat=</span>msSat,<span class="at">mcmc=</span>mcmc)</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="fu">plot</span>(fitout)</span></code></pre></div>
+<div class="float">
+<img role="img" aria-label="plot of chunk explot" src="data:image/png;base64,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" alt="plot of chunk explot" />
+<div class="figcaption">plot of chunk explot</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

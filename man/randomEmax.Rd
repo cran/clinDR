@@ -17,7 +17,8 @@ randomEmax(x,n,doselev,modType=c('4','3'))
 \arguments{
 	\item{x}{Object of type \code{emaxPrior} created by function
 	\code{emaxPrior.control}, that specifies a prior distribution
-	for the Emax model parameters.}
+	for the Emax model parameters.  Note: \code{randomEmax} does
+	not support mixture placebo prior distributions}
   \item{n}{Sample size for each dose group. }
   \item{doselev}{Dose levels (including 0 for placebo) included in the
 study corresponding to \code{n}.  Must be in increasing order.}

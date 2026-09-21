@@ -1,0 +1,391 @@
+---
+title: Using a Mixture Prior for E0 in the Bayesian Emax Model
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Using a Mixture Prior for E0 in the Bayesian Emax Model"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+library(RBesT)
+library(clinDR)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+#setwd("./Budha")
+
+```
+
+# Overview
+
+We demonstrate how to compute and apply a mixture prior for placebo response 
+using summary data from internal historical studies or publications.  The 
+derived prior is used to supplement information for $E_0$ in Emax 
+model fitting.  The examples have two parts:
+
+ - Designing a mixture distribution to capture placebo information from 
+ historical data 
+ - Applying the mixture distribution to $E_0$ in a Bayesian Emax model
+ 
+The mixture prior is developed using **RBesT** package, and then it is 
+applied to $E_0$ using the **clinDR** function `fitEmaxB`.  There are 
+examples with binary and continuous responses.  Note that covariate
+adjustment is not implemented with mixture PBO prior distributions.
+ 
+ 
+# Binary Response
+
+## Deriving a Mixture Prior Using RBesT
+
+This example is from [Getting Started with RBesT (binary)](https://github.com/Novartis/RBesT/blob/main/vignettes/introduction.Rmd). 
+ Additional details for the mixture prior are in this primary reference.
+
+### Data
+
+The dataset has control group information from historical trials in 
+Ankyloising Spondelitis [[1\]](#ref1). The primary efficacy endpoint is a
+binary response indicating >=20% change from baseline in the Assessment 
+of Spondelitis Arthritis
+International Society criteria for improvement (ASAS20) at Week 6:
+
+```{r histdata}
+
+kable(AS, digits=2, caption="Literature Data: ASAS20 Responder Summary at Week 6") %>% 
+  kable_styling(full_width = FALSE, position="center")
+
+```
+ 
+### Computing a MAP Prior MCMC Sample using `gMAP`
+
+An MCMC sample from the Meta Analytic Predictive (MAP) prior can be 
+generated using the `gMAP()` function in RBesT. For binary endpoints, the 
+prior distribution is specified on the logit scale.  A conservative choice of 
+the between trial heterogeneity is **Half-Normal(0, 1)**. 
+A **Normal(0,2)** prior distribution is specified for the mean of the 
+logit rates.  The prior mean of the logit rates may be assigned a more 
+substantive value than 0, which corresponds to a rate of 50 percent. 
+For more information about gMAP use **?gMAP()**, and for a detailed 
+description of the statistical methodology refer to [[2\]](#ref2).
+
+```{r gmap}
+
+set.seed(34563)
+map_mcmc <- gMAP(cbind(r, n - r) ~ 1 | study,
+  data = AS,
+  tau.dist = "HalfNormal",
+  tau.prior = 1,
+  beta.prior = 2,
+  family = binomial
+)
+print(map_mcmc)
+
+```
+### Parametric Approximation Derived from the MCMC Sample
+
+The current representation in **clinDR** allows a normal mixture for the 
+prior for $E_0$. This is a prior for placebo response on the logit scale. Therefore, 
+it is required to extract the  MAP MCMC sample on the logit scale.
+
+The next step is to convert the MCMC sample to a parametric representation with the 
+`automixfit()` function that computes the optimal number of mixture 
+components using the AIC. In practice, the optimal number of mixture components 
+is often large. Therefore, we recommend using `mixfit()` with the number of 
+components selected manually. For the protocol and Statistical Analysis Plan 
+(SAP), 2-3 component mixtures are preferred over the optimal selection strategy. 
+The optimal and manual selection performance can be visually compared.  
+
+```{r mixmap}
+# Extract posterior samples on the logit scale
+post_samp <- as.matrix(map_mcmc)[,'theta_pred']
+
+map <- mixfit(post_samp,Nc=2)
+
+print(map)
+## check accuracy of mixture fit
+plot(map)$mix
+```
+
+### Robustification and Effective Sample Size
+
+We recommend robustifying the MAP prior, which helps to protect against 
+type-I error inflation in case of prior-data conflict. 
+The unit-information prior $logit(p)$ [[3\]](#ref3) is:
+$$logit(p) \sim Normal(mean=logit(p_0), SD=[p_0 (1-p_0)]^{-1/2})$$
+where $p_0$ is the mean of MAP samples.
+```{r robmap}
+p0 <- plogis(mean(post_samp))
+sdp0 <- (p0*(1-p0))^(-1/2)
+map_robust <- robustify(map, weight = 0.5, mean = qlogis(p0), sigma=sdp0)
+print(map_robust)
+
+```
+
+The effective sample size (ESS) contributed by the historical data can be 
+calculated with the `ess()` function.
+
+```{r essmap}
+
+round(ess(map, method = 'elir', sigma=sdp0))
+
+```
+
+## Fit Binary Bayesian Emax Model with Mixture Prior for E0
+
+A simulated data set is created to illustrate the method.  
+
+```{r datagen}
+# Dose level
+dose <- c(0, 5, 25, 50 , 100)
+# Sample size
+ss <- c(38, 77, 79, 82, 80)
+resplev<-c(0.25, 0.40, 0.65, 0.72, 0.75) 
+y<-rbinom(length(ss),ss,resplev)
+y
+
+```
+ 
+The mixture prior for $E_0$ is specified in the function 
+`emaxPrior.control()`[[4\]](#ref1)[[5\]](#ref1)[[6\]](#ref1):
+
+ - `mixp`: Number of mixture components, integer
+ - `mu_ep`: Mean of mixture components E0 prior as vector
+ - `sd_ep`: Standard deviation of mixture components as vector
+ - `w_ep`: Weights of mixture components as vector
+
+Other non-default parameters (`difTargetmu, difTargetsca, dTarget, p50`) 
+must also be provided. Any values specified for `epmu` and `epsca` are 
+ignored if `mixP>=1`.
+ 
+To fit the binary $E_{max}$ model using `fitEmaxB()`, y must be 0/1 and counts 
+must be supplied for each 0/1 value. 
+
+```{r fitEmaxBayes}
+
+# y in grouped data 0/1
+cnt<-c(ss-y,y)
+y <- c(rep(0, length(dose)), rep(1, length(dose)))
+# Dose specification for grouped data
+dose <- rep(dose,2)
+
+ed50 <- 15
+dTarget <- max(dose)
+difTarget <- qlogis(0.75) - qlogis(0.25)
+
+# E0 prior and other hyper priors
+prior_bin <- emaxPrior.control(epmu=-1.1, epsca=1,
+                               mixP=3, 
+                               w_ep= map_robust[1,],
+                               mu_ep=map_robust[2,],
+                               sd_ep = map_robust[3,],
+                               difTargetmu = difTarget,
+                               difTargetsca= 1,
+                               dTarget = dTarget,
+                               p50 = ed50,
+                               binary = TRUE)
+
+# mcmc setup
+mcmc<-mcmc.control(chains=3,warmup=1000,iter=7000,seed=53453,
+                   propInit=0.5,adapt_delta = 0.8)
+
+# Now fit emax model
+
+fitbin <- fitEmaxB(y=y, dose=dose, count=cnt, prior=prior_bin, mcmc=mcmc, binary=TRUE)
+
+summary(fitbin)
+
+```
+A plot the fitted dose response model:
+
+```{r plotEmaxBayes}
+plot(fitbin)
+
+```
+
+
+
+# Continuous Response
+
+## Deriving a Mixture Prior Using RBesT
+
+This example is from 
+[Application of RBesT in a Normal Endpoint](https://github.com/Novartis/RBesT/blob/main/vignettes/articles/introduction_normal.Rmd). 
+Additional details for the mixture prior are in this primary reference.  The
+computations are very similar to the binary example.
+
+### Data
+
+The primary endpoint is the change from baseline in Crohn's Disease 
+Activity Index (CDAI), which is assumed to be normally distributed. Note that 
+for CDAI, an improved outcome  corresponds to a negative change from baseline. 
+The estimated standard deviation from historical studies is $\sigma=88$.
+
+```{r histdatac}
+
+h.data <- crohn
+crohn_sigma <- 88
+h.data$y.se <- crohn_sigma / sqrt(h.data$n)
+kable(h.data, digits=2, caption = "CDAI from Published Studies")%>%
+  kable_styling(full_width = FALSE, position = "center")
+
+```
+
+## Computing a MAP Prior MCMC Sample using `gMAP`
+
+An MCMC sample from the Meta Analytic Predictive (MAP) prior can be 
+computed using the `gMAP()` function in RBesT. The between trial heterogeneity 
+is a Half-Normal distribution with scale parameter $\tau$.  
+A conservative specification is $\tau= \sigma/2$.  A normal prior distribution 
+is specified for the mean placebo change from baseline with a prior mean of 
+$0.0$ and a **unit-information** prior SD. 
+
+```{r gmapc}
+
+map_mcmc <- gMAP(cbind(y, y.se) ~ 1 | study,
+  weights = n, data = h.data,
+  family = gaussian,
+  beta.prior = cbind(0, crohn_sigma),
+  tau.dist = "HalfNormal", tau.prior = cbind(0, crohn_sigma / 2)
+)
+print(map_mcmc)
+
+```
+
+## Parametric Approximation derived from the MCMC Sample
+
+As with the binary example, a parametric approximation is computed
+using `mixfit()` with 2 components selected manually. 
+
+```{r mixmapc}
+map <- mixfit(map_mcmc, Nc=2)
+print(map)
+## check accuracy of mixture fit
+plot(map)$mix
+```
+
+## Robustification and Effective Sample Size
+
+The robustification of the mixture prior is unchanged from the binary
+example:
+
+```{r robmapc}
+
+map_robust <- robustify(map, weight = 0.5, mean = -50)
+print(map_robust)
+
+```
+
+The effective sample size (ESS) also computed using `ess()` function:
+```{r essmapc}
+
+round(ess(map, method = 'elir'))
+
+```
+
+## Bayesian Emax Model with a Mixture Prior for E0
+
+### Simulated dose response study
+
+The methods are illustrated with simulated data from a dose response study 
+with placebo and four doses ranging from 5 mg to 100 mg.  The simulated 
+responses are normally distributed with means determined by a 
+3-parameter Emax model with $E_0=-50$, a difference with placebo at the 
+$100$ mg dose of $difTarget= -1SD$, with the $SD=75$, 
+and the $ED_{50}=30$mg.  The simulated data are consistent with the 
+mixture prior.
+ 
+The reduced sample size in the placebo group matches the sample size gain 
+from the informative mixture prior.
+ 
+```{r datagenc}
+
+# Dose groups
+doselev<-c(0, 5, 25, 50, 100) 
+# Sample size
+ss<-c(40, 80, 80, 80, 80)
+## Population Parameters
+e0<--50
+ed50<- 30
+dtarget<- 100
+diftarget<- -75
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+sdy<-75
+pop<-c(log(ed50),emax,e0)
+
+# Mean for each dose level
+mu<-emaxfun(doselev,pop)
+
+# Generate single study data
+dose_data <- rep(doselev, times=ss)
+mu_data <- rep(mu, times=ss)
+set.seed(20260217)
+y <- rnorm(n=sum(ss), mean=mu_data, sd=sdy)
+
+study.data <- data.frame(y=y, dose= dose_data)
+
+# Create summary data
+summ.data <- study.data %>% group_by(dose) %>%
+  summarise(
+    n=n(),
+    mean = mean(y),
+    std=sd(y)
+  )
+
+kable(summ.data, digits=2, caption="Summary at each Dose Level") %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+
+```
+
+## Model fit using `fitEmaxB`
+
+To set up a mixture prior for E0, we use `emaxPrior.control()` similar to before
+without specifying `binary=TRUE`:
+
+
+```{r fitemaxBayesc}
+
+prior.emax <- emaxPrior.control(epmu=0,epsca=100,mixP=3, 
+                                mu_ep=c(-48.6, -53.3, -50),sd_ep = c(10.9,32.7, 88.0),
+                                w_ep = c(0.35, 0.15, 0.5), difTargetmu = -150, difTargetsca =75,
+                                dTarget = 100, p50=30, sigmalow =10, sigmaup = 500)
+
+msSat <- sum((summ.data$n-1)*(summ.data$std)^2)/(sum(summ.data$n)-length(summ.data$n))
+mcmc <- mcmc.control(chains=3)
+
+## Fit Emax Model
+
+fitout<-fitEmaxB(summ.data$mean,summ.data$dose,prior.emax,modType=4,prot=rep(1, nrow(summ.data)),
+                 count=summ.data$n,msSat=msSat,mcmc=mcmc)
+summary(fitout)
+
+
+```
+
+Finally, the `plot` function displays the fitted Emax curve
+
+```{r plotc }
+
+plot(fitout)
+
+```
+ 
+
+
+# References
+
+
+<span id="ref1">[1]</span> Baeten D. et al., _The Lancet_, 2013, (382), 9906, p 1705  
+
+<span id="ref2">[2]</span> Neuenschwander B et. al, _Clin Trials_. 2010; 7(1):5-18  
+
+<span id="ref3">[3]</span> Kass RE, Wasserman L, _J Amer Statist Assoc_; 1995, 90(431):928-934.
+
+<span id="ref4">[4]</span> Thomas N et. al, _Statistics in Biopharmaceutical Research_, 2014, 302-317
+
+<span id="ref5">[5]</span> Thomas N et. al, _Statistics in Biopharmaceutical Research_, 2016, 302-317
+
+<span id="ref6">[6]</span> Wu, J.et. al., _Statistical Methods in Medical Research_, 2017 

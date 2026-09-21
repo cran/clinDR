@@ -1,0 +1,667 @@
+---
+title: Using a Mixture Prior for E0 in the Bayesian Emax Model
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Using a Mixture Prior for E0 in the Bayesian Emax Model"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+# Overview
+
+We demonstrate how to compute and apply a mixture prior for placebo response 
+using summary data from internal historical studies or publications.  The 
+derived prior is used to supplement information for $E_0$ in Emax 
+model fitting.  The examples have two parts:
+
+ - Designing a mixture distribution to capture placebo information from 
+ historical data 
+ - Applying the mixture distribution to $E_0$ in a Bayesian Emax model
+ 
+The mixture prior is developed using **RBesT** package, and then it is 
+applied to $E_0$ using the **clinDR** function `fitEmaxB`.  There are 
+examples with binary and continuous responses.  Note that covariate
+adjustment is not implemented with mixture PBO prior distributions.
+ 
+ 
+# Binary Response
+
+## Deriving a Mixture Prior Using RBesT
+
+This example is from [Getting Started with RBesT (binary)](https://github.com/Novartis/RBesT/blob/main/vignettes/introduction.Rmd). 
+ Additional details for the mixture prior are in this primary reference.
+
+### Data
+
+The dataset has control group information from historical trials in 
+Ankyloising Spondelitis [[1\]](#ref1). The primary efficacy endpoint is a
+binary response indicating >=20% change from baseline in the Assessment 
+of Spondelitis Arthritis
+International Society criteria for improvement (ASAS20) at Week 6:
+
+
+``` r
+kable(AS, digits=2, caption="Literature Data: ASAS20 Responder Summary at Week 6") %>% 
+  kable_styling(full_width = FALSE, position="center")
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>Literature Data: ASAS20 Responder Summary at Week 6</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> study </th>
+   <th style="text-align:right;"> n </th>
+   <th style="text-align:right;"> r </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Study 1 </td>
+   <td style="text-align:right;"> 107 </td>
+   <td style="text-align:right;"> 23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 2 </td>
+   <td style="text-align:right;"> 44 </td>
+   <td style="text-align:right;"> 12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 3 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 19 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 4 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 5 </td>
+   <td style="text-align:right;"> 139 </td>
+   <td style="text-align:right;"> 39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 6 </td>
+   <td style="text-align:right;"> 20 </td>
+   <td style="text-align:right;"> 6 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 7 </td>
+   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:right;"> 9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Study 8 </td>
+   <td style="text-align:right;"> 35 </td>
+   <td style="text-align:right;"> 10 </td>
+  </tr>
+</tbody>
+</table>
+ 
+### Computing a MAP Prior MCMC Sample using `gMAP`
+
+An MCMC sample from the Meta Analytic Predictive (MAP) prior can be 
+generated using the `gMAP()` function in RBesT. For binary endpoints, the 
+prior distribution is specified on the logit scale.  A conservative choice of 
+the between trial heterogeneity is **Half-Normal(0, 1)**. 
+A **Normal(0,2)** prior distribution is specified for the mean of the 
+logit rates.  The prior mean of the logit rates may be assigned a more 
+substantive value than 0, which corresponds to a rate of 50 percent. 
+For more information about gMAP use **?gMAP()**, and for a detailed 
+description of the statistical methodology refer to [[2\]](#ref2).
+
+
+``` r
+set.seed(34563)
+map_mcmc <- gMAP(cbind(r, n - r) ~ 1 | study,
+  data = AS,
+  tau.dist = "HalfNormal",
+  tau.prior = 1,
+  beta.prior = 2,
+  family = binomial
+)
+print(map_mcmc)
+```
+
+```
+## Generalized Meta Analytic Predictive Prior Analysis
+## 
+## Call:  gMAP(formula = cbind(r, n - r) ~ 1 | study, family = binomial, 
+##     data = AS, tau.dist = "HalfNormal", tau.prior = 1, beta.prior = 2)
+## 
+## Exchangeability tau strata: 1 
+## Prediction tau stratum    : 1 
+## Maximal Rhat              : 1 
+## 
+## Between-trial heterogeneity of tau prediction stratum
+##         mean median    sd   q2.5   q50 q97.5
+## tau[1] 0.387  0.359 0.215 0.0399 0.359 0.897
+## 
+## MAP Prior MCMC sample
+##                  mean median     sd  q2.5   q50 q97.5
+## theta_resp_pred 0.255  0.247 0.0864 0.106 0.247 0.461
+```
+### Parametric Approximation Derived from the MCMC Sample
+
+The current representation in **clinDR** allows a normal mixture for the 
+prior for $E_0$. This is a prior for placebo response on the logit scale. Therefore, 
+it is required to extract the  MAP MCMC sample on the logit scale.
+
+The next step is to convert the MCMC sample to a parametric representation with the 
+`automixfit()` function that computes the optimal number of mixture 
+components using the AIC. In practice, the optimal number of mixture components 
+is often large. Therefore, we recommend using `mixfit()` with the number of 
+components selected manually. For the protocol and Statistical Analysis Plan 
+(SAP), 2-3 component mixtures are preferred over the optimal selection strategy. 
+The optimal and manual selection performance can be visually compared.  
+
+
+``` r
+# Extract posterior samples on the logit scale
+post_samp <- as.matrix(map_mcmc)[,'theta_pred']
+
+map <- mixfit(post_samp,Nc=2)
+
+print(map)
+```
+
+```
+## EM for Normal Mixture Model
+## Log-Likelihood = -2464.067
+## 
+## Univariate normal mixture
+## Mixture Components:
+##   comp1      comp2     
+## w  0.6293999  0.3706001
+## m -1.1044228 -1.1491835
+## s  0.2706598  0.7031189
+```
+
+``` r
+## check accuracy of mixture fit
+plot(map)$mix
+```
+
+![plot of chunk mixmap](mixfig/mixmap-1.png)
+
+### Robustification and Effective Sample Size
+
+We recommend robustifying the MAP prior, which helps to protect against 
+type-I error inflation in case of prior-data conflict. 
+The unit-information prior $logit(p)$ [[3\]](#ref3) is:
+$$logit(p) \sim Normal(mean=logit(p_0), SD=[p_0 (1-p_0)]^{-1/2})$$
+where $p_0$ is the mean of MAP samples.
+
+``` r
+p0 <- plogis(mean(post_samp))
+sdp0 <- (p0*(1-p0))^(-1/2)
+map_robust <- robustify(map, weight = 0.5, mean = qlogis(p0), sigma=sdp0)
+print(map_robust)
+```
+
+```
+## Univariate normal mixture
+## Mixture Components:
+##   comp1      comp2      robust    
+## w  0.3146999  0.1853001  0.5000000
+## m -1.1044228 -1.1491835 -1.1210111
+## s  0.2706598  0.7031189  2.3224781
+```
+
+The effective sample size (ESS) contributed by the historical data can be 
+calculated with the `ess()` function.
+
+
+``` r
+round(ess(map, method = 'elir', sigma=sdp0))
+```
+
+```
+## [1] 36
+```
+
+## Fit Binary Bayesian Emax Model with Mixture Prior for E0
+
+A simulated data set is created to illustrate the method.  
+
+
+``` r
+# Dose level
+dose <- c(0, 5, 25, 50 , 100)
+# Sample size
+ss <- c(38, 77, 79, 82, 80)
+resplev<-c(0.25, 0.40, 0.65, 0.72, 0.75) 
+y<-rbinom(length(ss),ss,resplev)
+y
+```
+
+```
+## [1] 12 32 58 60 61
+```
+ 
+The mixture prior for $E_0$ is specified in the function 
+`emaxPrior.control()`[[4\]](#ref1)[[5\]](#ref1)[[6\]](#ref1):
+
+ - `mixp`: Number of mixture components, integer
+ - `mu_ep`: Mean of mixture components E0 prior as vector
+ - `sd_ep`: Standard deviation of mixture components as vector
+ - `w_ep`: Weights of mixture components as vector
+
+Other non-default parameters (`difTargetmu, difTargetsca, dTarget, p50`) 
+must also be provided. Any values specified for `epmu` and `epsca` are 
+ignored if `mixP>=1`.
+ 
+To fit the binary $E_{max}$ model using `fitEmaxB()`, y must be 0/1 and counts 
+must be supplied for each 0/1 value. 
+
+
+``` r
+# y in grouped data 0/1
+cnt<-c(ss-y,y)
+y <- c(rep(0, length(dose)), rep(1, length(dose)))
+# Dose specification for grouped data
+dose <- rep(dose,2)
+
+ed50 <- 15
+dTarget <- max(dose)
+difTarget <- qlogis(0.75) - qlogis(0.25)
+
+# E0 prior and other hyper priors
+prior_bin <- emaxPrior.control(epmu=-1.1, epsca=1,
+                               mixP=3, 
+                               w_ep= map_robust[1,],
+                               mu_ep=map_robust[2,],
+                               sd_ep = map_robust[3,],
+                               difTargetmu = difTarget,
+                               difTargetsca= 1,
+                               dTarget = dTarget,
+                               p50 = ed50,
+                               binary = TRUE)
+
+# mcmc setup
+mcmc<-mcmc.control(chains=3,warmup=1000,iter=7000,seed=53453,
+                   propInit=0.5,adapt_delta = 0.8)
+
+# Now fit emax model
+
+fitbin <- fitEmaxB(y=y, dose=dose, count=cnt, prior=prior_bin, mcmc=mcmc, binary=TRUE)
+
+summary(fitbin)
+```
+
+```
+## Inference for Stan model: mrmod.
+## 3 chains, each with iter=7000; warmup=1000; thin=1; 
+## post-warmup draws per chain=6000, total post-warmup draws=18000.
+## 
+##              mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+## led50        2.54    0.01 0.81    1.49    2.03    2.38    2.82    4.73  3510    1
+## lambda       1.19    0.01 0.48    0.49    0.86    1.11    1.42    2.39  6923    1
+## emax         2.64    0.02 0.91    1.70    2.17    2.45    2.83    5.00  3202    1
+## e0[1]       -0.96    0.00 0.25   -1.44   -1.12   -0.97   -0.81   -0.46  7919    1
+## difTarget    2.22    0.00 0.31    1.61    2.01    2.22    2.42    2.82  7972    1
+## loglambda    0.10    0.01 0.39   -0.72   -0.15    0.10    0.35    0.87  5798    1
+## lp__      -215.14    0.03 1.74 -219.59 -215.96 -214.73 -213.88 -213.02  3944    1
+## 
+## Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:22:21 2026.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).
+```
+A plot the fitted dose response model:
+
+
+``` r
+plot(fitbin)
+```
+
+![plot of chunk plotEmaxBayes](mixfig/plotEmaxBayes-1.png)
+
+
+
+# Continuous Response
+
+## Deriving a Mixture Prior Using RBesT
+
+This example is from 
+[Application of RBesT in a Normal Endpoint](https://github.com/Novartis/RBesT/blob/main/vignettes/articles/introduction_normal.Rmd). 
+Additional details for the mixture prior are in this primary reference.  The
+computations are very similar to the binary example.
+
+### Data
+
+The primary endpoint is the change from baseline in Crohn's Disease 
+Activity Index (CDAI), which is assumed to be normally distributed. Note that 
+for CDAI, an improved outcome  corresponds to a negative change from baseline. 
+The estimated standard deviation from historical studies is $\sigma=88$.
+
+
+``` r
+h.data <- crohn
+crohn_sigma <- 88
+h.data$y.se <- crohn_sigma / sqrt(h.data$n)
+kable(h.data, digits=2, caption = "CDAI from Published Studies")%>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>CDAI from Published Studies</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> study </th>
+   <th style="text-align:right;"> n </th>
+   <th style="text-align:right;"> y </th>
+   <th style="text-align:right;"> y.se </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Gastr06 </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:right;"> -51 </td>
+   <td style="text-align:right;"> 10.23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> AIMed07 </td>
+   <td style="text-align:right;"> 166 </td>
+   <td style="text-align:right;"> -49 </td>
+   <td style="text-align:right;"> 6.83 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> NEJM07 </td>
+   <td style="text-align:right;"> 328 </td>
+   <td style="text-align:right;"> -36 </td>
+   <td style="text-align:right;"> 4.86 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Gastr01a </td>
+   <td style="text-align:right;"> 20 </td>
+   <td style="text-align:right;"> -47 </td>
+   <td style="text-align:right;"> 19.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> APhTh04 </td>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> -90 </td>
+   <td style="text-align:right;"> 17.60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Gastr01b </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:right;"> -54 </td>
+   <td style="text-align:right;"> 11.55 </td>
+  </tr>
+</tbody>
+</table>
+
+## Computing a MAP Prior MCMC Sample using `gMAP`
+
+An MCMC sample from the Meta Analytic Predictive (MAP) prior can be 
+computed using the `gMAP()` function in RBesT. The between trial heterogeneity 
+is a Half-Normal distribution with scale parameter $\tau$.  
+A conservative specification is $\tau= \sigma/2$.  A normal prior distribution 
+is specified for the mean placebo change from baseline with a prior mean of 
+$0.0$ and a **unit-information** prior SD. 
+
+
+``` r
+map_mcmc <- gMAP(cbind(y, y.se) ~ 1 | study,
+  weights = n, data = h.data,
+  family = gaussian,
+  beta.prior = cbind(0, crohn_sigma),
+  tau.dist = "HalfNormal", tau.prior = cbind(0, crohn_sigma / 2)
+)
+print(map_mcmc)
+```
+
+```
+## Generalized Meta Analytic Predictive Prior Analysis
+## 
+## Call:  gMAP(formula = cbind(y, y.se) ~ 1 | study, family = gaussian, 
+##     data = h.data, weights = n, tau.dist = "HalfNormal", tau.prior = cbind(0, 
+##         crohn_sigma/2), beta.prior = cbind(0, crohn_sigma))
+## 
+## Exchangeability tau strata: 1 
+## Prediction tau stratum    : 1 
+## Maximal Rhat              : 1 
+## Estimated reference scale : 88 
+## 
+## Between-trial heterogeneity of tau prediction stratum
+##        mean median   sd q2.5  q50 q97.5
+## tau[1] 14.3   12.3 9.71 1.51 12.3  39.2
+## 
+## MAP Prior MCMC sample
+##                  mean median   sd  q2.5   q50 q97.5
+## theta_resp_pred -49.6  -48.4 18.8 -91.1 -48.4 -12.7
+```
+
+## Parametric Approximation derived from the MCMC Sample
+
+As with the binary example, a parametric approximation is computed
+using `mixfit()` with 2 components selected manually. 
+
+
+``` r
+map <- mixfit(map_mcmc, Nc=2)
+print(map)
+```
+
+```
+## EM for Normal Mixture Model
+## Log-Likelihood = -16937.04
+## 
+## Univariate normal mixture
+## Reference scale: 88
+## Mixture Components:
+##   comp1       comp2      
+## w   0.7405834   0.2594166
+## m -48.3825486 -53.0860498
+## s  10.6234701  31.9008848
+```
+
+``` r
+## check accuracy of mixture fit
+plot(map)$mix
+```
+
+![plot of chunk mixmapc](mixfig/mixmapc-1.png)
+
+## Robustification and Effective Sample Size
+
+The robustification of the mixture prior is unchanged from the binary
+example:
+
+
+``` r
+map_robust <- robustify(map, weight = 0.5, mean = -50)
+print(map_robust)
+```
+
+```
+## Univariate normal mixture
+## Reference scale: 88
+## Mixture Components:
+##   comp1       comp2       robust     
+## w   0.3702917   0.1297083   0.5000000
+## m -48.3825486 -53.0860498 -50.0000000
+## s  10.6234701  31.9008848  88.0000000
+```
+
+The effective sample size (ESS) also computed using `ess()` function:
+
+``` r
+round(ess(map, method = 'elir'))
+```
+
+```
+## [1] 40
+```
+
+## Bayesian Emax Model with a Mixture Prior for E0
+
+### Simulated dose response study
+
+The methods are illustrated with simulated data from a dose response study 
+with placebo and four doses ranging from 5 mg to 100 mg.  The simulated 
+responses are normally distributed with means determined by a 
+3-parameter Emax model with $E_0=-50$, a difference with placebo at the 
+$100$ mg dose of $difTarget= -1SD$, with the $SD=75$, 
+and the $ED_{50}=30$mg.  The simulated data are consistent with the 
+mixture prior.
+ 
+The reduced sample size in the placebo group matches the sample size gain 
+from the informative mixture prior.
+ 
+
+``` r
+# Dose groups
+doselev<-c(0, 5, 25, 50, 100) 
+# Sample size
+ss<-c(40, 80, 80, 80, 80)
+## Population Parameters
+e0<--50
+ed50<- 30
+dtarget<- 100
+diftarget<- -75
+emax<-solveEmax(diftarget,dtarget,log(ed50),1,e0)
+sdy<-75
+pop<-c(log(ed50),emax,e0)
+
+# Mean for each dose level
+mu<-emaxfun(doselev,pop)
+
+# Generate single study data
+dose_data <- rep(doselev, times=ss)
+mu_data <- rep(mu, times=ss)
+set.seed(20260217)
+y <- rnorm(n=sum(ss), mean=mu_data, sd=sdy)
+
+study.data <- data.frame(y=y, dose= dose_data)
+
+# Create summary data
+summ.data <- study.data %>% group_by(dose) %>%
+  summarise(
+    n=n(),
+    mean = mean(y),
+    std=sd(y)
+  )
+
+kable(summ.data, digits=2, caption="Summary at each Dose Level") %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>Summary at each Dose Level</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> dose </th>
+   <th style="text-align:right;"> n </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> std </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> -62.38 </td>
+   <td style="text-align:right;"> 78.34 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> -67.24 </td>
+   <td style="text-align:right;"> 79.20 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 25 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> -106.93 </td>
+   <td style="text-align:right;"> 75.80 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 50 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> -111.03 </td>
+   <td style="text-align:right;"> 84.94 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> -120.21 </td>
+   <td style="text-align:right;"> 74.33 </td>
+  </tr>
+</tbody>
+</table>
+
+## Model fit using `fitEmaxB`
+
+To set up a mixture prior for E0, we use `emaxPrior.control()` similar to before
+without specifying `binary=TRUE`:
+
+
+
+``` r
+prior.emax <- emaxPrior.control(epmu=0,epsca=100,mixP=3, 
+                                mu_ep=c(-48.6, -53.3, -50),sd_ep = c(10.9,32.7, 88.0),
+                                w_ep = c(0.35, 0.15, 0.5), difTargetmu = -150, difTargetsca =75,
+                                dTarget = 100, p50=30, sigmalow =10, sigmaup = 500)
+
+msSat <- sum((summ.data$n-1)*(summ.data$std)^2)/(sum(summ.data$n)-length(summ.data$n))
+mcmc <- mcmc.control(chains=3)
+
+## Fit Emax Model
+
+fitout<-fitEmaxB(summ.data$mean,summ.data$dose,prior.emax,modType=4,prot=rep(1, nrow(summ.data)),
+                 count=summ.data$n,msSat=msSat,mcmc=mcmc)
+summary(fitout)
+```
+
+```
+## Inference for Stan model: mrmod.
+## 3 chains, each with iter=4333; warmup=1000; thin=1; 
+## post-warmup draws per chain=3333, total post-warmup draws=9999.
+## 
+##               mean se_mean    sd     2.5%      25%      50%      75%    97.5% n_eff Rhat
+## led50         3.30    0.02  1.18     1.75     2.54     3.04     3.77     6.42  2685    1
+## lambda        1.07    0.01  0.46     0.45     0.76     0.99     1.29     2.22  4990    1
+## emax       -101.04    1.50 67.98  -266.13  -106.73   -84.20   -70.04   -50.45  2051    1
+## e0[1]       -54.53    0.11  8.41   -71.39   -60.15   -54.50   -48.98   -38.11  5812    1
+## sigma[1]     78.80    0.04  2.97    73.24    76.75    78.71    80.79    84.71  7011    1
+## difTarget   -67.61    0.15 11.13   -89.23   -75.20   -67.66   -60.38   -45.49  5428    1
+## loglambda    -0.01    0.01  0.40    -0.80    -0.28    -0.01     0.25     0.80  4790    1
+## lp__      -1863.67    0.03  1.84 -1868.27 -1864.60 -1863.26 -1862.31 -1861.27  3026    1
+## 
+## Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:22:31 2026.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).
+```
+
+Finally, the `plot` function displays the fitted Emax curve
+
+
+``` r
+plot(fitout)
+```
+
+![plot of chunk plotc](mixfig/plotc-1.png)
+ 
+
+
+# References
+
+
+<span id="ref1">[1]</span> Baeten D. et al., _The Lancet_, 2013, (382), 9906, p 1705  
+
+<span id="ref2">[2]</span> Neuenschwander B et. al, _Clin Trials_. 2010; 7(1):5-18  
+
+<span id="ref3">[3]</span> Kass RE, Wasserman L, _J Amer Statist Assoc_; 1995, 90(431):928-934.
+
+<span id="ref4">[4]</span> Thomas N et. al, _Statistics in Biopharmaceutical Research_, 2014, 302-317
+
+<span id="ref5">[5]</span> Thomas N et. al, _Statistics in Biopharmaceutical Research_, 2016, 302-317
+
+<span id="ref6">[6]</span> Wu, J.et. al., _Statistical Methods in Medical Research_, 2017 

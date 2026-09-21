@@ -10,7 +10,7 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	prot<-object$prot
 	nprot<-max(as.numeric(prot))
 	nbase<-object$nbase
-	if(nbase)xbase<-object$xbase[prot==int,]
+	if(nbase)xbase<-as.matrix(object$xbase[prot==int,])
 	
 	if(! int%in%(c(1:nprot)))stop('The intercept specification is invalid')
 
@@ -19,14 +19,14 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	
 	parms<-coef(object)
 	nparm<-ncol(parms)
-	if(nbase>0)bparms<-parms[,(1+nparm-nbase):nparm]
-	parms<-parms[,1:(nparm-nbase)]
+	if(nbase>0)bparms<-as.matrix(parms[,(1+nparm-nbase):nparm])
+	parms<-as.matrix(parms[,1:(nparm-nbase)])
 	if(pboAdj){
 		parms<-cbind(parms,rep(0,nrow(parms)))		
-	}else parms<-coef(object)[,c(1:(modType-1),modType+(int-1))]
+	}else parms<-as.matrix(coef(object)[,c(1:(modType-1),modType+(int-1))])
 	if(!binary && !dimFit) sigsim<-sigma(object) else sigsim<-NULL
 	
-	predout<- emaxfun(dosevec,parms)
+	predout<- as.matrix(emaxfun(dosevec,parms))
 	predref<- as.vector(emaxfun(dref,parms))
 	if(nbase>0){
 		if(!is.null(xvec)){
@@ -37,7 +37,6 @@ function(object,dosevec,clev=0.9,int=1,dref=0, xvec=NULL, ...){
 	if(binary){
 		if(nbase>0){
 			predref<-apply(plogis(predref+bcont),1,mean)	
-			if(nbase==1)predout<-matrix(predout,ncol=1)
 			for(i in 1:length(dosevec)){
 				predout[,i]<-apply(plogis(predout[,i]+bcont),1,mean)	
 			}

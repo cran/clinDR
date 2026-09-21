@@ -44,6 +44,8 @@ importFrom("tibble", "as_tibble")
 importFrom("dplyr", "mutate", "select", "rename", "bind_rows")
 importFrom("tidyr", "pivot_longer")
 importFrom("glue", "glue")
+importFrom("officer", "read_docx","body_add_par","body_add_fpar",
+           "fpar","ftext","fp_text")
 S3method("[",emaxsim)
 S3method("[",emaxsimB)
 S3method(coef,emaxsimB)

@@ -21,8 +21,13 @@ data {
     
 		real<lower=0> df2;   // saturated df divided by 2
 		real<lower=0> ssy;
+		int<lower=0> mixP;     //mixP= 0 t-prior,  mixP>0 mixture prior with mixP components
     real epmu;
 		real<lower=0> epsca;
+		vector[mixP ? mixP : 0]  mu_ep; // Prespecified e0 mixture means
+		vector[mixP ? mixP : 0]  sd_ep; // Prespecified e0 mixture standard deviations
+		vector[mixP ? mixP : 0]  w_ep; // Prespecified e0 mixture weights (simplex)
+
     real difTargetmu;
 		real<lower=0> difTargetsca;
 		real<lower=0> dTarget;
@@ -107,8 +112,18 @@ model{
 		csd=sqrt(spreg*(parmDF+pow(loged50-loged50mu,2)/pow(loged50sca,2))/(parmDF+1));
 		
 		if(intercept){
-			for(i in 1:nprot){
-				e0[i]~student_t(e0DF,epmu,epsca);
+			if(!mixP){
+					for(i in 1:nprot){
+						e0[i]~student_t(e0DF,epmu,epsca);
+					}
+			}else{
+				for (i in 1:nprot) {
+					vector[mixP] log_components;
+					for (j in 1:mixP) {
+						log_components[j] = log(w_ep[j]) + normal_lpdf(e0[i] | mu_ep[j], sd_ep[j]);
+					}
+					target += log_sum_exp(log_components);
+				}
 			}
 		}
 		

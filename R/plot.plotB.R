@@ -179,10 +179,10 @@
     
    
     if(predict)gp2<-gp2+geom_errorbar(aes(x=doselev,ymin=plotlowP,ymax=plotupP),
-                                      width=werrbar,size=1.1,color='grey')
-    gp2<-gp2+geom_errorbar(aes(x=doselev,ymin=plotlow,ymax=plotup),width=0,size=1.1,color='black')
+                                      width=werrbar,linewidth=1.1,color='grey')
+    gp2<-gp2+geom_errorbar(aes(x=doselev,ymin=plotlow,ymax=plotup),width=0,linewidth=1.1,color='black')
     gp2<-gp2+geom_line(data=data.frame(dgrid,plotmg),
-                       aes(x=dgrid,y=plotmg),col='black',size=1.1)
+                       aes(x=dgrid,y=plotmg),col='black',linewidth=1.1)
     gp2<-gp2+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()
     gp2<-gp2+geom_point(data=data.frame(dose,ploty,symbol),aes(x=dose,y=ploty,shape=symbol,
                                                                color=symbol),size=symbolSize)
@@ -197,9 +197,9 @@
       
       if(predict)gp2<-gp2+geom_errorbar(aes(x=max(doselev)+max(diff(doselev)),
                                             ymin=aclowLpred,ymax=acupLpred),
-                                        width=0,size=1.1,color='grey')
+                                        width=0,linewidth=1.1,color='grey')
       gp2<-gp2+geom_errorbar(aes(x=max(doselev)+max(diff(doselev)),
-                                 ymin=aclowL,ymax=acupL),width=0,size=1.1,color='black')    
+                                 ymin=aclowL,ymax=acupL),width=0,linewidth=1.1,color='black')    
       
       gp2 <- gp2 + geom_point(aes(x=max(doselev)+max(diff(doselev)),y=yac),
                               size=symbolSize,color=colac,shape=shapeac)      
@@ -257,12 +257,12 @@
     }
    
     if(predict)gp2<-gp2+geom_errorbar(aes(x=log(doselevlog),ymin=plotlowP,ymax=plotupP),
-                                      width=werrbarlog,size=1.1,color='grey')
-    gp2<-gp2+geom_errorbar(aes(x=log(doselevlog),ymin=plotlow,ymax=plotup),width=0,size=1.1,color='black')
+                                      width=werrbarlog,linewidth=1.1,color='grey')
+    gp2<-gp2+geom_errorbar(aes(x=log(doselevlog),ymin=plotlow,ymax=plotup),width=0,linewidth=1.1,color='black')
     gp2<-gp2+geom_line(data=data0,
-                       aes(x=log(dgridlog),y=plotmg),col='black',size=1.1, linetype="dashed")
+                       aes(x=log(dgridlog),y=plotmg),col='black',linewidth=1.1, linetype="dashed")
     gp2<-gp2+geom_line(data=data2,
-                       aes(x=log(dgridlog),y=plotmg),col='black',size=1.1, linetype="solid")    
+                       aes(x=log(dgridlog),y=plotmg),col='black',linewidth=1.1, linetype="solid")    
     
     gp2<-gp2+ylab(ylab) + xlab(xlab) + ggplot2::theme_bw()
     gp2<-gp2+geom_point(data=data.frame(doselog,ploty,symbol),aes(x=log(doselog),y=ploty,shape=symbol,
@@ -278,9 +278,9 @@
 
       if(predict)gp2<-gp2+geom_errorbar(aes(x=log(max(doselevlog))+max(diff(log(doselevlog))),
                                             ymin=aclowLpred,ymax=acupLpred),
-                                        width=0,size=1.1,color='grey')
+                                        width=0,linewidth=1.1,color='grey')
       gp2<-gp2+geom_errorbar(aes(x=log(max(doselevlog))+max(diff(log(doselevlog))),
-                                 ymin=aclowL,ymax=acupL),width=0,size=1.1,color='black')    
+                                 ymin=aclowL,ymax=acupL),width=0,linewidth=1.1,color='black')    
       if(is.null(xat))   gp2 <- gp2 + scale_x_continuous(breaks=c(log(doselevlog), log(max(doselevlog))+max(diff(log(doselevlog)))),
                                       labels=c(doselev, labac)) 
       gp2 <- gp2 + geom_point(aes(x=log(max(doselevlog))+max(diff(log(doselevlog))),y=yac),
@@ -297,7 +297,7 @@
   ## remove the vertical grid lines
   gp2 <- gp2+ ggplot2::theme(panel.grid.major.x=element_blank(),
                     panel.grid.minor.x=element_blank(),
-                    panel.grid.major.y=element_line(size=0.1))  
+                    panel.grid.major.y=element_line(linewidth=0.1))  
   
   if(!is.null(xat)){
     if(activeControl){

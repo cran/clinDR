@@ -51,8 +51,8 @@
         data <- data.frame(ym,doselevlog,chvec,clvec)
         #data1 <- subset(data, data$doselevlog < doselevlog[2] & data$doselevlog >= doselevlog[1])
         data2 <- subset(data, data$doselevlog >= doselevlog[2])
-        ggp<-ggp+geom_line(data=data, aes(x=log(doselevlog),ym),color='black',size=0.6, linetype="dashed") 
-        ggp<-ggp+geom_line(data=data2, aes(x=log(doselevlog),ym),color='black',size=0.6, linetype="solid") 
+        ggp<-ggp+geom_line(data=data, aes(x=log(doselevlog),ym),color='black',linewidth=0.6, linetype="dashed") 
+        ggp<-ggp+geom_line(data=data2, aes(x=log(doselevlog),ym),color='black',linewidth=0.6, linetype="solid") 
         
       } 
       
@@ -78,7 +78,7 @@
   ## remove the vertical grid lines
   ggp <- ggp+ ggplot2::theme(panel.grid.major.x=element_blank(),
                     panel.grid.minor.x=element_blank(),
-                    panel.grid.major.y=element_line(size=0.1))  
+                    panel.grid.major.y=element_line(linewidth=0.1))  
   
   return(list(ggp = ggp, means = ym, se = sem))
 }

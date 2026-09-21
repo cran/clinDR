@@ -383,12 +383,12 @@
       	if(is.null(ncol))ncol<-min(nprot,5)
       	lplot<-lplot+facet_wrap(~protD,ncol=ncol) 
       }
-      if(predict)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=pihvec,ymin=pilvec),size=1.1,
+      if(predict)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=pihvec,ymin=pilvec),linewidth=1.1,
                                             color='grey',width=werrbar)
-      if(plotci)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=cihvec,ymin=cilvec),width=0,size=1.1,color='black')
+      if(plotci)lplot<-lplot+geom_errorbar(aes(x=doseLevVec,ymax=cihvec,ymin=cilvec),width=0,linewidth=1.1,color='black')
       lplot<-lplot+geom_line(data=data.frame(dgridvec=dgridvec,predvecG=predvecG,
                                              protD=factor(protG,labels=protlab)),
-                             aes(x=dgridvec,y=predvecG),color='black',size=1.1, ...)   
+                             aes(x=dgridvec,y=predvecG),color='black',linewidth=1.1, ...)   
       lplot<-lplot+geom_point(data=data.frame(ymvecDS,dosevecDS,symDS,protD=factor(protDS,labels=protlab)),
                               aes(x=dosevecDS,y=ymvecDS,shape=symDS,color=symDS),
                               size=symbolSize)
@@ -445,17 +445,17 @@
         }
         
         
-        if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),size=1.1,
+        if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),linewidth=1.1,
                                               color='grey',width=werrbarlog)
         
-        if(plotci)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=cihvec,ymin=cilvec),width=0,size=1.1,
+        if(plotci)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=cihvec,ymin=cilvec),width=0,linewidth=1.1,
                                              color='black')
         
         data=data.frame(dgridveclog,predvecG=predvecG,protD=factor(protG,labels=protlab))
         data1 <- subset(data, data$dgridveclog < bench_doseLevVeclog [2] & data$dgridveclog >= xtemp)
         data2 <- subset(data, data$dgridveclog >= bench_doseLevVeclog [2])
-        lplot<-lplot+geom_line(data=data1, aes(x=log(dgridveclog),y=predvecG),color='black',size=1.1, linetype="dashed") 
-        lplot<-lplot+geom_line(data=data2, aes(x=log(dgridveclog),y=predvecG),color='black',size=1.1, linetype="solid") 
+        lplot<-lplot+geom_line(data=data1, aes(x=log(dgridveclog),y=predvecG),color='black',linewidth=1.1, linetype="dashed") 
+        lplot<-lplot+geom_line(data=data2, aes(x=log(dgridveclog),y=predvecG),color='black',linewidth=1.1, linetype="solid") 
         
         
         
@@ -510,16 +510,16 @@
       		if(is.null(ncol))ncol<-min(nprot,5)
         	lplot<-lplot+facet_wrap(~protD,ncol=ncol) 
         }
-        if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),size=1.1,
+        if(predict)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=pihvec,ymin=pilvec),linewidth=1.1,
                                               color='grey',width=werrbarlog)
-        if(plotci)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=cihvec,ymin=cilvec),width=0,size=1.1,color='black')
+        if(plotci)lplot<-lplot+geom_errorbar(aes(x=log(doseLevVeclog),ymax=cihvec,ymin=cilvec),width=0,linewidth=1.1,color='black')
         
         data=data.frame(dgridveclog,predvecG=predvecG,protD=factor(protG,labels=protlab))
         data1 <- subset(data, data$dgridveclog < bench_doseLevVeclog[1] & data$dgridveclog >= xtemp)
         data2 <- subset(data, data$dgridveclog >= bench_doseLevVeclog[1])
         
-        lplot<-lplot+geom_line(data=data1, aes(x=log(dgridveclog),y=predvecG),color='black',size=1.1, linetype="dashed") 
-        lplot<-lplot+geom_line(data=data2, aes(x=log(dgridveclog),y=predvecG),color='black',size=1.1, linetype="solid") 
+        lplot<-lplot+geom_line(data=data1, aes(x=log(dgridveclog),y=predvecG),color='black',linewidth=1.1, linetype="dashed") 
+        lplot<-lplot+geom_line(data=data2, aes(x=log(dgridveclog),y=predvecG),color='black',linewidth=1.1, linetype="solid") 
         
         lplot<-lplot+geom_point(data=data.frame(ymvecDS,dosevecDSlog,symDS,protD=factor(protDS,labels=protlab)),
                                 aes(x=log(dosevecDSlog),y=ymvecDS,shape=symDS,color=symDS),
@@ -536,7 +536,7 @@
     ## remove the vertical grid lines
     lplot <- lplot+ ggplot2::theme(panel.grid.major.x=element_blank(),
     											panel.grid.minor.x=element_blank(),
-    											panel.grid.major.y=element_line(size=0.1))   
+    											panel.grid.major.y=element_line(linewidth=0.1))   
     
     if(nolegend)lplot<-lplot + ggplot2::theme(legend.position = "none")
 

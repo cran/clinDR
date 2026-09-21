@@ -119,8 +119,8 @@
       names(df1)<-c('low','high','lowP','highP','doselev','dm')
       gp2<-ggplot(df1,aes(x=doselev,y=dm))
       gp2<-gp2+geom_point(shape=8,color='red',size=4)
-      if(predict)gp2<-gp2+geom_errorbar(aes(ymin=lowP,ymax=highP),width=werrbar,size=1.1,color='grey')
-      gp2<-gp2+geom_errorbar(aes(ymin=low,ymax=high),width=0,size=1.1,color='black')
+      if(predict)gp2<-gp2+geom_errorbar(aes(ymin=lowP,ymax=highP),width=werrbar,linewidth=1.1,color='grey')
+      gp2<-gp2+geom_errorbar(aes(ymin=low,ymax=high),width=0,linewidth=1.1,color='black')
       gp2<-gp2+xlab(xlab)+ylab(ylab)
       gp2<-gp2+coord_cartesian(xlim=xlim,ylim=ylim)
       
@@ -202,8 +202,8 @@
         names(df1)<-c('low','high','lowP','highP','doselevlog','dm')
         gp2<-ggplot(data=df1,aes(x=log(doselevlog),y=dm))
         gp2<-gp2+geom_point(shape=8,color='red',size=4)        
-        if(predict)gp2<-gp2+geom_errorbar(aes(ymin=lowP,ymax=highP),width=werrbarlog,size=1.1,color='grey')
-        gp2<-gp2+geom_errorbar(aes(ymin=low,ymax=high),width=0,size=1.1,color='black')
+        if(predict)gp2<-gp2+geom_errorbar(aes(ymin=lowP,ymax=highP),width=werrbarlog,linewidth=1.1,color='grey')
+        gp2<-gp2+geom_errorbar(aes(ymin=low,ymax=high),width=0,linewidth=1.1,color='black')
         gp2<-gp2+xlab(xlab)+ylab(ylab)      
         gp2<-gp2+coord_cartesian(xlim=xlimlog,ylim=ylim) 
         
@@ -311,7 +311,7 @@
     ## remove the vertical grid lines
     gp2 <- gp2+ ggplot2::theme(panel.grid.major.x=element_blank(),
                       panel.grid.minor.x=element_blank(),
-                      panel.grid.major.y=element_line(size=0.1))   
+                      panel.grid.major.y=element_line(linewidth=0.1))   
     
     if(!is.null(xat)){
       if(!logScale)      gp2 <- gp2 + scale_x_continuous(breaks=xat, 
@@ -367,7 +367,7 @@ function(x, clev=0.9, plotDif=FALSE, plotPop=c('m','3','4'),
 	
 	lplot<-lplot+geom_line(data=data.frame(dgrid=dgrid,popg=popg),
                             aes(x=dgrid,y=popg),color='black',
-												 		linetype='dashed',size=1.1) 	
+												 		linetype='dashed',linewidth=1.1) 	
 	
 	print(lplot)
   if(!plotResid) cat("Note:  Dashed curve is population, solid curve is estimated\n")

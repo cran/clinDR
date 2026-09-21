@@ -197,7 +197,9 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=0.1,sigmaup=30,parmDF=5,
+                         basemu=basemu,basevar=basevar)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
@@ -262,8 +264,11 @@ basemu<-numeric(2)
 basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
 basevar<-basevar*(4)^2  ## off-diagonal elements
 
-prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,
+                         parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,
+                   adapt_delta = .9)
 
 testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=4,xbase=x,
 										mcmc=mcmc,diagnostics=FALSE,binary=TRUE,nproc=1)
@@ -465,8 +470,12 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
-mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=0.1,sigmaup=30,parmDF=5,
+                         basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,
+                   adapt_delta = .9)
 
 testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
 									 mcmc=mcmc,diagnostics=FALSE,nproc=3)
@@ -530,7 +539,10 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
+
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=0.1,sigmaup=30,parmDF=5,
+                         basemu=basemu,basevar=basevar)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout2<-fitEmaxB(y,dose,prior=prior,modType=3,prot=prots,xbase=x,
@@ -674,7 +686,9 @@ basemu<-numeric(2)
 basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
 basevar<-basevar*(4)^2  ## off-diagonal elements
 
-prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=0.1,sigmaup=30,parmDF=5,
+                         basemu=basemu,basevar=basevar,binary=TRUE)
 mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=4,xbase=x,

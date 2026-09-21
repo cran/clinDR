@@ -1,0 +1,123 @@
+---
+title: Getting started with clinDR
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Getting started with clinDR"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+ 
+# Introduction 
+
+This introductory document includes
+
+-  Installation instructions highlighting the one-time use of 
+**compileStanModels()**
+-  A brief summary of the primary **clinDR** functions
+-  Instructions to access the dose response meta-data used to support the
+Emax model and construct prior distributions for its parameters
+-  A brief example
+
+A detailed example using **clinDR** is in the vignette "Example of Bayesian 
+Emax dose response modeling".
+
+
+
+# Installation
+
+The **clinDR** package can be installed from the CRAN package library.  It does
+not include any compiled code so there are seldom problems with installing it
+and checking the installation using **library(clinDR)** code.
+
+The Bayesian computing in **clinDR** is performed using **STAN** thru the
+**rstan** R package, which must be installed before using most of the functions
+in **clinDR**.  Most **clinDR** installation problems occur when **rstan** has
+not been successfully installed.  To confirm that **rstan** is executing
+correctly, we recommend executing the simple example included in the 
+documentation for the **rstan** function **sampling**.  
+
+Once **rstan**
+execution has been confirmed, one additional step is required before
+the Bayesian calculations in **clinDR** can be used.  Before the first
+use of **clinDR**, the **clinDR** function **compileStanModels()** must be
+executed to compile the Emax model code.  This preliminary step only needs
+to be executed one time. It typically requires 1-3 minutes to execute.  It 
+greatly accelerates the execution of the model fiting codes.
+
+If a new version of **rstan** is installed, it is strongly recommended to
+re-execute the **compileStanModels()** command.  If **clinDR** is re-installed or
+a new version is installed, the **compileStanModels()** function
+must be executed again before using **clinDR**.
+
+
+# Primary **clinDR** functions
+
+The primary clinDR function is **fitEmaxB**, which fits the Bayesian Emax
+model.  The prior distribution input to it is constructed by the function
+**emaxPrior.control**, and the MCMC specifications are constructed by
+**mcmc.control**.  Many of the input settings have default values specified. 
+There are numerous generic functions specialized to handle the **fitEmaxB**
+output such as **print**, **plot**, **coef**, **predict**, etc. The **fitEmaxB**
+function can be applied to continuous(normal) or binary data, and individual
+patient-level data or data aggregated to the dose group level.  A corresponding
+**fitEmax** function computes maximum likelihood estimates with a step down
+sequence to the best fitting simpler dose response functions like linear, 
+log-linear, and the exponential functions when the Emax model fits do not 
+converge.
+
+Simulation studies can be simulated without any programming using the 
+corresponding **emaxsimB** and **emaxsim** functions.  These functions also
+include many supporting functions to summarize their output.  The documentation
+of these functions includes methods that allow specialized output to be
+created with minimal additional coding.
+
+# Dose response meta-data
+
+Clinical dose response data from more than 200 compounds were evaluated using
+graphical methods and hierarchical modeling to support the use of the Emax
+function for dose response modeling.   Combined with compound-specific information 
+for a future dose response study, it is also used to create a moderately 
+informative prior distribution
+for some of the model parameters.  The data includes all available 
+dose response studies displaying a non-null trend from
+one large sponsor since 1990 for both approved and subsequentially terminated
+compounds.  The data includes publicly available data for all FDA approved
+compounds between 2009-2019.  It also includes some older data from biological
+compounds.  All of the data are aggregated to the dose level.
+
+The data can be accessed from the **clinDR** package using **data(metaData)**.  
+Details of the data format are available using the usual help functions.  Some
+references for the different data sources are
+
+Thomas, Sweeney, and Somayaji (2014) <doi:10.1080/19466315.2014.924876> 
+
+Thomas and Roy (2016) <doi:10.1080/19466315.2016.1256229> 
+
+Wu, Banerjee, Jin, Menon, Martin, and Heatherington(2017) <doi:10.1177/0962280216684528>  
+
+
+# Example 
+
+
+``` r
+library(clinDR)
+data("metaData")
+exdat<-metaData[metaData$taid==1,]
+
+prior<-emaxPrior.control(epmu=0,epsca=4,difTargetmu=0,difTargetsca=4,dTarget=20,
+				p50=(2+5)/2,
+				sigmalow=0.01,sigmaup=3)
+										
+mcmc<-mcmc.control(chains=3)
+
+### estimate of within dose group SD
+msSat<-sum((exdat$sampsize-1)*(exdat$sd)^2)/(sum(exdat$sampsize)-length(exdat$sampsize))
+
+fitout<-fitEmaxB(exdat$rslt,exdat$dose,prior,modType=4,prot=exdat$protid,
+				count=exdat$sampsize,msSat=msSat,mcmc=mcmc)
+plot(fitout)
+```
+
+![plot of chunk explot](gsfig/explot-1.png)

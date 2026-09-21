@@ -3,6 +3,8 @@ function(x,n,doselev,modType=c('4','3'))
 {
 
 	modType<-match.arg(modType,c('4','3'))
+	
+	if(isTRUE(x$mixP))stop('randomEmax does not support mixture PBO prior')
 
 	dord<-order(doselev)
 	doselev<-doselev[dord]

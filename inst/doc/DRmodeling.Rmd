@@ -1,0 +1,973 @@
+---
+title: Example of Bayesian Emax dose response modeling
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Example of Bayesian Emax dose response modeling"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+ 
+# Introduction
+  
+**Dose-Response modelling** using the **clinDR** is illustrated with 
+a real example of a  
+compound treating Rheumatoid Arthritis (RA).  
+
+The data are available in **clinDR** so no additional downloads are needed.  
+There are **two dose-response studies** for the compound:  
+  
+  1. **First study** – treated as a *new compound*.  
+ - We will fit dose-response models and explore posterior inferences. 
+ 
+  2. **Second study** – dose-response design and dose selection strategy.  
+ - This analysis will leverage information from the first study.  
+
+We will demonstrate the usefulness of different `clinDR` functionalities 
+including: 
+
+- `emaxPrior.control()`  
+- `fitEmaxB()`  
+- Posterior inference with `predict()`  
+- Visualization with `plot()`  
+- Convergence diagnostics using `traceplot()`  
+- Goodness-of-fit checks with `bpchkMonoEmax()`  
+- **Note:** A mixture placebo prior is not used in this example.  It is covered 
+in the vignette "Using a Mixture Prior for E0 in the Bayesian Emax Model".
+
+
+The R packages we use are loaded in the following code:
+
+
+``` r
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+
+library(clinDR)
+#> Loading required package: rstan
+#> Loading required package: StanHeaders
+#> 
+#> rstan version 2.39.0.9000 (Stan version 2.39.0)
+#> For execution on a local, multicore CPU with excess RAM we recommend calling
+#> options(mc.cores = parallel::detectCores()).
+#> To avoid recompilation of unchanged Stan programs, we recommend calling
+#> rstan_options(auto_write = TRUE)
+#> For within-chain threading using `reduce_sum()` or `map_rect()` Stan functions,
+#> change `threads_per_chain` option:
+#> rstan_options(threads_per_chain = 1)
+#> Do not specify '-march=native' in 'LOCAL_CPPFLAGS' or a Makevars file
+#> Loading required package: shiny
+library(DoseFinding)
+library(kableExtra)
+library(dplyr)
+#> 
+#> Attaching package: 'dplyr'
+#> The following object is masked from 'package:kableExtra':
+#> 
+#>     group_rows
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
+```
+
+# Step 1: Dose Response in a New RA Study
+
+## Data
+
+We extract the data for compound **taid=23** and **Protocol=A3921019** from
+the metaData repository which contains hundreds of compounds/protocols.
+
+
+
+``` r
+
+# Access metaData
+
+data("metaData")
+
+# Extract study data for taid=23 and protno='A3921019'
+
+dat1019 <- metaData[metaData$taid==23 & metaData$protno=="A3921019",]
+
+# Extract necessary columns
+
+dat1019 <- dat1019 %>% select(c("protno","dose", "rslt","se","sampsize","indication", "endpointShort", "primtype", "regimen",))
+
+kable(dat1019, row.names=FALSE, align="c") %>% 
+  kable_styling(full_width=FALSE,
+                bootstrap_options = c("hover"),
+                position = "center")
+```
+
+<table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:center;"> protno </th>
+   <th style="text-align:center;"> dose </th>
+   <th style="text-align:center;"> rslt </th>
+   <th style="text-align:center;"> se </th>
+   <th style="text-align:center;"> sampsize </th>
+   <th style="text-align:center;"> indication </th>
+   <th style="text-align:center;"> endpointShort </th>
+   <th style="text-align:center;"> primtype </th>
+   <th style="text-align:center;"> regimen </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 0 </td>
+   <td style="text-align:center;"> 0.3387097 </td>
+   <td style="text-align:center;"> 0.0601055 </td>
+   <td style="text-align:center;"> 62 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 10 </td>
+   <td style="text-align:center;"> 0.7241379 </td>
+   <td style="text-align:center;"> 0.0586871 </td>
+   <td style="text-align:center;"> 58 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 30 </td>
+   <td style="text-align:center;"> 0.7941176 </td>
+   <td style="text-align:center;"> 0.0490340 </td>
+   <td style="text-align:center;"> 68 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 60 </td>
+   <td style="text-align:center;"> 0.8095238 </td>
+   <td style="text-align:center;"> 0.0494726 </td>
+   <td style="text-align:center;"> 63 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+</tbody>
+</table>
+
+
+Key study design components:
+
+- Placebo and 3 actives BID doses - 10mg , 30mg and 60mg in total daily dose
+- Parallel arm design
+- Primary endpoint is ACR20 at week 6. ACR20 is a binary endpoint (Responder / Non Responder)
+- Targeted efficacy: A 0.3 point improvement over placebo is commercially meaningful. 
+- An estimated improvement of 0.2 or lower versus placebo (even if p-value 
+is significant) is considered failure for Phase 3
+
+
+
+A quick visualization of the dose response shape uses **clinDR:plotD:**
+
+
+``` r
+
+attach(dat1019)
+
+plotD(rslt, dose, meansOnly = TRUE, sem=se, ylab="ACR20 Proportion")
+#> $ggp
+```
+
+![plot of chunk plotraw](DRmodelPlots/plotraw-1.png)
+
+```
+#> 
+#> $means
+#> [1] 0.3387097 0.7241379 0.7941176 0.8095238
+#> 
+#> $se
+#> [1] 0.06010548 0.05868710 0.04903402 0.04947262
+```
+
+## Pre-specified alpha-controlled hypothesis testing: MCP-Mod Trend Test
+
+Pre-specified alpha-controlled tests are not required but they can be useful 
+as reviewers often expect/require p-value reporting. Once a successful
+p-value is reported, the primary objectives of dose-response analyses can
+be pursued. Obtaining a successful p-value is typically a minimal
+requirement.  A signal so weak it cannot be differentiated from noise will
+not contribute much to the differentiation of active doses for dose selection.  
+
+Selecting MCP-Mod contrasts created from Emax shapes is a natural first step
+in creating a prior distribution for Bayesian Emax modeling.
+A detailed overview of the implementation of 
+MCP-Mod is available in the package vignettes 
+[MCP-Mod](https://cran.r-project.org/package=DoseFinding). 
+Some default values values for candidate model selection that have
+been found to be useful are:
+
+ - Power (Hill) Parameter = 1
+ - ED50: half- of the lowest active dose , median dose, and average of the
+ two highest doses.  If there are only 3 active doses, then the contrast
+ based on the median dose is omitted.
+
+The candidate dose response models for MCP-Mod in the example are:
+
+
+``` r
+
+Ndose <- length(dose)
+#ED50 candidates
+ed50_cnd <- c((dose[1] + dose[2])/2, (dose[Ndose-1]+dose[Ndose])/2)
+#Lambda = 1
+lambda_cnd <- rep(1,2)
+
+parms_cnd <- cbind(ed50_cnd, lambda_cnd)
+
+# Candidate Models
+testMods <- Mods(sigEmax=parms_cnd, doses=dose, placEff = 0, maxEff = 1)
+
+plot(testMods)
+```
+
+![plot of chunk mcpmod_candidate](DRmodelPlots/mcpmod_candidate-1.png)
+
+MCP-Mod handles the binary data through the asymptotic normal approximation 
+of logit transformed rates:
+
+$$Var(logit(p)) = \frac{1}{n*p*(1-p)}$$
+
+
+
+``` r
+# Logit transformed rates
+ylogit <- qlogis(rslt)
+# Asymptotic variance covariance matrix
+VARCOV <- diag(1/(rslt*(1-rslt)*sampsize))
+#Optimal Contrasts
+contMat <- optContr(testMods, S=VARCOV)
+
+MCTtest(dose, ylogit, contMat = contMat, S=VARCOV, type='general')$tStat
+#> sigEmax1 sigEmax2 
+#> 6.069198 5.415233 
+#> attr(,"pVal")
+#> [1] 1.170114e-09 5.422183e-08
+```
+
+The p-values are already alpha adjusted for the multiple candidate dose 
+response shapes. The overall p-value is the lowest one. Clearly, there 
+is a strong dose response signal.
+
+## Setting up Prior for DR analysis
+
+The prior distribution for the Emax model parameters is specified in 
+package `clinDR` using the `emaxPrior.control()` function.  For binary data 
+like the example, the proportion of responders is modeled using on the 
+logit scale, so the prior for the Emax parameters is specified on the logit scale.
+The `clinDR` package allows us to specify priors for the Emax model parameters 
+using the `emaxPrior.control()` function. The response parameter is modeled 
+using the *logit* link function, so the prior for the Emax parameter is specified 
+on the logit scale.
+
+- $E_0$ (placebo response) is expected to be around 0.15, so we set the 
+prior mean for $E_0$ to logit(0.15). The historical placebo response is highly 
+variable and changing over time, so we use a diffuse prior around the mean
+
+$$E_0 \sim t_5(epmu=logit(0.15),epsca= 4)$$
+
+- $difTarget$ (placebo adjusted effect at the maximum dose on the logit scale) 
+We use a diffuse prior around 0, i.e., no effect, which is common in 
+early dose response studies
+
+- $ED_{50}$ (dose at which 50% of the maximum effect is achieved) Based on 
+pre-clinical data and pharmacology models, the $p_{50}$, the preliminary 
+prediction of the $ED_{50}$ is 10 mg
+
+For the other parameters, default priors included in `emaxPrior.control()` 
+are used.
+
+A description of prior and model is available through `clinDR:print`
+
+
+``` r
+# Prior control object
+# defaults
+# effDF=5,parmDF=5,             
+# loged50mu=0.0,loged50sca=1.73,
+# loglammu=0.0,loglamsca=0.425,parmCor=-0.45,
+# lowled50=log(0.001),highled50=log(1000),
+# lowllam=log(0.3),highllam=log(4.0)
+
+prior <- emaxPrior.control(epmu=qlogis(0.15), epsca=4, dTarget=max(dose),
+                           difTargetmu=0, difTargetsca=4, p50=10,
+                           binary=TRUE)
+
+
+print(prior, doc=TRUE, diffuse=c(pbo=TRUE,eff=TRUE), 
+      docType='sap')
+#> [1] "sap/binary/diffuse/t"
+```
+
+## Fit Bayesian Dose Response
+
+The Bayesian Emax model is fitted using `clinDR:fitEmaxB()`. 
+
+- $y:$ Response data in 1/0 format
+- $dose:$ Dose levels, needs to be in the same order as response data
+- $count:$ Sample size of responder (i.e 1) and non-responder (i.e 0), needs to be in the same order as dose
+
+
+
+``` r
+### convert proportions to 1/0 count data
+ndose<-length(dose)
+ybin<-c(rep(1,ndose),rep(0,ndose))
+nbin<-c(round(sampsize*rslt),sampsize-round(sampsize*rslt))
+dbin<-c(dose,dose)
+
+cat(
+  "Response data in 1/0 format: ", ybin, "\n",
+      "Dose levels: ", dbin, "\n",
+    "Count of responders and non-responders: ", nbin, "\n"
+)
+#> Response data in 1/0 format:  1 1 1 1 0 0 0 0 
+#>  Dose levels:  0 10 30 60 0 10 30 60 
+#>  Count of responders and non-responders:  21 42 54 51 41 16 14 12
+```
+When patient level data are available, the 0/1 value and dose of each patient 
+can be entered with a sample size of 1 for each 0 or 1 value.
+In addition to study data:
+
+- $prior:$ Prior control object created using `emaxPrior.control()`
+- $mcmc:$ MCMC control parameters. There are default values for all 
+required inputs. Consideration should be given to modifying these settings
+(e.g. warmup, iterations, chains, thin etc)
+
+
+
+``` r
+mcmc<-mcmc.control(chains=3,thin=3,iter=3333*3+1000, warmup=1000)
+
+fitout<-fitEmaxB(ybin,dbin,prior,count=nbin, mcmc=mcmc,binary=TRUE)
+
+```
+
+A modified maximum likelihood fit can also be computed using 
+`clinDR:fitEmax`. This estimation is not illustrated in the current example.
+
+
+## Posterior Diagnostics
+
+Convergence of MCMC should always be checked. The *rstan* objects are stored under *fitEmaxB* object
+
+
+``` r
+
+names(fitout)
+#>  [1] "estanfit"  "y"         "dose"      "prot"      "count"     "nbase"     "xbase"     "dimFit"    "vcest"    
+#> [10] "modType"   "binary"    "pboAdj"    "msSat"     "prior"     "mcmc"      "localParm"
+```
+
+**Traceplot**: This helps in assessing the convergence of the chains.
+
+
+``` r
+traceplot(fitout$estanfit,pars=c('led50','loglambda','e0[1]','difTarget'))
+```
+
+![plot of chunk traceplot](DRmodelPlots/traceplot-1.png)
+
+**pair plot**: Pair plot visualizes posterior marginal distributions and 
+correlation between parameters. It also helps diagnosing mixing of chains, 
+identifiability issues, etc.
+
+
+``` r
+pairs(fitout$estanfit,pars=c('led50','loglambda','e0[1]','difTarget'))
+```
+
+![plot of chunk pairplot](DRmodelPlots/pairplot-1.png)
+
+Finally, *clinDR* provides a convenient function to check the goodness of 
+fit of the model. The function `bpchkMonoEmax()` checks for monotonicity of 
+the Emax model fit comparing the best response from lower doses to the 
+response from highest dose.  The function returns a posterior predictive 
+check designed to be sensitive to non-monotonicity. A small predictive 
+probability indicates that the model fit is inconsistent with a monotonic 
+Emax dose response relationship.
+
+
+``` r
+bpchkMonoEmax(fitout)
+#> [1] 0.4922492
+```
+
+## Posterior Inference
+
+Posterior summaries of the *Emax* parameters are displayed by:
+
+
+``` r
+
+summary(fitout,pars=c('led50','lambda','emax','e0','difTarget','loglambda'))
+#> Inference for Stan model: mrmod.
+#> 3 chains, each with iter=10999; warmup=1000; thin=3; 
+#> post-warmup draws per chain=3333, total post-warmup draws=9999.
+#> 
+#>              mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+#> led50        1.55    0.02 1.54   -1.72    0.80    1.58    2.28    4.94  7406    1
+#> lambda       1.08    0.01 0.54    0.37    0.70    0.98    1.32    2.48  7889    1
+#> emax         2.67    0.02 1.36    1.50    2.02    2.37    2.88    5.77  6886    1
+#> e0[1]       -0.64    0.00 0.27   -1.19   -0.82   -0.64   -0.47   -0.13  7682    1
+#> difTarget    2.13    0.00 0.37    1.42    1.88    2.13    2.37    2.88  7707    1
+#> loglambda   -0.04    0.01 0.48   -1.00   -0.35   -0.02    0.28    0.91  7998    1
+#> lp__      -140.27    0.02 1.87 -144.99 -141.18 -139.85 -138.88 -137.91  5859    1
+#> 
+#> Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:21:39 2026.
+#> For each parameter, n_eff is a crude measure of effective sample size,
+#> and Rhat is the potential scale reduction factor on split chains (at 
+#> convergence, Rhat=1).
+```
+Although they are easy to summarize and extract for further calculations, 
+the draws from the posterior distribution of the model parameters should be 
+viewed with caution and skepticism because they are usually poorly identified 
+by the data in typical dose response studies. The parameter estimates are 
+most often highly correlated and unstable. The resulting estimated dose 
+response within the observed dosing range, however, is much better determined. 
+The `plot()` function can be utilized to visualize the fitted dose-response 
+curve along with the observed data. The black bars represents posterior 
+credible interval, while the grey ones represent posterior predictive intervals 
+for future samples rates in a similar study. The observed data points are 
+marked using red asterisks
+
+
+``` r
+
+plot(fitout,xlab='Total Daily Dose',ylab='ACR20', clev=0.9)
+```
+
+![plot of chunk plot_fit](DRmodelPlots/plot_fit-1.png)
+
+The placebo adjusted dose response curve is plotted by setting `plotDif=TRUE`. 
+
+
+``` r
+plot(fitout,xlab='Total Daily Dose',ylab='Placebo Adjusted ACR20', 
+     clev=0.9, dref=0, plotDif=TRUE)
+```
+
+![plot of chunk plot_fit_dif](DRmodelPlots/plot_fit_dif-1.png)
+
+## Assessing the Need For a Second Study and Its Potential Design
+
+The evaluated dose range in the first study spanned only a six‑fold difference 
+between the lowest and highest doses, prompting a key question:
+
+ - Are all active doses on a plateau?
+
+This is a critical concern given the compound’s immunosuppressive mechanism 
+and intended chronic usage, particularly in the presence of dose‑related 
+safety risks at higher doses. A strong and defensible dose selection rationale 
+is therefore essential:
+
+ - How far can the dose be reduced while maintaining clinically 
+ meaningful efficacy?
+
+To assess the location of the plateau, the lowest active dose is directly 
+compared with the middle dose, evaluating whether additional exposure provides 
+incremental benefit.
+
+
+
+``` r
+# Posterior 
+pred10v30 <- predict(fitout,dosevec=c(10,30),dref=30,clev=0.90)
+names(pred10v30)
+#>  [1] "pred"      "predMed"   "lb"        "ub"        "se"        "fitdif"    "fitdifMed" "lbdif"     "ubdif"    
+#> [10] "sedif"     "simResp"   "sigsim"
+```
+
+A 90% CI of difference between 10 mg vs 30 mg
+
+
+``` r
+
+dif10v30 <-round(pred10v30$fitdif[1],3)
+lb10v30 <- round(pred10v30$lbdif[1],3)
+ub10v30 <- round(pred10v30$ubdif[1],3)
+
+cat("Difference in response between 10mg and 30mg: ", dif10v30, "\n",
+    "90% CI: [", lb10v30, ", ", ub10v30, "]\n")
+#> Difference in response between 10mg and 30mg:  -0.071 
+#>  90% CI: [ -0.147 ,  -0.002 ]
+```
+The 90% credible interval confirms that the response of the 10 mg dose may 
+be close to the plateau. The first study failed to convincingly identify the 
+dosing range where the dose-response is rapidly changing.
+The 10 mg dose was chosen as the lowest dose for the first study because only 
+5 and 10 mg tablets were manufactured (Recall the dosing is BID).
+While the first study was accruing, a 1 mg tablet was manufactured so it is 
+now possible to study much lower doses. A practical dosing constraint based on 
+safety assessments from the first study is that the doses above 30 mg cannot 
+be included in future studies.
+
+A key design question is whether a 2mg dose will display lower efficacy that 
+provides a lower bound on useful doses. If not, a third study will be 
+necessary. Should we proceed with the 2mg low dose or wait for a lower 
+dose to be manufactured?
+
+Predicting the response to a 2mg based based on current study data:
+
+
+``` r
+# Simulate 2 mg and 30 mg response based on current data
+pred2v30 <- predict(fitout,dosevec=c(2,30),dref=30,clev=0.90)
+
+dif2v30 <-round(pred2v30$fitdif[1],3)
+lb2v30 <- round(pred2v30$lbdif[1],3)
+ub2v30 <- round(pred2v30$ubdif[1],3)
+
+cat("Difference in response between 10mg and 30mg: ", dif2v30, "\n",
+    "90% CI: [", lb2v30, ", ", ub2v30, "]\n")
+#> Difference in response between 10mg and 30mg:  -0.238 
+#>  90% CI: [ -0.403 ,  -0.031 ]
+```
+
+While not certain, it is likely the 2mg dose will have appreciably less 
+efficacy than the highest 30 mg dose. However, reviewers focus more on sample 
+proportions rather than theoretical population rates estimated from a fitted 
+model. To account for the naive assessment likely applied to the second study 
+results by key decision makers, we will compute the following criteria for 
+demonstrating the lowest dose lacks sufficient efficacy:
+
+ - **C1:** What is the chance that the observed sample proportion for 2mg is 0.3 point better improvement compared to placebo
+ - **C2:** What is the chance that the observed sample rate for 2mg is 0.1 point (remember 0.2 point is the minimal difference) or less worse than the observed rate for 30 mg
+ 
+The future study will include approximately 50 patients per dose group, based 
+largely on practical operational considerations:
+
+
+
+
+``` r
+
+### obtain simulated pbo response
+pred2v0<-predict(fitout,dosevec=c(2.0,0),dref=0)
+
+nsim<-length(pred2v30$simResp[,1])
+nnew<-50 # Sample size in New study
+
+ynew2<-rbinom(nsim,nnew,pred2v30$simResp[,1])   ## 2 mg dose new study
+ynew30<-rbinom(nsim,nnew,pred2v30$simResp[,2])  ## 30 mg highest new study
+ynew0<-rbinom(nsim,nnew,pred2v0$simResp[,2])  ## placebo in new study
+
+# Estimated sample proportion
+pnew2<-ynew2/nnew
+pnew30<-ynew30/nnew
+pnew0<-ynew0/nnew
+
+# Both C1 and C2 satisfied
+pjoint<-mean(pnew30-pnew2<0.1 & 
+                            pnew2-pnew0>0.3)
+pjoint<-round(pjoint,2)
+
+pjoint
+#> [1] 0.12
+```
+
+
+
+``` r
+
+detach(dat1019)
+
+```
+The refined joint assessment predicting results for observed rates in a future 
+study show that it is unlikely (though not certain) that the 2mg dose will 
+display adequate efficacy similar to the 30 mg dose. Based on PK-PD simulation 
+and these results, a new study was proposed with 
+0mg, 2mg, 6mg, 10mg, 20mg and 30mg doses.
+
+# Step 2: Dose Response in a Second RA Study
+
+The second study has been completed and the data from both studies are now 
+analyzed simultaneously. The dose response model assumes the same Emax 
+parameters across different studies of same compound in same indication, 
+except that placebo response, E0, is allowed to 
+differ (independent placebo rates).
+
+
+``` r
+
+# Extract study data for taid=23 and protno='A3921019'
+
+dat23 <- metaData[metaData$taid==23 & 
+                  (metaData$protno=="A3921019" | metaData$protno=='A3921035'),]
+
+
+# Extract necessary columns
+
+dat23 <- dat23 %>% select(c("protno","dose", "rslt","se","sampsize","indication", "endpointShort", "primtype", "regimen",))
+
+kable(dat23, row.names=FALSE, align="c") %>% 
+  kable_styling(full_width=FALSE,
+                bootstrap_options = c("hover"),
+                position = "center")
+```
+
+<table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:center;"> protno </th>
+   <th style="text-align:center;"> dose </th>
+   <th style="text-align:center;"> rslt </th>
+   <th style="text-align:center;"> se </th>
+   <th style="text-align:center;"> sampsize </th>
+   <th style="text-align:center;"> indication </th>
+   <th style="text-align:center;"> endpointShort </th>
+   <th style="text-align:center;"> primtype </th>
+   <th style="text-align:center;"> regimen </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 0 </td>
+   <td style="text-align:center;"> 0.3387097 </td>
+   <td style="text-align:center;"> 0.0601055 </td>
+   <td style="text-align:center;"> 62 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 10 </td>
+   <td style="text-align:center;"> 0.7241379 </td>
+   <td style="text-align:center;"> 0.0586871 </td>
+   <td style="text-align:center;"> 58 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 30 </td>
+   <td style="text-align:center;"> 0.7941176 </td>
+   <td style="text-align:center;"> 0.0490340 </td>
+   <td style="text-align:center;"> 68 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921019 </td>
+   <td style="text-align:center;"> 60 </td>
+   <td style="text-align:center;"> 0.8095238 </td>
+   <td style="text-align:center;"> 0.0494726 </td>
+   <td style="text-align:center;"> 63 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 0 </td>
+   <td style="text-align:center;"> 0.3043478 </td>
+   <td style="text-align:center;"> 0.0678426 </td>
+   <td style="text-align:center;"> 46 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 2 </td>
+   <td style="text-align:center;"> 0.3863636 </td>
+   <td style="text-align:center;"> 0.0734053 </td>
+   <td style="text-align:center;"> 44 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 6 </td>
+   <td style="text-align:center;"> 0.5000000 </td>
+   <td style="text-align:center;"> 0.0737210 </td>
+   <td style="text-align:center;"> 46 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 10 </td>
+   <td style="text-align:center;"> 0.6444444 </td>
+   <td style="text-align:center;"> 0.0713576 </td>
+   <td style="text-align:center;"> 45 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 20 </td>
+   <td style="text-align:center;"> 0.7678571 </td>
+   <td style="text-align:center;"> 0.0564188 </td>
+   <td style="text-align:center;"> 56 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> A3921035 </td>
+   <td style="text-align:center;"> 30 </td>
+   <td style="text-align:center;"> 0.7547170 </td>
+   <td style="text-align:center;"> 0.0591001 </td>
+   <td style="text-align:center;"> 53 </td>
+   <td style="text-align:center;"> RHEUMATOID ARTHRITIS </td>
+   <td style="text-align:center;"> ACR20 </td>
+   <td style="text-align:center;"> BINARY </td>
+   <td style="text-align:center;"> BID </td>
+  </tr>
+</tbody>
+</table>
+
+
+
+## Bayesian Emax Model fitting
+
+The Bayesian Emax fitting is the same as before, except we fit both the 
+studies together by adding variable indicating the protocol for each 
+dose/response input. The prior distribution is unchanged except there are 
+now 2 independent prior distributions for the 2 placebo responses.
+
+
+``` r
+
+attach(dat23)
+
+ndose<-length(dose)
+ybin<-c(rep(1,ndose),rep(0,ndose))
+nbin<-c(round(sampsize*rslt),sampsize-round(sampsize*rslt))
+dbin<-c(dose,dose)
+# protocol indicator
+prot<-c(as.character(protno),as.character(protno))
+
+# fitEmaxB
+fitout2<-fitEmaxB(ybin,dbin,prior,count=nbin,prot=prot,
+                                 mcmc=mcmc,binary=TRUE)
+```
+
+## Posterior Diagnostics
+
+Note: `e0[1]` and `e0[2]` represent the placebo response for the two studies, 
+while the other parameters are shared across studies.
+
+**Traceplot**
+
+
+``` r
+
+traceplot(fitout2$estanfit,pars=c('led50','loglambda','e0','difTarget'))
+```
+
+![plot of chunk study2_traceplot](DRmodelPlots/study2_traceplot-1.png)
+
+**Pairplot**
+
+
+``` r
+
+pairs(fitout2$estanfit,pars=c('led50','loglambda','e0','difTarget'))
+```
+
+![plot of chunk study2_pairplot](DRmodelPlots/study2_pairplot-1.png)
+
+## Posterior Inference
+
+A downward shift in response rates across dose groups was observed in the 
+second trial and can be evaluated through the model parameter summaries. 
+After accounting for this shift, treatment effects relative to placebo 
+remain consistent.
+
+This pattern has been commonly observed in dose-response meta‑analyses, 
+including studies with laboratory endpoints, when multiple trials are combined.
+
+
+``` r
+
+summary(fitout2,pars=c('led50','lambda','emax','e0','difTarget','loglambda'))
+#> Inference for Stan model: mrmod.
+#> 3 chains, each with iter=10999; warmup=1000; thin=3; 
+#> post-warmup draws per chain=3333, total post-warmup draws=9999.
+#> 
+#>              mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+#> led50        2.21    0.01 0.84    1.06    1.72    2.04    2.48    4.52  5790    1
+#> lambda       1.10    0.00 0.42    0.48    0.81    1.04    1.31    2.14  7538    1
+#> emax         2.82    0.02 1.12    1.80    2.24    2.56    3.03    5.77  5198    1
+#> e0[1]       -0.66    0.00 0.22   -1.09   -0.80   -0.65   -0.51   -0.24  8650    1
+#> e0[2]       -0.90    0.00 0.22   -1.35   -1.05   -0.90   -0.75   -0.47  8761    1
+#> difTarget    2.27    0.00 0.30    1.71    2.07    2.26    2.47    2.89  7679    1
+#> loglambda    0.03    0.00 0.37   -0.73   -0.21    0.04    0.27    0.76  7164    1
+#> lp__      -319.86    0.02 1.83 -324.41 -320.79 -319.46 -318.51 -317.46  5876    1
+#> 
+#> Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:21:48 2026.
+#> For each parameter, n_eff is a crude measure of effective sample size,
+#> and Rhat is the potential scale reduction factor on split chains (at 
+#> convergence, Rhat=1).
+```
+
+The *int = 0* option in the plotting function displays model fits for 
+**both protocols** side by side, while *int = 1* or *int = 2* restricts the 
+plot to the first or second protocol, respectively.
+
+
+``` r
+
+plot(fitout2,xlab='Total Daily Dose',ylab='ACR20', clev=0.9, int=0)
+```
+
+![plot of chunk plot_study2](DRmodelPlots/plot_study2-1.png)
+
+## Dose Selection
+
+The clinical team has clear dose selection criteria:
+
+  - A 0.3 point improvement versus placebo is the commercial target efficacy 
+  - An improvement of <=0.2 point versus placebo 
+   is considered failure for Phase 3 even if its p-value is significant
+ - Safety is assessed separately and overlaid with efficacy to form 
+ a therapeutic index. A major challenge is that the safety issues are 
+ mostly observed only with long term dosing
+ 
+The probability that the population response rates achieved the
+clinical criteria are computed over a range of 
+potential doses based on the analysis of the two combined studies:
+ 
+
+``` r
+
+dvec<-c(2*(1:10),30)
+
+# Simulate response for dose range dvec
+pout2<-predict(fitout2,dvec)$simResp ### by default, pbo rate from first study
+
+# Simulate placebo response
+pbo2<-as.vector(predict(fitout2,0)$simResp)
+
+# Median difference between dose and placebo
+med23<-round(apply(pout2-pbo2,2,median),2)
+# At least 0.2 improvement over placebo
+p20<-round(apply(pout2-pbo2>0.2,2,mean),2)
+# At least 0.3improvement over placebo
+p30<-round(apply(pout2-pbo2>0.3,2,mean),2)
+
+pop<-cbind(dvec,med23,p20,p30)
+pop
+#>    dvec med23  p20  p30
+#> 2     2  0.12 0.10 0.00
+#> 4     4  0.21 0.57 0.07
+#> 6     6  0.27 0.89 0.31
+#> 8     8  0.32 0.98 0.61
+#> 10   10  0.35 1.00 0.80
+#> 12   12  0.37 1.00 0.91
+#> 14   14  0.39 1.00 0.95
+#> 16   16  0.40 1.00 0.97
+#> 18   18  0.41 1.00 0.98
+#> 20   20  0.42 1.00 0.99
+#> 30   30  0.46 1.00 1.00
+```
+The 10 mg dose meets the criteria for dose selection.  
+
+This assessment is 
+for population rates.  The Phase 3 observed rates will be used for the
+final regulatory and commercial decisions.  These observed rates are 
+more uncertain and the rate differences
+will be attenuated by missing data.  At the time of the planned analyses,
+regarding dropouts as failures was the accepted approach for missing data
+adjustments, so is the approach assessed here using simulation 
+generated from MCMC parameter draws from
+the fitted combined model.  The Phase 3 design will be 2:1 with approximately 
+200 patients on drug, 100 on PBO.  The team anticipated a 15% dropout rate.
+The probability of achieving the 2 clinical criteria over a range of doses:
+
+
+``` r
+
+nsim<-length(pbo2)
+np<-ncol(pout2)
+med23obs<-numeric(np)
+p20obs<-numeric(np)
+p30obs<-numeric(np)
+
+### placebo simulations
+y0sim<-rbinom(nsim*100,1,pbo2)
+
+# Impute Missing data as non-response
+y0sim[sample(1:(100*nsim),0.15*100*nsim)]<-0
+y0sim<-matrix(y0sim,ncol=100)
+p0sim<-apply(y0sim,1,sum)/100   
+
+### doses
+for(i in 1:np){
+    ## simulate 200 patients for each mcmc prob for dose i
+    ydsim<-rbinom(nsim*200,1,pout2[,i])
+    ## random dropouts assigned non-response
+    ydsim[rbinom(nsim*200,1,.15)==1]<-0
+    ## row has 9999 obs for each mcmc-generated prob for dose i
+    ydsim<-matrix(ydsim,ncol=200)
+    pdsim<-apply(ydsim,1,sum)/200
+    
+    med23obs[i]<-round(median(pdsim-p0sim),2)
+    p20obs[i]<-round(mean(pdsim-p0sim>0.2),2)
+    p30obs[i]<-round(mean(pdsim-p0sim>0.3),2)
+}
+cbind(pop,med23obs,p20obs,p30obs)
+#>    dvec med23  p20  p30 med23obs p20obs p30obs
+#> 2     2  0.12 0.10 0.00     0.11   0.10   0.01
+#> 4     4  0.21 0.57 0.07     0.18   0.38   0.06
+#> 6     6  0.27 0.89 0.31     0.23   0.64   0.18
+#> 8     8  0.32 0.98 0.61     0.27   0.81   0.33
+#> 10   10  0.35 1.00 0.80     0.29   0.90   0.46
+#> 12   12  0.37 1.00 0.91     0.32   0.94   0.58
+#> 14   14  0.39 1.00 0.95     0.33   0.96   0.66
+#> 16   16  0.40 1.00 0.97     0.34   0.97   0.72
+#> 18   18  0.41 1.00 0.98     0.35   0.98   0.77
+#> 20   20  0.42 1.00 0.99     0.36   0.98   0.80
+#> 30   30  0.46 1.00 1.00     0.38   0.99   0.88
+```
+
+The 10 mg total daily BID dose is likely to provide clinical benefit, 
+but there is considerable risk it will not achieve the 
+commercial target.  Increasing the dose to 20 mg produced 
+much higher confidence of achieving the targeted efficacy but it has
+more risk of long term safety concerns.
+
+To manage this uncertainty, both doses were advanced into Phase 3.   
+The modeling framework ultimately proved highly predictive of outcomes. 
+The efficacy predictions were confirmed.  The 10 mg dose was approved by 
+most regulatory agencies, while the 20 mg dose was not approved due to 
+longer‑term safety concerns. The analyses demonstrate the importance of 
+integrating predictive modeling, missing data considerations, and 
+safety risk into dose selection decisions.
+   

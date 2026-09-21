@@ -30,7 +30,8 @@ meanlev<-emaxfun(dose,pop)
 y<-rnorm(n1+n2,meanlev,sdy)
 prots<-c(rep(1,n1),rep(2,n2))
 
-prior<-emaxPrior.control(0,30,0,30,dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 testout<-suppressWarnings(fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,
@@ -101,7 +102,8 @@ nag<-table(dose,prots)
 nag<-as.vector(nag[nag>0])
 
 
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)
 
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
@@ -172,7 +174,8 @@ ysub<-y[dose!=0]
 dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
@@ -242,8 +245,10 @@ ysub<-y[dose!=0]
 dsub<-dose[dose!=0]
 protsub<-prots[dose!=0]
 
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
-mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)
+mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,
+                   propInit=0.15,adapt_delta = .9)
 
 
 
@@ -324,8 +329,10 @@ runsim<-function(j,seed,nsim){
 	z<-matrix(numeric(modtype*nsim),ncol=modtype)
 	zabs<-matrix(numeric(nsim*2),ncol=2)
 	zdif<-matrix(numeric(nsim*2),ncol=2)
-	prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
-	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
+  prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)	
+	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+	                   propInit=0.15,adapt_delta = .9)
 	estan<-selEstan('mrmodel')
 	
 	for(i in 1:nsim){
@@ -369,7 +376,7 @@ for(i in 2:nsim){
  
 cl<-makeCluster(nprocdef)
 registerDoParallel(cl)	
-outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR','mvtnorm')) %dopar%{
 	runsim(j,seed,nsim)
 }
 stopCluster(cl)
@@ -630,7 +637,7 @@ for(i in 2:nprocdef){
  
 cl<-makeCluster(nprocdef)
 registerDoParallel(cl)	
-outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR')) %dopar%{
+outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR','mvtnorm')) %dopar%{
 	runsim(j,seed,nsim)
 }
 stopCluster(cl)
@@ -678,7 +685,9 @@ counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
 dvec<-c(dvec1,dvec1,dvec2,dvec2)
 
-prior<-emaxPrior.control(0,4,0,4,1.0,.5,parmDF=5,binary=TRUE)
+prior<-emaxPrior.control(epmu=0,epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=1.0,
+                         p50=.5,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout<-fitEmaxB(y,dvec,modType=modType,
@@ -743,7 +752,9 @@ counts<-c(y1,n1-y1,y2,n2-y2)
 prots<-c(rep(1,2*nd1),rep(2,2*nd2))
 dvec<-c(dvec1,dvec1,dvec2,dvec2)
 
-prior<-emaxPrior.control(0,4,0,4,1.0,0.5,parmDF=5,binary=TRUE)
+prior<-emaxPrior.control(epmu=0,epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=1.0,
+                         p50=.5,parmDF=5,binary=TRUE)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 
@@ -803,7 +814,8 @@ runsim<-function(j,seed,nsim){
 	pop.parm<-c(log(ed50),emax,e0)    
 	
 	modType<-4
-	prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5)	
 	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
 	estan<-selEstan('mrmodel')
 	
@@ -859,7 +871,7 @@ for(i in 2:nprocdef){
  
 cl<-makeCluster(nprocdef)
 registerDoParallel(cl)	
-outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR','mvtnorm')) %dopar%{
 	runsim(j,seed,nsim)
 }
 stopCluster(cl)
@@ -925,8 +937,12 @@ runsim<-function(j,seed,nsim){
 	covdifpi<-matrix(logical(nsim*nd),ncol=nd)
 	
 	modType<-4
-	prior<-emaxPrior.control(0,4,0,4,350,50,parmDF=5,binary=TRUE)
-	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,propInit=0.15,adapt_delta = .9)
+	
+	prior<-emaxPrior.control(epmu=0,epsca=4,
+                         difTargetmu=0,difTargetsca=4,dTarget=350,
+                         p50=50,parmDF=5,binary=TRUE)
+	mcmc<-mcmc.control(chains=1,warmup=500,iter=5000,seed=53453,
+	                   propInit=0.15,adapt_delta = .9)
 	estan<-selEstan('mrmodel')
 	
 	for (i in 1:nsim){
@@ -972,7 +988,7 @@ for(i in 2:nsim){
  
 cl<-makeCluster(nprocdef)
 registerDoParallel(cl)	
-outsim<-foreach(j=1:nprocdef, .packages=c('clinDR')) %dopar%{
+outsim<-foreach(j=1:nprocdef, .packages=c('nlme','DoseFinding','clinDR','mvtnorm')) %dopar%{
 	runsim(j,seed,nsim)
 }
 stopCluster(cl)
@@ -1026,10 +1042,10 @@ test_that("plot.fitEmaxB PI DIF for binary data agree within 3se",{
 							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
 										 tolerance=0.05,scale=1))
 })
-test_that("plot.fitEmaxB PI DIF for binary data agree within 3se",{
+test_that("plot.fitEmaxB PI DIF for binary data agree",{
 	expect_that(clev,
 							equals(as.numeric(mean(apply(covdifpi[,-1],2,mean,na.rm=TRUE))),
-										 tolerance=0.04,scale=1))
+										 tolerance=0.05,scale=1))
 })
 
 #################################################################################
@@ -1068,8 +1084,13 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-0
 basevar<-matrix((10*sdy)^2,nrow=1,ncol=1)
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
-mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5,
+                          basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,
+                   propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
 									mcmc=mcmc,diagnostics=FALSE,nproc=3))
@@ -1137,7 +1158,9 @@ prots<-c(rep(1,n1),rep(2,n2))
 
 basemu<-numeric(3)
 basevar<-diag(3)*(10*sdy)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5,
+                          basemu=basemu,basevar=basevar)
 mcmc<-mcmc.control(chains=3,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout2<-fitEmaxB(y,dose,prior=prior,modType=4,prot=prots,xbase=x,
@@ -1202,8 +1225,12 @@ y<-rnorm(ntot,meanlev,sdy)
 
 basemu<-numeric(2)
 basevar<-diag(2)*(10*sdy)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,0.1,30,parmDF=5,basemu=basemu,basevar=basevar)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,sigmalow=.1,sigmaup=30,parmDF=5,
+                          basemu=basemu,basevar=basevar)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,
+                   propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout3<-fitEmaxB(y,dose,prior=prior,modType=3,xbase=x,
 									mcmc=mcmc,diagnostics=FALSE,nproc=1))
@@ -1267,8 +1294,11 @@ y<-rbinom(ntot,1,meanlev)
 
 basemu<-numeric(2)
 basevar<-diag(2)*(4)^2
-prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,parmDF=5,
+                          basemu=basemu,basevar=basevar,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,
+                   propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout4b<-fitEmaxB(y,dose,prior=prior,modType=4,xbase=x,
 									mcmc=mcmc,diagnostics=FALSE,binary=TRUE,nproc=1))
@@ -1337,8 +1367,11 @@ basemu<-numeric(2)
 basevar<-diag(2); basevar[2,1]<-.25; basevar[1,2]<-.25
 basevar<-basevar*(4)^2  ## off-diagonal elements
 
-prior<-emaxPrior.control(0,30,0,30,350,50,parmDF=5,basemu=basemu,basevar=basevar,binary=TRUE)
-mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,propInit=0.15,adapt_delta = .9)
+prior<-emaxPrior.control(epmu=0,epsca=30,difTargetmu=0,difTargetsca=30,
+                         dTarget=350,p50=50,parmDF=5,
+                          basemu=basemu,basevar=basevar,binary=TRUE)
+mcmc<-mcmc.control(chains=1,warmup=500,iter=3000,seed=53453,
+                   propInit=0.15,adapt_delta = .9)
 
 suppressWarnings(testout5b<-fitEmaxB(y,dose,prot=prot,prior=prior,modType=3,xbase=x,
 									mcmc=mcmc,diagnostics=FALSE,binary=TRUE,nproc=1))

@@ -21,6 +21,9 @@ For Bayesian output, the \code{clinDR}
 package function \code{compileStanModels()} must be executed
 once before using the shiny app or any of the package functions
 utilizing Bayes methods.
+
+The shiny app does not currently support mixture placebo prior
+distributions.
 }
 \examples{
 	if (interactive()) {

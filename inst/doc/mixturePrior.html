@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Using a Mixture Prior for E0 in the Bayesian Emax Model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using a Mixture Prior for E0 in the
+Bayesian Emax Model</h1>
+
+
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>We demonstrate how to compute and apply a mixture prior for placebo
+response using summary data from internal historical studies or
+publications. The derived prior is used to supplement information for
+<span class="math inline">\(E_0\)</span> in Emax model fitting. The
+examples have two parts:</p>
+<ul>
+<li>Designing a mixture distribution to capture placebo information from
+historical data</li>
+<li>Applying the mixture distribution to <span class="math inline">\(E_0\)</span> in a Bayesian Emax model</li>
+</ul>
+<p>The mixture prior is developed using <strong>RBesT</strong> package,
+and then it is applied to <span class="math inline">\(E_0\)</span> using
+the <strong>clinDR</strong> function <code>fitEmaxB</code>. There are
+examples with binary and continuous responses. Note that covariate
+adjustment is not implemented with mixture PBO prior distributions.</p>
+</div>
+<div id="binary-response" class="section level1">
+<h1>Binary Response</h1>
+<div id="deriving-a-mixture-prior-using-rbest" class="section level2">
+<h2>Deriving a Mixture Prior Using RBesT</h2>
+<p>This example is from <a href="https://github.com/Novartis/RBesT/blob/main/vignettes/introduction.Rmd">Getting
+Started with RBesT (binary)</a>. Additional details for the mixture
+prior are in this primary reference.</p>
+<div id="data" class="section level3">
+<h3>Data</h3>
+<p>The dataset has control group information from historical trials in
+Ankyloising Spondelitis [<a href="#ref1">1]</a>. The primary efficacy
+endpoint is a binary response indicating &gt;=20% change from baseline
+in the Assessment of Spondelitis Arthritis International Society
+criteria for improvement (ASAS20) at Week 6:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">kable</span>(AS, <span class="at">digits=</span><span class="dv">2</span>, <span class="at">caption=</span><span class="st">&quot;Literature Data: ASAS20 Responder Summary at Week 6&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position=</span><span class="st">&quot;center&quot;</span>)</span></code></pre></div>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Literature Data: ASAS20 Responder Summary at Week 6
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+study
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+r
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Study 1
+</td>
+<td style="text-align:right;">
+107
+</td>
+<td style="text-align:right;">
+23
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 2
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 3
+</td>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:right;">
+19
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 4
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 5
+</td>
+<td style="text-align:right;">
+139
+</td>
+<td style="text-align:right;">
+39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 6
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 7
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:right;">
+9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study 8
+</td>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:right;">
+10
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="computing-a-map-prior-mcmc-sample-using-gmap" class="section level3">
+<h3>Computing a MAP Prior MCMC Sample using <code>gMAP</code></h3>
+<p>An MCMC sample from the Meta Analytic Predictive (MAP) prior can be
+generated using the <code>gMAP()</code> function in RBesT. For binary
+endpoints, the prior distribution is specified on the logit scale. A
+conservative choice of the between trial heterogeneity is
+<strong>Half-Normal(0, 1)</strong>. A <strong>Normal(0,2)</strong> prior
+distribution is specified for the mean of the logit rates. The prior
+mean of the logit rates may be assigned a more substantive value than 0,
+which corresponds to a rate of 50 percent. For more information about
+gMAP use <strong>?gMAP()</strong>, and for a detailed description of the
+statistical methodology refer to [<a href="#ref2">2]</a>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">34563</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>map_mcmc <span class="ot">&lt;-</span> <span class="fu">gMAP</span>(<span class="fu">cbind</span>(r, n <span class="sc">-</span> r) <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">data =</span> AS,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">tau.dist =</span> <span class="st">&quot;HalfNormal&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">tau.prior =</span> <span class="dv">1</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">beta.prior =</span> <span class="dv">2</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">family =</span> binomial</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">print</span>(map_mcmc)</span></code></pre></div>
+<pre><code>## Generalized Meta Analytic Predictive Prior Analysis
+## 
+## Call:  gMAP(formula = cbind(r, n - r) ~ 1 | study, family = binomial, 
+##     data = AS, tau.dist = &quot;HalfNormal&quot;, tau.prior = 1, beta.prior = 2)
+## 
+## Exchangeability tau strata: 1 
+## Prediction tau stratum    : 1 
+## Maximal Rhat              : 1 
+## 
+## Between-trial heterogeneity of tau prediction stratum
+##         mean median    sd   q2.5   q50 q97.5
+## tau[1] 0.387  0.359 0.215 0.0399 0.359 0.897
+## 
+## MAP Prior MCMC sample
+##                  mean median     sd  q2.5   q50 q97.5
+## theta_resp_pred 0.255  0.247 0.0864 0.106 0.247 0.461</code></pre>
+</div>
+<div id="parametric-approximation-derived-from-the-mcmc-sample" class="section level3">
+<h3>Parametric Approximation Derived from the MCMC Sample</h3>
+<p>The current representation in <strong>clinDR</strong> allows a normal
+mixture for the prior for <span class="math inline">\(E_0\)</span>. This
+is a prior for placebo response on the logit scale. Therefore, it is
+required to extract the MAP MCMC sample on the logit scale.</p>
+<p>The next step is to convert the MCMC sample to a parametric
+representation with the <code>automixfit()</code> function that computes
+the optimal number of mixture components using the AIC. In practice, the
+optimal number of mixture components is often large. Therefore, we
+recommend using <code>mixfit()</code> with the number of components
+selected manually. For the protocol and Statistical Analysis Plan (SAP),
+2-3 component mixtures are preferred over the optimal selection
+strategy. The optimal and manual selection performance can be visually
+compared.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Extract posterior samples on the logit scale</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>post_samp <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(map_mcmc)[,<span class="st">&#39;theta_pred&#39;</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>map <span class="ot">&lt;-</span> <span class="fu">mixfit</span>(post_samp,<span class="at">Nc=</span><span class="dv">2</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">print</span>(map)</span></code></pre></div>
+<pre><code>## EM for Normal Mixture Model
+## Log-Likelihood = -2464.067
+## 
+## Univariate normal mixture
+## Mixture Components:
+##   comp1      comp2     
+## w  0.6293999  0.3706001
+## m -1.1044228 -1.1491835
+## s  0.2706598  0.7031189</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="do">## check accuracy of mixture fit</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">plot</span>(map)<span class="sc">$</span>mix</span></code></pre></div>
+<div class="float">
+<img role="img" aria-label="plot of chunk mixmap" src="data:image/png;base64,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" alt="plot of chunk mixmap" />
+<div class="figcaption">plot of chunk mixmap</div>
+</div>
+</div>
+<div id="robustification-and-effective-sample-size" class="section level3">
+<h3>Robustification and Effective Sample Size</h3>
+<p>We recommend robustifying the MAP prior, which helps to protect
+against type-I error inflation in case of prior-data conflict. The
+unit-information prior <span class="math inline">\(logit(p)\)</span> [<a href="#ref3">3]</a> is: <span class="math display">\[logit(p) \sim
+Normal(mean=logit(p_0), SD=[p_0 (1-p_0)]^{-1/2})\]</span> where <span class="math inline">\(p_0\)</span> is the mean of MAP samples.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>p0 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(<span class="fu">mean</span>(post_samp))</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>sdp0 <span class="ot">&lt;-</span> (p0<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>p0))<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>map_robust <span class="ot">&lt;-</span> <span class="fu">robustify</span>(map, <span class="at">weight =</span> <span class="fl">0.5</span>, <span class="at">mean =</span> <span class="fu">qlogis</span>(p0), <span class="at">sigma=</span>sdp0)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">print</span>(map_robust)</span></code></pre></div>
+<pre><code>## Univariate normal mixture
+## Mixture Components:
+##   comp1      comp2      robust    
+## w  0.3146999  0.1853001  0.5000000
+## m -1.1044228 -1.1491835 -1.1210111
+## s  0.2706598  0.7031189  2.3224781</code></pre>
+<p>The effective sample size (ESS) contributed by the historical data
+can be calculated with the <code>ess()</code> function.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">ess</span>(map, <span class="at">method =</span> <span class="st">&#39;elir&#39;</span>, <span class="at">sigma=</span>sdp0))</span></code></pre></div>
+<pre><code>## [1] 36</code></pre>
+</div>
+</div>
+<div id="fit-binary-bayesian-emax-model-with-mixture-prior-for-e0" class="section level2">
+<h2>Fit Binary Bayesian Emax Model with Mixture Prior for E0</h2>
+<p>A simulated data set is created to illustrate the method.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Dose level</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>dose <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">25</span>, <span class="dv">50</span> , <span class="dv">100</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co"># Sample size</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>ss <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">38</span>, <span class="dv">77</span>, <span class="dv">79</span>, <span class="dv">82</span>, <span class="dv">80</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>resplev<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.40</span>, <span class="fl">0.65</span>, <span class="fl">0.72</span>, <span class="fl">0.75</span>) </span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>y<span class="ot">&lt;-</span><span class="fu">rbinom</span>(<span class="fu">length</span>(ss),ss,resplev)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>y</span></code></pre></div>
+<pre><code>## [1] 12 32 58 60 61</code></pre>
+<p>The mixture prior for <span class="math inline">\(E_0\)</span> is
+specified in the function <code>emaxPrior.control()</code>[<a href="#ref1">4]</a>[<a href="#ref1">5]</a>[<a href="#ref1">6]</a>:</p>
+<ul>
+<li><code>mixp</code>: Number of mixture components, integer</li>
+<li><code>mu_ep</code>: Mean of mixture components E0 prior as
+vector</li>
+<li><code>sd_ep</code>: Standard deviation of mixture components as
+vector</li>
+<li><code>w_ep</code>: Weights of mixture components as vector</li>
+</ul>
+<p>Other non-default parameters
+(<code>difTargetmu, difTargetsca, dTarget, p50</code>) must also be
+provided. Any values specified for <code>epmu</code> and
+<code>epsca</code> are ignored if <code>mixP&gt;=1</code>.</p>
+<p>To fit the binary <span class="math inline">\(E_{max}\)</span> model
+using <code>fitEmaxB()</code>, y must be 0/1 and counts must be supplied
+for each 0/1 value.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># y in grouped data 0/1</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>cnt<span class="ot">&lt;-</span><span class="fu">c</span>(ss<span class="sc">-</span>y,y)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">length</span>(dose)), <span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">length</span>(dose)))</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Dose specification for grouped data</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>dose <span class="ot">&lt;-</span> <span class="fu">rep</span>(dose,<span class="dv">2</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>ed50 <span class="ot">&lt;-</span> <span class="dv">15</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>dTarget <span class="ot">&lt;-</span> <span class="fu">max</span>(dose)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>difTarget <span class="ot">&lt;-</span> <span class="fu">qlogis</span>(<span class="fl">0.75</span>) <span class="sc">-</span> <span class="fu">qlogis</span>(<span class="fl">0.25</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co"># E0 prior and other hyper priors</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>prior_bin <span class="ot">&lt;-</span> <span class="fu">emaxPrior.control</span>(<span class="at">epmu=</span><span class="sc">-</span><span class="fl">1.1</span>, <span class="at">epsca=</span><span class="dv">1</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>                               <span class="at">mixP=</span><span class="dv">3</span>, </span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>                               <span class="at">w_ep=</span> map_robust[<span class="dv">1</span>,],</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>                               <span class="at">mu_ep=</span>map_robust[<span class="dv">2</span>,],</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>                               <span class="at">sd_ep =</span> map_robust[<span class="dv">3</span>,],</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>                               <span class="at">difTargetmu =</span> difTarget,</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>                               <span class="at">difTargetsca=</span> <span class="dv">1</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>                               <span class="at">dTarget =</span> dTarget,</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>                               <span class="at">p50 =</span> ed50,</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>                               <span class="at">binary =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co"># mcmc setup</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>mcmc<span class="ot">&lt;-</span><span class="fu">mcmc.control</span>(<span class="at">chains=</span><span class="dv">3</span>,<span class="at">warmup=</span><span class="dv">1000</span>,<span class="at">iter=</span><span class="dv">7000</span>,<span class="at">seed=</span><span class="dv">53453</span>,</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>                   <span class="at">propInit=</span><span class="fl">0.5</span>,<span class="at">adapt_delta =</span> <span class="fl">0.8</span>)</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co"># Now fit emax model</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>fitbin <span class="ot">&lt;-</span> <span class="fu">fitEmaxB</span>(<span class="at">y=</span>y, <span class="at">dose=</span>dose, <span class="at">count=</span>cnt, <span class="at">prior=</span>prior_bin, <span class="at">mcmc=</span>mcmc, <span class="at">binary=</span><span class="cn">TRUE</span>)</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="fu">summary</span>(fitbin)</span></code></pre></div>
+<pre><code>## Inference for Stan model: mrmod.
+## 3 chains, each with iter=7000; warmup=1000; thin=1; 
+## post-warmup draws per chain=6000, total post-warmup draws=18000.
+## 
+##              mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+## led50        2.54    0.01 0.81    1.49    2.03    2.38    2.82    4.73  3510    1
+## lambda       1.19    0.01 0.48    0.49    0.86    1.11    1.42    2.39  6923    1
+## emax         2.64    0.02 0.91    1.70    2.17    2.45    2.83    5.00  3202    1
+## e0[1]       -0.96    0.00 0.25   -1.44   -1.12   -0.97   -0.81   -0.46  7919    1
+## difTarget    2.22    0.00 0.31    1.61    2.01    2.22    2.42    2.82  7972    1
+## loglambda    0.10    0.01 0.39   -0.72   -0.15    0.10    0.35    0.87  5798    1
+## lp__      -215.14    0.03 1.74 -219.59 -215.96 -214.73 -213.88 -213.02  3944    1
+## 
+## Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:22:21 2026.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<p>A plot the fitted dose response model:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">plot</span>(fitbin)</span></code></pre></div>
+<div class="float">
+<img role="img" aria-label="plot of chunk plotEmaxBayes" src="data:image/png;base64,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" alt="plot of chunk plotEmaxBayes" />
+<div class="figcaption">plot of chunk plotEmaxBayes</div>
+</div>
+</div>
+</div>
+<div id="continuous-response" class="section level1">
+<h1>Continuous Response</h1>
+<div id="deriving-a-mixture-prior-using-rbest-1" class="section level2">
+<h2>Deriving a Mixture Prior Using RBesT</h2>
+<p>This example is from <a href="https://github.com/Novartis/RBesT/blob/main/vignettes/articles/introduction_normal.Rmd">Application
+of RBesT in a Normal Endpoint</a>. Additional details for the mixture
+prior are in this primary reference. The computations are very similar
+to the binary example.</p>
+<div id="data-1" class="section level3">
+<h3>Data</h3>
+<p>The primary endpoint is the change from baseline in Crohn’s Disease
+Activity Index (CDAI), which is assumed to be normally distributed. Note
+that for CDAI, an improved outcome corresponds to a negative change from
+baseline. The estimated standard deviation from historical studies is
+<span class="math inline">\(\sigma=88\)</span>.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>h.data <span class="ot">&lt;-</span> crohn</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>crohn_sigma <span class="ot">&lt;-</span> <span class="dv">88</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>h.data<span class="sc">$</span>y.se <span class="ot">&lt;-</span> crohn_sigma <span class="sc">/</span> <span class="fu">sqrt</span>(h.data<span class="sc">$</span>n)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">kable</span>(h.data, <span class="at">digits=</span><span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;CDAI from Published Studies&quot;</span>)<span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>)</span></code></pre></div>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+CDAI from Published Studies
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+study
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+y
+</th>
+<th style="text-align:right;">
+y.se
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Gastr06
+</td>
+<td style="text-align:right;">
+74
+</td>
+<td style="text-align:right;">
+-51
+</td>
+<td style="text-align:right;">
+10.23
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AIMed07
+</td>
+<td style="text-align:right;">
+166
+</td>
+<td style="text-align:right;">
+-49
+</td>
+<td style="text-align:right;">
+6.83
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NEJM07
+</td>
+<td style="text-align:right;">
+328
+</td>
+<td style="text-align:right;">
+-36
+</td>
+<td style="text-align:right;">
+4.86
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Gastr01a
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+-47
+</td>
+<td style="text-align:right;">
+19.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+APhTh04
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:right;">
+-90
+</td>
+<td style="text-align:right;">
+17.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Gastr01b
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+-54
+</td>
+<td style="text-align:right;">
+11.55
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="computing-a-map-prior-mcmc-sample-using-gmap-1" class="section level2">
+<h2>Computing a MAP Prior MCMC Sample using <code>gMAP</code></h2>
+<p>An MCMC sample from the Meta Analytic Predictive (MAP) prior can be
+computed using the <code>gMAP()</code> function in RBesT. The between
+trial heterogeneity is a Half-Normal distribution with scale parameter
+<span class="math inline">\(\tau\)</span>.<br />
+A conservative specification is <span class="math inline">\(\tau=
+\sigma/2\)</span>. A normal prior distribution is specified for the mean
+placebo change from baseline with a prior mean of <span class="math inline">\(0.0\)</span> and a
+<strong>unit-information</strong> prior SD.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>map_mcmc <span class="ot">&lt;-</span> <span class="fu">gMAP</span>(<span class="fu">cbind</span>(y, y.se) <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> study,</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">weights =</span> n, <span class="at">data =</span> h.data,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">family =</span> gaussian,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">beta.prior =</span> <span class="fu">cbind</span>(<span class="dv">0</span>, crohn_sigma),</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">tau.dist =</span> <span class="st">&quot;HalfNormal&quot;</span>, <span class="at">tau.prior =</span> <span class="fu">cbind</span>(<span class="dv">0</span>, crohn_sigma <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>)</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="fu">print</span>(map_mcmc)</span></code></pre></div>
+<pre><code>## Generalized Meta Analytic Predictive Prior Analysis
+## 
+## Call:  gMAP(formula = cbind(y, y.se) ~ 1 | study, family = gaussian, 
+##     data = h.data, weights = n, tau.dist = &quot;HalfNormal&quot;, tau.prior = cbind(0, 
+##         crohn_sigma/2), beta.prior = cbind(0, crohn_sigma))
+## 
+## Exchangeability tau strata: 1 
+## Prediction tau stratum    : 1 
+## Maximal Rhat              : 1 
+## Estimated reference scale : 88 
+## 
+## Between-trial heterogeneity of tau prediction stratum
+##        mean median   sd q2.5  q50 q97.5
+## tau[1] 14.3   12.3 9.71 1.51 12.3  39.2
+## 
+## MAP Prior MCMC sample
+##                  mean median   sd  q2.5   q50 q97.5
+## theta_resp_pred -49.6  -48.4 18.8 -91.1 -48.4 -12.7</code></pre>
+</div>
+<div id="parametric-approximation-derived-from-the-mcmc-sample-1" class="section level2">
+<h2>Parametric Approximation derived from the MCMC Sample</h2>
+<p>As with the binary example, a parametric approximation is computed
+using <code>mixfit()</code> with 2 components selected manually.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>map <span class="ot">&lt;-</span> <span class="fu">mixfit</span>(map_mcmc, <span class="at">Nc=</span><span class="dv">2</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">print</span>(map)</span></code></pre></div>
+<pre><code>## EM for Normal Mixture Model
+## Log-Likelihood = -16937.04
+## 
+## Univariate normal mixture
+## Reference scale: 88
+## Mixture Components:
+##   comp1       comp2      
+## w   0.7405834   0.2594166
+## m -48.3825486 -53.0860498
+## s  10.6234701  31.9008848</code></pre>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="do">## check accuracy of mixture fit</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">plot</span>(map)<span class="sc">$</span>mix</span></code></pre></div>
+<div class="float">
+<img role="img" aria-label="plot of chunk mixmapc" src="data:image/png;base64,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" alt="plot of chunk mixmapc" />
+<div class="figcaption">plot of chunk mixmapc</div>
+</div>
+</div>
+<div id="robustification-and-effective-sample-size-1" class="section level2">
+<h2>Robustification and Effective Sample Size</h2>
+<p>The robustification of the mixture prior is unchanged from the binary
+example:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>map_robust <span class="ot">&lt;-</span> <span class="fu">robustify</span>(map, <span class="at">weight =</span> <span class="fl">0.5</span>, <span class="at">mean =</span> <span class="sc">-</span><span class="dv">50</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">print</span>(map_robust)</span></code></pre></div>
+<pre><code>## Univariate normal mixture
+## Reference scale: 88
+## Mixture Components:
+##   comp1       comp2       robust     
+## w   0.3702917   0.1297083   0.5000000
+## m -48.3825486 -53.0860498 -50.0000000
+## s  10.6234701  31.9008848  88.0000000</code></pre>
+<p>The effective sample size (ESS) also computed using
+<code>ess()</code> function:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">ess</span>(map, <span class="at">method =</span> <span class="st">&#39;elir&#39;</span>))</span></code></pre></div>
+<pre><code>## [1] 40</code></pre>
+</div>
+<div id="bayesian-emax-model-with-a-mixture-prior-for-e0" class="section level2">
+<h2>Bayesian Emax Model with a Mixture Prior for E0</h2>
+<div id="simulated-dose-response-study" class="section level3">
+<h3>Simulated dose response study</h3>
+<p>The methods are illustrated with simulated data from a dose response
+study with placebo and four doses ranging from 5 mg to 100 mg. The
+simulated responses are normally distributed with means determined by a
+3-parameter Emax model with <span class="math inline">\(E_0=-50\)</span>, a difference with placebo at the
+<span class="math inline">\(100\)</span> mg dose of <span class="math inline">\(difTarget= -1SD\)</span>, with the <span class="math inline">\(SD=75\)</span>, and the <span class="math inline">\(ED_{50}=30\)</span>mg. The simulated data are
+consistent with the mixture prior.</p>
+<p>The reduced sample size in the placebo group matches the sample size
+gain from the informative mixture prior.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Dose groups</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>doselev<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">25</span>, <span class="dv">50</span>, <span class="dv">100</span>) </span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a><span class="co"># Sample size</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>ss<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="dv">40</span>, <span class="dv">80</span>, <span class="dv">80</span>, <span class="dv">80</span>, <span class="dv">80</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a><span class="do">## Population Parameters</span></span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>e0<span class="ot">&lt;-</span><span class="sc">-</span><span class="dv">50</span></span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>ed50<span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>dtarget<span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>diftarget<span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">75</span></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>emax<span class="ot">&lt;-</span><span class="fu">solveEmax</span>(diftarget,dtarget,<span class="fu">log</span>(ed50),<span class="dv">1</span>,e0)</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>sdy<span class="ot">&lt;-</span><span class="dv">75</span></span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>pop<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="fu">log</span>(ed50),emax,e0)</span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a><span class="co"># Mean for each dose level</span></span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a>mu<span class="ot">&lt;-</span><span class="fu">emaxfun</span>(doselev,pop)</span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a><span class="co"># Generate single study data</span></span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a>dose_data <span class="ot">&lt;-</span> <span class="fu">rep</span>(doselev, <span class="at">times=</span>ss)</span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>mu_data <span class="ot">&lt;-</span> <span class="fu">rep</span>(mu, <span class="at">times=</span>ss)</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260217</span>)</span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="at">n=</span><span class="fu">sum</span>(ss), <span class="at">mean=</span>mu_data, <span class="at">sd=</span>sdy)</span>
+<span id="cb26-22"><a href="#cb26-22" tabindex="-1"></a></span>
+<span id="cb26-23"><a href="#cb26-23" tabindex="-1"></a>study.data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y=</span>y, <span class="at">dose=</span> dose_data)</span>
+<span id="cb26-24"><a href="#cb26-24" tabindex="-1"></a></span>
+<span id="cb26-25"><a href="#cb26-25" tabindex="-1"></a><span class="co"># Create summary data</span></span>
+<span id="cb26-26"><a href="#cb26-26" tabindex="-1"></a>summ.data <span class="ot">&lt;-</span> study.data <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(dose) <span class="sc">%&gt;%</span></span>
+<span id="cb26-27"><a href="#cb26-27" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb26-28"><a href="#cb26-28" tabindex="-1"></a>    <span class="at">n=</span><span class="fu">n</span>(),</span>
+<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(y),</span>
+<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a>    <span class="at">std=</span><span class="fu">sd</span>(y)</span>
+<span id="cb26-31"><a href="#cb26-31" tabindex="-1"></a>  )</span>
+<span id="cb26-32"><a href="#cb26-32" tabindex="-1"></a></span>
+<span id="cb26-33"><a href="#cb26-33" tabindex="-1"></a><span class="fu">kable</span>(summ.data, <span class="at">digits=</span><span class="dv">2</span>, <span class="at">caption=</span><span class="st">&quot;Summary at each Dose Level&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-34"><a href="#cb26-34" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">position =</span> <span class="st">&quot;center&quot;</span>)</span></code></pre></div>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Summary at each Dose Level
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+dose
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+mean
+</th>
+<th style="text-align:right;">
+std
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:right;">
+-62.38
+</td>
+<td style="text-align:right;">
+78.34
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+-67.24
+</td>
+<td style="text-align:right;">
+79.20
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+-106.93
+</td>
+<td style="text-align:right;">
+75.80
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+-111.03
+</td>
+<td style="text-align:right;">
+84.94
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+100
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+-120.21
+</td>
+<td style="text-align:right;">
+74.33
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="model-fit-using-fitemaxb" class="section level2">
+<h2>Model fit using <code>fitEmaxB</code></h2>
+<p>To set up a mixture prior for E0, we use
+<code>emaxPrior.control()</code> similar to before without specifying
+<code>binary=TRUE</code>:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>prior.emax <span class="ot">&lt;-</span> <span class="fu">emaxPrior.control</span>(<span class="at">epmu=</span><span class="dv">0</span>,<span class="at">epsca=</span><span class="dv">100</span>,<span class="at">mixP=</span><span class="dv">3</span>, </span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>                                <span class="at">mu_ep=</span><span class="fu">c</span>(<span class="sc">-</span><span class="fl">48.6</span>, <span class="sc">-</span><span class="fl">53.3</span>, <span class="sc">-</span><span class="dv">50</span>),<span class="at">sd_ep =</span> <span class="fu">c</span>(<span class="fl">10.9</span>,<span class="fl">32.7</span>, <span class="fl">88.0</span>),</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>                                <span class="at">w_ep =</span> <span class="fu">c</span>(<span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.5</span>), <span class="at">difTargetmu =</span> <span class="sc">-</span><span class="dv">150</span>, <span class="at">difTargetsca =</span><span class="dv">75</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>                                <span class="at">dTarget =</span> <span class="dv">100</span>, <span class="at">p50=</span><span class="dv">30</span>, <span class="at">sigmalow =</span><span class="dv">10</span>, <span class="at">sigmaup =</span> <span class="dv">500</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>msSat <span class="ot">&lt;-</span> <span class="fu">sum</span>((summ.data<span class="sc">$</span>n<span class="dv">-1</span>)<span class="sc">*</span>(summ.data<span class="sc">$</span>std)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>(<span class="fu">sum</span>(summ.data<span class="sc">$</span>n)<span class="sc">-</span><span class="fu">length</span>(summ.data<span class="sc">$</span>n))</span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a>mcmc <span class="ot">&lt;-</span> <span class="fu">mcmc.control</span>(<span class="at">chains=</span><span class="dv">3</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a><span class="do">## Fit Emax Model</span></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>fitout<span class="ot">&lt;-</span><span class="fu">fitEmaxB</span>(summ.data<span class="sc">$</span>mean,summ.data<span class="sc">$</span>dose,prior.emax,<span class="at">modType=</span><span class="dv">4</span>,<span class="at">prot=</span><span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(summ.data)),</span>
+<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a>                 <span class="at">count=</span>summ.data<span class="sc">$</span>n,<span class="at">msSat=</span>msSat,<span class="at">mcmc=</span>mcmc)</span>
+<span id="cb27-13"><a href="#cb27-13" tabindex="-1"></a><span class="fu">summary</span>(fitout)</span></code></pre></div>
+<pre><code>## Inference for Stan model: mrmod.
+## 3 chains, each with iter=4333; warmup=1000; thin=1; 
+## post-warmup draws per chain=3333, total post-warmup draws=9999.
+## 
+##               mean se_mean    sd     2.5%      25%      50%      75%    97.5% n_eff Rhat
+## led50         3.30    0.02  1.18     1.75     2.54     3.04     3.77     6.42  2685    1
+## lambda        1.07    0.01  0.46     0.45     0.76     0.99     1.29     2.22  4990    1
+## emax       -101.04    1.50 67.98  -266.13  -106.73   -84.20   -70.04   -50.45  2051    1
+## e0[1]       -54.53    0.11  8.41   -71.39   -60.15   -54.50   -48.98   -38.11  5812    1
+## sigma[1]     78.80    0.04  2.97    73.24    76.75    78.71    80.79    84.71  7011    1
+## difTarget   -67.61    0.15 11.13   -89.23   -75.20   -67.66   -60.38   -45.49  5428    1
+## loglambda    -0.01    0.01  0.40    -0.80    -0.28    -0.01     0.25     0.80  4790    1
+## lp__      -1863.67    0.03  1.84 -1868.27 -1864.60 -1863.26 -1862.31 -1861.27  3026    1
+## 
+## Samples were drawn using NUTS(diag_e) at Sun Sep 20 20:22:31 2026.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<p>Finally, the <code>plot</code> function displays the fitted Emax
+curve</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">plot</span>(fitout)</span></code></pre></div>
+<div class="float">
+<img role="img" aria-label="plot of chunk plotc" src="data:image/png;base64,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" alt="plot of chunk plotc" />
+<div class="figcaption">plot of chunk plotc</div>
+</div>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p><span id="ref1">[1]</span> Baeten D. et al., <em>The Lancet</em>,
+2013, (382), 9906, p 1705</p>
+<p><span id="ref2">[2]</span> Neuenschwander B et. al, <em>Clin
+Trials</em>. 2010; 7(1):5-18</p>
+<p><span id="ref3">[3]</span> Kass RE, Wasserman L, <em>J Amer Statist
+Assoc</em>; 1995, 90(431):928-934.</p>
+<p><span id="ref4">[4]</span> Thomas N et. al, <em>Statistics in
+Biopharmaceutical Research</em>, 2014, 302-317</p>
+<p><span id="ref5">[5]</span> Thomas N et. al, <em>Statistics in
+Biopharmaceutical Research</em>, 2016, 302-317</p>
+<p><span id="ref6">[6]</span> Wu, J.et. al., <em>Statistical Methods in
+Medical Research</em>, 2017</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
